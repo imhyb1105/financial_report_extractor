@@ -1,0 +1,115 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-15",
+  "needs_verification": false,
+  "tax_rates": {
+    "general": {
+      "label": "一般企业",
+      "rate": 0.25,
+      "description": "法定税率25%",
+      "legal_basis": "《中华人民共和国企业所得税法》第四条"
+    },
+    "small_micro_tier1": {
+      "label": "小型微利企业（≤100万）",
+      "rate": 0.025,
+      "description": "减按25%计入应纳税所得额 × 20%税率 × 50%减免 = 实际税负2.5%",
+      "conditions": {
+        "annual_income_limit": 1000000,
+        "employee_limit": 300,
+        "asset_limit": 50000000
+      },
+      "policy_period": "2023-01-01 至 2027-12-31"
+    },
+    "small_micro_tier2": {
+      "label": "小型微利企业（100万-300万）",
+      "rate": 0.05,
+      "description": "减按25%计入应纳税所得额 × 20%税率 = 实际税负5%",
+      "conditions": {
+        "annual_income_min": 1000000,
+        "annual_income_max": 3000000,
+        "employee_limit": 300,
+        "asset_limit": 50000000
+      },
+      "policy_period": "2023-01-01 至 2027-12-31"
+    },
+    "high_tech": {
+      "label": "高新技术企业",
+      "rate": 0.15,
+      "description": "减按15%税率征收",
+      "legal_basis": "《中华人民共和国企业所得税法》第二十八条",
+      "loss_carryforward_years": 10
+    },
+    "tech_small": {
+      "label": "技术先进型服务企业",
+      "rate": 0.15,
+      "description": "减按15%税率征收"
+    },
+    "integrated_circuit": {
+      "label": "集成电路生产企业",
+      "rate": 0.10,
+      "description": "特定条件下减按10%税率征收"
+    }
+  },
+  "small_micro_policy": {
+    "effective_period": "2023-01-01 至 2027-12-31",
+    "legal_basis": "财政部 税务总局公告2023年第6号",
+    "tier1": {
+      "range": "年应纳税所得额 ≤ 100万元",
+      "calculation": "减按25%计入应纳税所得额 × 20%税率 × 50%减免",
+      "actual_rate": 0.025
+    },
+    "tier2": {
+      "range": "100万元 < 年应纳税所得额 ≤ 300万元",
+      "calculation": "减按25%计入应纳税所得额 × 20%税率",
+      "actual_rate": 0.05
+    },
+    "conditions": [
+      "从事国家非限制和禁止行业",
+      "年应纳税所得额不超过300万元",
+      "从业人数不超过300人",
+      "资产总额不超过5000万元"
+    ]
+  },
+  "deduction_rules": {
+    "rd_expense": {
+      "deduction_rate": 1.00,
+      "description": "研发费用加计扣除100%",
+      "legal_basis": "财政部 税务总局公告2023年第7号"
+    },
+    "public_welfare_donation": {
+      "limit_rate": 0.12,
+      "description": "公益性捐赠在年度利润总额12%以内准予扣除，超过部分可结转以后三年扣除",
+      "legal_basis": "《企业所得税法实施条例》第五十一条"
+    },
+    "employee_education": {
+      "limit_rate": 0.08,
+      "description": "职工教育经费支出，不超过工资薪金总额8%的部分准予扣除"
+    },
+    "employee_welfare": {
+      "limit_rate": 0.14,
+      "description": "职工福利费支出，不超过工资薪金总额14%的部分准予扣除"
+    },
+    "union_fee": {
+      "limit_rate": 0.02,
+      "description": "工会经费支出，不超过工资薪金总额2%的部分准予扣除"
+    }
+  },
+  "loss_carryforward": {
+    "general": {
+      "years": 5,
+      "description": "一般企业亏损可在以后5年内弥补"
+    },
+    "high_tech": {
+      "years": 10,
+      "description": "高新技术企业/科技型中小企业亏损可在以后10年内弥补",
+      "legal_basis": "《企业所得税法实施条例》"
+    }
+  },
+  "notes": [
+    "小型微利企业需同时满足：年应纳税所得额≤300万元、从业人数≤300人、资产总额≤5000万元",
+    "高新技术企业需经省级科技、财政、税务部门联合认定",
+    "年度亏损可在以后5年内（高新技术企业10年）弥补",
+    "研发费用加计扣除政策适用于所有企业"
+  ]
+}

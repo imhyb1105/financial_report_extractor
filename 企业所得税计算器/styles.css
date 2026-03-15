@@ -1,0 +1,122 @@
+/* 企业所得税计算器样式 */
+
+/* 状态栏样式 */
+.status-bar {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.status-bar span {
+    margin-right: 1.5rem;
+}
+
+.status-bar strong {
+    color: #333;
+}
+
+/* 错误提示 */
+.errors {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.errors:empty {
+    display: none;
+}
+
+/* 结果卡片 */
+#resultCard {
+    border-left: 4px solid #0d6efd;
+}
+
+#resultCard .alert {
+    margin-bottom: 0;
+}
+
+#resultCard .alert small {
+    color: #6c757d;
+}
+
+/* 计算明细 */
+.breakdown {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.875rem;
+}
+
+.breakdown .line {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+    color: #495057;
+}
+
+.breakdown .line:last-child {
+    margin-bottom: 0;
+}
+
+/* 知识库链接 */
+.knowledge-link {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+.knowledge-link:hover {
+    text-decoration: underline;
+}
+
+/* 表单提示 */
+.form-text {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+/* Tab 内容中的表格 */
+.tab-content .table {
+    margin-bottom: 0;
+    font-size: 0.875rem;
+}
+
+.tab-content .table td {
+    padding: 0.375rem 0.5rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .row.g-3 > div {
+        margin-bottom: 0.5rem;
+    }
+
+    .status-bar span {
+        display: block;
+        margin-right: 0;
+        margin-bottom: 0.25rem;
+    }
+
+    #resultCard .row > div {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .btn, .nav-tabs, #errors {
+        display: none !important;
+    }
+
+    #resultCard {
+        border: 1px solid #dee2e6;
+        display: block !important;
+    }
+}

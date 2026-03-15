@@ -1,0 +1,22 @@
+{
+  "version": "2026.01-001",
+  "effective_date": "2026-01-01",
+  "tax_items": [
+    { "key": "goods", "label": "通用货物/加工修理修配劳务", "rate": 0.13 },
+    { "key": "manufacturing", "label": "制造业产品", "rate": 0.13 },
+    { "key": "electricity", "label": "电力/燃气/水供应", "rate": 0.13 },
+    { "key": "road_transport", "label": "道路运输", "rate": 0.09 },
+    { "key": "construction", "label": "建筑服务", "rate": 0.09 },
+    { "key": "real_estate_lease", "label": "不动产租赁", "rate": 0.09 },
+    { "key": "agriculture", "label": "农产品销售", "rate": 0.09 },
+    { "key": "rd_service", "label": "研发和技术服务", "rate": 0.06 },
+    { "key": "it_service", "label": "信息技术服务", "rate": 0.06 },
+    { "key": "financial_service", "label": "金融服务", "rate": 0.06 },
+    { "key": "life_service", "label": "生活服务", "rate": 0.06 },
+    { "key": "export_zero", "label": "出口/零税率", "rate": 0.00 }
+  ],
+  "notes": [
+    "农产品进项抵扣率按政策规定执行",
+    "差额征税与兼营分别核算规则以知识库为准"
+  ]
+}

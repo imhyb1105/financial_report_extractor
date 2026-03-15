@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "effective_date": "2021-09-01",
+  "notes": "税率依据城市维护建设税法、教育费附加/地方教育附加暂行条例，若政策期调整请更新。",
+  "city_maintenance_tax": {
+    "city": 0.07,
+    "county_town": 0.05,
+    "other": 0.01
+  },
+  "education_surcharge": 0.03,
+  "local_education_surcharge": 0.02
+}

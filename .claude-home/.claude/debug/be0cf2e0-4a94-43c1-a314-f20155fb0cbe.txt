@@ -1,0 +1,70 @@
+2026-03-15T03:30:03.984Z [ERROR] Failed to save config with lock: Error: ENOENT: no such file or directory, lstat 'D:\ai\ai编程\财税小工具\.claude-home\.claude.json'
+2026-03-15T03:30:03.988Z [DEBUG] Writing to temp file: D:\ai\ai编程\财税小工具\.claude-home\.claude.json.tmp.9640.1773545403988
+2026-03-15T03:30:03.988Z [DEBUG] Setting permissions for new file: 600
+2026-03-15T03:30:04.158Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (170.2ms)
+2026-03-15T03:30:04.158Z [DEBUG] Temp file written successfully, size: 82 bytes
+2026-03-15T03:30:04.158Z [DEBUG] Renaming D:\ai\ai编程\财税小工具\.claude-home\.claude.json.tmp.9640.1773545403988 to D:\ai\ai编程\财税小工具\.claude-home\.claude.json
+2026-03-15T03:30:04.162Z [DEBUG] File D:\ai\ai编程\财税小工具\.claude-home\.claude.json written atomically
+2026-03-15T03:30:04.238Z [DEBUG] Writing to temp file: D:\ai\ai编程\财税小工具\.claude-home\.claude.json.tmp.9640.1773545404238
+2026-03-15T03:30:04.242Z [DEBUG] Preserving file permissions: 100666
+2026-03-15T03:30:04.347Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (104.9ms)
+2026-03-15T03:30:04.347Z [DEBUG] Temp file written successfully, size: 130 bytes
+2026-03-15T03:30:04.349Z [DEBUG] Applied original permissions to temp file
+2026-03-15T03:30:04.350Z [DEBUG] Renaming D:\ai\ai编程\财税小工具\.claude-home\.claude.json.tmp.9640.1773545404238 to D:\ai\ai编程\财税小工具\.claude-home\.claude.json
+2026-03-15T03:30:04.353Z [DEBUG] File D:\ai\ai编程\财税小工具\.claude-home\.claude.json written atomically
+2026-03-15T03:30:05.139Z [DEBUG] Using bash path: "C:\Program Files\Git\bin\bash.exe"
+2026-03-15T03:30:05.333Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-03-15T03:30:05.333Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-03-15T03:30:05.333Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-03-15T03:30:05.354Z [DEBUG] Writing to temp file: D:\ai\ai编程\财税小工具\.claude-home\.claude.json.tmp.9640.1773545405354
+2026-03-15T03:30:05.355Z [DEBUG] Preserving file permissions: 100666
+2026-03-15T03:30:05.512Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (156.4ms)
+2026-03-15T03:30:05.512Z [DEBUG] Temp file written successfully, size: 167 bytes
+2026-03-15T03:30:05.513Z [DEBUG] Applied original permissions to temp file
+2026-03-15T03:30:05.513Z [DEBUG] Renaming D:\ai\ai编程\财税小工具\.claude-home\.claude.json.tmp.9640.1773545405354 to D:\ai\ai编程\财税小工具\.claude-home\.claude.json
+2026-03-15T03:30:05.515Z [DEBUG] File D:\ai\ai编程\财税小工具\.claude-home\.claude.json written atomically
+2026-03-15T03:30:05.583Z [DEBUG] [SLOW OPERATION DETECTED] fs.existsSync (6.2ms)
+2026-03-15T03:30:05.667Z [DEBUG] Writing to temp file: D:\ai\ai编程\财税小工具\.claude-home\.claude.json.tmp.9640.1773545405667
+2026-03-15T03:30:05.668Z [DEBUG] Preserving file permissions: 100666
+2026-03-15T03:30:05.826Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (157.1ms)
+2026-03-15T03:30:05.826Z [DEBUG] Temp file written successfully, size: 202 bytes
+2026-03-15T03:30:05.874Z [DEBUG] Applied original permissions to temp file
+2026-03-15T03:30:05.874Z [DEBUG] Renaming D:\ai\ai编程\财税小工具\.claude-home\.claude.json.tmp.9640.1773545405667 to D:\ai\ai编程\财税小工具\.claude-home\.claude.json
+2026-03-15T03:30:06.037Z [DEBUG] [SLOW OPERATION DETECTED] fs.renameSync (163.0ms)
+2026-03-15T03:30:06.037Z [DEBUG] File D:\ai\ai编程\财税小工具\.claude-home\.claude.json written atomically
+2026-03-15T03:30:06.211Z [DEBUG] LSP server manager initialized successfully
+2026-03-15T03:30:06.221Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-03-15T03:30:06.693Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-03-15T03:30:06.887Z [DEBUG] Loading skills from directories: managed=C:\ProgramData\ClaudeCode\.claude\skills, user=D:\ai\ai编程\财税小工具\.claude-home\.claude\skills, project=[]
+2026-03-15T03:30:07.200Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2026-03-15T03:30:07.667Z [DEBUG] Creating shell snapshot for bash (C:\Program Files\Git\bin\bash.exe)
+2026-03-15T03:30:07.668Z [DEBUG] Looking for shell config file: D:\ai\ai编程\财税小工具\.claude-home\.bashrc
+2026-03-15T03:30:07.668Z [DEBUG] Shell config file not found: D:\ai\ai编程\财税小工具\.claude-home\.bashrc, creating snapshot with Claude Code defaults only
+2026-03-15T03:30:07.668Z [DEBUG] Snapshots directory: D:\ai\ai编程\财税小工具\.claude-home\.claude\shell-snapshots
+2026-03-15T03:30:07.834Z [DEBUG] Creating snapshot at: D:\ai\ai编程\财税小工具\.claude-home\.claude\shell-snapshots\snapshot-bash-1773545407668-z70xnc.sh
+2026-03-15T03:30:07.835Z [DEBUG] Shell binary exists: true
+2026-03-15T03:30:07.835Z [DEBUG] Execution timeout: 10000ms
+2026-03-15T03:30:07.870Z [DEBUG] Writing to temp file: D:\ai\ai编程\财税小工具\.claude-home\.claude\todos\be0cf2e0-4a94-43c1-a314-f20155fb0cbe-agent-be0cf2e0-4a94-43c1-a314-f20155fb0cbe.json.tmp.9640.1773545407870
+2026-03-15T03:30:08.019Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (148.7ms)
+2026-03-15T03:30:08.019Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-03-15T03:30:08.019Z [DEBUG] Renaming D:\ai\ai编程\财税小工具\.claude-home\.claude\todos\be0cf2e0-4a94-43c1-a314-f20155fb0cbe-agent-be0cf2e0-4a94-43c1-a314-f20155fb0cbe.json.tmp.9640.1773545407870 to D:\ai\ai编程\财税小工具\.claude-home\.claude\todos\be0cf2e0-4a94-43c1-a314-f20155fb0cbe-agent-be0cf2e0-4a94-43c1-a314-f20155fb0cbe.json
+2026-03-15T03:30:08.023Z [DEBUG] File D:\ai\ai编程\财税小工具\.claude-home\.claude\todos\be0cf2e0-4a94-43c1-a314-f20155fb0cbe-agent-be0cf2e0-4a94-43c1-a314-f20155fb0cbe.json written atomically
+2026-03-15T03:30:08.058Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2026-03-15T03:30:08.058Z [DEBUG] Total plugin skills loaded: 0
+2026-03-15T03:30:08.058Z [DEBUG] Total plugin commands loaded: 0
+2026-03-15T03:30:08.058Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-03-15T03:30:08.406Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, duplicates removed: 0)
+2026-03-15T03:30:08.609Z [DEBUG] Attempting to auto-install official marketplace
+2026-03-15T03:30:08.802Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2026-03-15T03:30:08.816Z [DEBUG] Total plugin agents loaded: 0
+2026-03-15T03:30:08.957Z [DEBUG] Git remote URL: null
+2026-03-15T03:30:08.957Z [DEBUG] No git remote URL found
+2026-03-15T03:30:08.957Z [DEBUG] Not in a GitHub repository, skipping path mapping update
+2026-03-15T03:30:08.962Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=C:\Users\Administrator\.trae\binaries\node\versions\24.11.1\node_modules\@anthropic-ai\claude-code\vendor\ripgrep\x64-win32\rg.exe)
+2026-03-15T03:30:09.686Z [DEBUG] Writing to temp file: D:\ai\ai编程\财税小工具\.claude-home\.claude.json.tmp.9640.1773545409686
+2026-03-15T03:30:09.687Z [DEBUG] Preserving file permissions: 100666
+2026-03-15T03:30:09.827Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (139.4ms)
+2026-03-15T03:30:09.827Z [DEBUG] Temp file written successfully, size: 154960 bytes
+2026-03-15T03:30:09.828Z [DEBUG] Applied original permissions to temp file
+2026-03-15T03:30:09.828Z [DEBUG] Renaming D:\ai\ai编程\财税小工具\.claude-home\.claude.json.tmp.9640.1773545409686 to D:\ai\ai编程\财税小工具\.claude-home\.claude.json
+2026-03-15T03:30:09.832Z [DEBUG] File D:\ai\ai编程\财税小工具\.claude-home\.claude.json written atomically

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>附加税费计算器测试页</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>附加税费计算器测试</h1>
+      <p class="subtitle">用于简单回归测试与结果校验</p>
+    </header>
+
+    <section class="card">
+      <div id="test-output"></div>
+    </section>
+  </div>
+
+  <script>
+    // 简单测试函数（与业务脚本一致的公式）
+    const rates = { city_maintenance_tax: { city: 0.07, county_town: 0.05, other: 0.01 }, education_surcharge: 0.03, local_education_surcharge: 0.02 };
+    function compute(vat, excise, location) {
+      const base = vat + excise;
+      const cityRate = rates.city_maintenance_tax[location];
+      const eduRate = rates.education_surcharge;
+      const localEduRate = rates.local_education_surcharge;
+      const cityTax = base * cityRate;
+      const eduTax = base * eduRate;
+      const localEduTax = base * localEduRate;
+      const total = cityTax + eduTax + localEduTax;
+      return { base, cityTax, eduTax, localEduTax, total };
+    }
+    function toFixed2(n){return (Math.round(n * 100) / 100).toFixed(2);}
+
+    const cases = [
+      { name: '城市档位，VAT=10000，Excise=0', vat: 10000, excise: 0, loc: 'city', expect: { base: '10000.00', city: '700.00', edu: '300.00', local: '200.00', total: '1200.00' } },
+      { name: '县城档位，VAT=10000，Excise=2000', vat: 10000, excise: 2000, loc: 'county_town', expect: { base: '12000.00', city: '600.00', edu: '360.00', local: '240.00', total: '1200.00' } },
+      { name: '其他档位，VAT=0，Excise=0', vat: 0, excise: 0, loc: 'other', expect: { base: '0.00', city: '0.00', edu: '0.00', local: '0.00', total: '0.00' } },
+    ];
+
+    const out = document.getElementById('test-output');
+    let passCount = 0;
+    const results = cases.map(c => {
+      const r = compute(c.vat, c.excise, c.loc);
+      const actual = { base: toFixed2(r.base), city: toFixed2(r.cityTax), edu: toFixed2(r.eduTax), local: toFixed2(r.localEduTax), total: toFixed2(r.total) };
+      const ok = actual.base === c.expect.base && actual.city === c.expect.city && actual.edu === c.expect.edu && actual.local === c.expect.local && actual.total === c.expect.total;
+      passCount += ok ? 1 : 0;
+      return `<li>${ok ? '✅' : '❌'} ${c.name} => base:${actual.base}, city:${actual.city}, edu:${actual.edu}, local:${actual.local}, total:${actual.total}</li>`;
+    });
+    out.innerHTML = `<h2>测试结果（${passCount}/${cases.length} 通过）</h2><ul>${results.join('')}</ul>`;
+  </script>
+</body>
+</html>

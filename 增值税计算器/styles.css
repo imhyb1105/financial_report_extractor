@@ -1,0 +1,98 @@
+/* 增值税计算器样式（统一系统字体与CSS变量色板） */
+:root {
+    --bg: #f7f7fa;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6c757d;
+    --primary: #2563eb;
+    --primary-contrast: #ffffff;
+    --danger: #dc3545;
+}
+
+body {
+    background-color: var(--bg);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.card {
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #f1f8ff;
+}
+
+.result-item {
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.result-label {
+    font-weight: bold;
+    color: #495057;
+}
+
+.result-value {
+    font-weight: bold;
+    color: var(--primary);
+    margin-left: 5px;
+}
+
+#resultTaxPayable {
+    color: var(--danger);
+    font-size: 18px;
+}
+
+.knowledge-link {
+    display: block;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.knowledge-link:hover {
+    background-color: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border: none;
+    padding: 10px 20px;
+    font-weight: bold;
+}
+
+.btn-primary:hover {
+    filter: brightness(1.05);
+    transform: translateY(-2px);
+}
+
+footer {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.errors {
+    color: var(--danger);
+    min-height: 20px;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .card {
+        margin-bottom: 15px;
+    }
+    
+    .knowledge-link {
+        margin-bottom: 5px;
+    }
+}

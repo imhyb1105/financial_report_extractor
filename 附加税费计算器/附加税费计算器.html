@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>附加税费计算器</title>
+  <link rel="stylesheet" href="../common/styles.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>附加税费计算器</h1>
+      <p class="subtitle">基于当期实际缴纳增值税/消费税与纳税地点档位</p>
+  <div class="status-bar small">
+    <span>税率版本：<strong id="rateVersion">—</strong></span>
+    <span>最后生效日期：<strong id="effectiveDate">—</strong></span>
+  </div>
+    </header>
+
+    <section class="card">
+      <h2>输入参数</h2>
+      <form id="surcharge-form">
+        <div class="form-row">
+          <label for="vatPaid">当期实际缴纳增值税（元）</label>
+          <input id="vatPaid" name="vatPaid" type="number" step="0.01" min="0" placeholder="例如：10000" required />
+        </div>
+
+        <div class="form-row">
+          <label for="excisePaid">当期实际缴纳消费税（元，可为0）</label>
+          <input id="excisePaid" name="excisePaid" type="number" step="0.01" min="0" placeholder="例如：0" value="0" />
+        </div>
+
+        <div class="form-row">
+          <label for="location">纳税地点档位</label>
+          <select id="location" name="location" required>
+            <option value="city">城市（市区）</option>
+            <option value="county_town">县城与建制镇</option>
+            <option value="other">其他地区</option>
+          </select>
+        </div>
+
+        <div class="form-row inline">
+          <label class="checkbox">
+            <input id="isImport" name="isImport" type="checkbox" />
+            输入为进口环节税额（勾选后不计征附加税费）
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn-primary">计算</button>
+          <button type="reset" class="btn-secondary">重置</button>
+        </div>
+
+        <div id="errors" class="errors" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>计算结果</h2>
+      <div id="result" class="result">
+        <div class="row"><span>税基（增值税+消费税）：</span><strong id="base">—</strong></div>
+        <div class="row"><span>城建税：</span><strong id="cityMaintenanceTax">—</strong></div>
+        <div class="row"><span>教育费附加：</span><strong id="educationSurcharge">—</strong></div>
+        <div class="row"><span>地方教育附加：</span><strong id="localEducationSurcharge">—</strong></div>
+        <div class="row total"><span>合计附加税费：</span><strong id="total">—</strong></div>
+        <div id="importNote" class="note"></div>
+        <div class="result-actions">
+          <button id="btnCopyResult" type="button" class="btn-outline">复制结果</button>
+          <button id="btnExportPDF" type="button" class="btn-secondary">导出PDF</button>
+        </div>
+        <div class="breakdown" id="calcBreakdown"></div>
+        <div class="note" id="policyNote"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>计算依据与知识库</h2>
+      <ul class="kb-links">
+        <li>税率与档位：<a href="./附加税费知识库/2_附加税费税率.md" target="_blank" rel="noopener">附加税费税率</a></li>
+        <li>征收规定：<a href="./附加税费知识库/3_附加税费征收规定.md" target="_blank" rel="noopener">附加税费征收规定</a></li>
+        <li>公式与示例：<a href="./附加税费知识库/4_附加税费计算方法.md" target="_blank" rel="noopener">附加税费计算方法</a></li>
+      </ul>
+    </section>
+
+    <footer>
+      <p class="footnote">若享受免税、零税率或即征即退：附加税费随同税款先征后退或冲减，以“实际缴纳税额”计征。</p>
+      <p class="text-muted small">知识库与计算结果仅供参考，以最新政策为准。</p>
+    </footer>
+  </div>
+
+  <script src="../common/components/utils.js"></script>
+  <script src="../common/components/version.js"></script>
+  <script src="../common/components/export.js"></script>
+  <script src="./script.js"></script>
+</body>
+</html>

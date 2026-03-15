@@ -1,0 +1,34 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": [
+    { "key": "under1_0", "label": "1.0L（含）以下", "rate": 120, "unit": "元/年", "range": "60-180" },
+    { "key": "1_0_to_1_6", "label": "1.0L-1.6L（含）", "rate": 330, "unit": "元/年", "range": "300-360" },
+    { "key": "1_6_to_2_0", "label": "1.6L-2.0L（含）", "rate": 400, "unit": "元/年", "range": "360-660" },
+    { "key": "2_0_to_2_5", "label": "2.0L-2.5L（含）", "rate": 660, "unit": "元/年", "range": "660-1200" },
+    { "key": "2_5_to_3_0", "label": "2.5L-3.0L（含）", "rate": 1500, "unit": "元/年", "range": "1200-2400" },
+    { "key": "3_0_to_4_0", "label": "3.0L-4.0L（含）", "rate": 2640, "unit": "元/年", "range": "2400-3600" },
+    { "key": "over4_0", "label": "4.0L以上", "rate": 3960, "unit": "元/年", "range": "3600-5400" },
+    { "key": "bus_large", "label": "大型客车", "rate": 600, "unit": "元/年", "range": "480-1440" },
+    { "key": "bus_medium", "label": "中型客车", "rate": 480, "unit": "元/年", "range": "420-960" },
+    { "key": "bus_small", "label": "小型客车", "rate": 360, "unit": "元/年", "range": "360-660" },
+    { "key": "truck", "label": "货车", "rate": 60, "unit": "元/吨·年", "range": "16-120" },
+    { "key": "motorcycle", "label": "摩托车", "rate": 60, "unit": "元/年", "range": "36-120" }
+  ],
+  "notes": [
+    "小排量减负、大排量加税",
+    "新能源汽车符合条件可享受减免优惠",
+    "节能汽车可享受减半征收优惠",
+    "具体税额各省可在国家基准税额基础上适当调整"
+  ],
+  "policy_evidence": {
+    "source_url": "https://fgk.chinatax.gov.cn/zcfgk/c100013/c5243561/content.html",
+    "policy_name": "工业和信息化部财政部税务总局公告2024年第10号",
+    "publish_date": "2024-12-01",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

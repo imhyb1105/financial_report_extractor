@@ -1,22 +1,84 @@
 {
-  "version": "2026.01-001",
+  "version": "2026.03-001",
   "effective_date": "2026-01-01",
-  "tax_items": [
-    { "key": "goods", "label": "通用货物/加工修理修配劳务", "rate": 0.13 },
-    { "key": "manufacturing", "label": "制造业产品", "rate": 0.13 },
-    { "key": "electricity", "label": "电力/燃气/水供应", "rate": 0.13 },
-    { "key": "road_transport", "label": "道路运输", "rate": 0.09 },
-    { "key": "construction", "label": "建筑服务", "rate": 0.09 },
-    { "key": "real_estate_lease", "label": "不动产租赁", "rate": 0.09 },
-    { "key": "agriculture", "label": "农产品销售", "rate": 0.09 },
-    { "key": "rd_service", "label": "研发和技术服务", "rate": 0.06 },
-    { "key": "it_service", "label": "信息技术服务", "rate": 0.06 },
-    { "key": "financial_service", "label": "金融服务", "rate": 0.06 },
-    { "key": "life_service", "label": "生活服务", "rate": 0.06 },
-    { "key": "export_zero", "label": "出口/零税率", "rate": 0.00 }
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "taxpayer_types": {
+    "general": {
+      "label": "一般纳税人",
+      "description": "年应税销售额超过500万元或登记为一般纳税人"
+    },
+    "small": {
+      "label": "小规模纳税人",
+      "description": "年应税销售额≤500万元"
+    }
+  },
+  "general_taxpayer_rates": [
+    { "key": "standard", "label": "标准税率", "rate": 0.13, "scope": "销售货物、加工修理修配劳务、有形动产租赁服务等" },
+    { "key": "low", "label": "低税率", "rate": 0.09, "scope": "交通运输、邮政、基础电信、建筑、不动产租赁、销售不动产、转让土地使用权" },
+    { "key": "basic", "label": "基础税率", "rate": 0.06, "scope": "现代服务、生活服务、增值电信服务、销售无形资产" },
+    { "key": "zero", "label": "零税率", "rate": 0, "scope": "出口货物、跨境应税行为" }
   ],
+  "small_taxpayer_rates": [
+    { "key": "standard", "label": "标准征收率", "rate": 0.03, "scope": "一般应税销售" },
+    { "key": "reduced_2024_2027", "label": "减按征收率(2024-2027)", "rate": 0.01, "scope": "2024-2027年小规模纳税人适用3%征收率的应税销售收入" },
+    { "key": "real_estate", "label": "不动产销售", "rate": 0.05, "scope": "销售不动产" },
+    { "key": "leasing", "label": "不动产租赁", "rate": 0.05, "scope": "出租不动产" }
+  ],
+  "input_tax_credit": {
+    "deductible": [
+      "从销售方取得的增值税专用发票",
+      "从海关取得的海关进口增值税专用缴款书",
+      "购进农产品收购发票或销售发票",
+      "解缴税款的完税凭证",
+      "道路、桥、闸通行费发票"
+    ],
+    "non_deductible": [
+      "用于简易计税方法计税项目",
+      "用于免征增值税项目",
+      "用于集体福利或个人消费",
+      "非正常损失的购进货物",
+      "非正常损失的在产品、产成品",
+      "购进的贷款服务、餐饮服务、居民日常服务、娱乐服务"
+    ]
+  },
+  "special_rules": {
+    "import": {
+      "label": "进口货物",
+      "formula": "应纳税额 = 组成计税价格 × 税率",
+      "formula_detail": "组成计税价格 = 关税完税价格 + 关税 + 消费税"
+    },
+    "export": {
+      "label": "出口退税",
+      "note": "出口货物适用零税率，可申请出口退税"
+    }
+  },
+  "calculation": {
+    "general": {
+      "label": "一般纳税人",
+      "formula": "应纳税额 = 当期销项税额 - 当期进项税额"
+    },
+    "small": {
+      "label": "小规模纳税人",
+      "formula": "应纳税额 = 销售额 × 征收率"
+    },
+    "import": {
+      "label": "进口货物",
+      "formula": "应纳税额 = 组成计税价格 × 税率"
+    }
+  },
   "notes": [
-    "农产品进项抵扣率按政策规定执行",
-    "差额征税与兼营分别核算规则以知识库为准"
-  ]
+    "小规模纳税人2024-2027年适用3%征收率的减按1%征收",
+    "月销售额≤10万元的小规模纳税人免征增值税",
+    "一般纳税人进项税额需取得合法有效凭证方可抵扣",
+    "留抵税额可结转下期继续抵扣"
+  ],
+  "policy_evidence": {
+    "source_url": "http://www.chinatax.gov.cn/n810219/n810744/n3752930/n3752974/n3752991/c4203344/content.html",
+    "policy_name": "中华人民共和国增值税法",
+    "publish_date": "2026-01-01",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
 }

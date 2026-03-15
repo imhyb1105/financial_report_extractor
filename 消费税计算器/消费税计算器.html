@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消费税计算器 - 财税小工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-purple text-white">
+                        <h4 class="mb-0">消费税计算器</h4>
+                        <small>版本：2026.03-001 | 生效日期：2026-01-01</small>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs mb-3" id="categoryTabs">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tobacco">烟类</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#alcohol">酒类</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cosmetics">化妆品</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#fuel">成品油</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#car">小汽车</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#other">其他</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- 烟类 -->
+                            <div class="tab-pane fade show active" id="tobacco">
+                                <form id="tobaccoForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">烟类品种 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="tobaccoType" required>
+                                            <option value="">请选择</option>
+                                            <option value="cigarette_a">甲类卷烟（56% + 0.003元/支）</option>
+                                            <option value="cigarette_b">乙类卷烟（36% + 0.003元/支）</option>
+                                            <option value="cigarette_wholesale">卷烟批发（11% + 0.005元/支）</option>
+                                            <option value="cigar">雪茄烟（36%）</option>
+                                            <option value="cut_tobacco">烟丝（30%）</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">销售额（元）</label>
+                                            <input type="number" class="form-control" id="tobaccoAmount" placeholder="销售额" min="0" step="0.01">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">数量（支）</label>
+                                            <input type="number" class="form-control" id="tobaccoQuantity" placeholder="卷烟数量（支）" min="0" step="1">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">计算消费税</button>
+                                </form>
+                            </div>
+
+                            <!-- 酒类 -->
+                            <div class="tab-pane fade" id="alcohol">
+                                <form id="alcoholForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">酒类品种 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="alcoholType" required>
+                                            <option value="">请选择</option>
+                                            <option value="baijiu">白酒（20% + 0.5元/500克）</option>
+                                            <option value="yellow_wine">黄酒（240元/吨）</option>
+                                            <option value="beer_a">甲类啤酒（250元/吨）</option>
+                                            <option value="beer_b">乙类啤酒（220元/吨）</option>
+                                            <option value="other_alcohol">其他酒（10%）</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">销售额（元）</label>
+                                            <input type="number" class="form-control" id="alcoholAmount" placeholder="销售额" min="0" step="0.01">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">数量（吨/斤）</label>
+                                            <input type="number" class="form-control" id="alcoholQuantity" placeholder="白酒：斤；啤酒/黄酒：吨" min="0" step="0.01">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">计算消费税</button>
+                                </form>
+                            </div>
+
+                            <!-- 化妆品 -->
+                            <div class="tab-pane fade" id="cosmetics">
+                                <form id="cosmeticsForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">化妆品类型 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="cosmeticsType" required>
+                                            <option value="">请选择</option>
+                                            <option value="high_cosmetics">高档化妆品（15%）</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">销售额（元） <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="cosmeticsAmount" placeholder="请输入销售额" min="0" step="0.01" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">计算消费税</button>
+                                </form>
+                            </div>
+
+                            <!-- 成品油 -->
+                            <div class="tab-pane fade" id="fuel">
+                                <form id="fuelForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">成品油类型 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="fuelType" required>
+                                            <option value="">请选择</option>
+                                            <option value="gasoline">汽油（1.52元/升）</option>
+                                            <option value="diesel">柴油（1.20元/升）</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">销售数量（升） <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="fuelQuantity" placeholder="请输入数量（升）" min="0" step="0.01" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">计算消费税</button>
+                                </form>
+                            </div>
+
+                            <!-- 小汽车 -->
+                            <div class="tab-pane fade" id="car">
+                                <form id="carForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">小汽车排量 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="carType" required>
+                                            <option value="">请选择</option>
+                                            <option value="car_small">≤1.0L（1%）</option>
+                                            <option value="car_1_0_1_5">1.0L-1.5L（3%）</option>
+                                            <option value="car_1_5_2_0">1.5L-2.0L（5%）</option>
+                                            <option value="car_2_0_2_5">2.0L-2.5L（9%）</option>
+                                            <option value="car_2_5_3_0">2.5L-3.0L（12%）</option>
+                                            <option value="car_3_0_4_0">3.0L-4.0L（25%）</option>
+                                            <option value="car_over4_0">＞4.0L（40%）</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">销售额（元） <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="carAmount" placeholder="请输入销售额" min="0" step="0.01" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">计算消费税</button>
+                                </form>
+                            </div>
+
+                            <!-- 其他 -->
+                            <div class="tab-pane fade" id="other">
+                                <form id="otherForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">其他应税消费品 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="otherType" required>
+                                            <option value="">请选择</option>
+                                            <option value="jewelry">贵重首饰珠宝玉石（10%）</option>
+                                            <option value="fireworks">鞭炮焰火（15%）</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">销售额（元） <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="otherAmount" placeholder="请输入销售额" min="0" step="0.01" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">计算消费税</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div id="result" class="mt-4 d-none">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h5 class="mb-0">计算结果</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th width="40%">应税消费品</th>
+                                                <td id="resultType">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>计税依据</th>
+                                                <td id="resultBasis">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>计征方式</th>
+                                                <td id="resultMethod">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>适用税率/税额</th>
+                                                <td id="resultRate">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>应纳消费税</th>
+                                                <td id="resultTax" class="text-danger fw-bold">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="mt-3">
+                                        <h6>计算公式</h6>
+                                        <div class="bg-white p-2 border rounded" id="formula">
+                                            <code></code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>
+                            <strong>政策依据：</strong>《中华人民共和国消费税暂行条例》<br>
+                            <strong>注：</strong>复合计征 = 从价计征 + 从量计征
+                        </small>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="消费税知识库/0_索引.md" class="btn btn-outline-secondary btn-sm" target="_blank">查看知识库</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

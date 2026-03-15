@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关税计算器 - 财税小工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-navy text-white">
+                        <h4 class="mb-0">关税计算器</h4>
+                        <small>版本：2026.03-001 | 生效日期：2026-01-01</small>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs mb-3" id="tradeTabs">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#import">进口关税</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#export">出口关税</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- 进口关税 -->
+                            <div class="tab-pane fade show active" id="import">
+                                <form id="importForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">计征方式 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="importMethod" required>
+                                            <option value="ad_valorem">从价计征</option>
+                                            <option value="specific">从量计征</option>
+                                            <option value="compound">复合计征</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3" id="customsValueGroup">
+                                        <label class="form-label">完税价格（元） <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="customsValue" placeholder="CIF价格（到岸价格）" min="0" step="0.01">
+                                        <small class="text-muted">完税价格 = 货价 + 运费 + 保险费</small>
+                                    </div>
+
+                                    <div class="mb-3" id="quantityGroup" style="display:none;">
+                                        <label class="form-label">货物数量</label>
+                                        <input type="number" class="form-control" id="importQuantity" placeholder="货物数量" min="0" step="0.01">
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">关税税率（%） <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="importRate" placeholder="如：15" min="0" max="100" step="0.1" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3" id="specificRateGroup" style="display:none;">
+                                            <label class="form-label">单位税额（元）</label>
+                                            <input type="number" class="form-control" id="specificRate" placeholder="从量税额" min="0" step="0.01">
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary w-100">计算进口关税</button>
+                                </form>
+                            </div>
+
+                            <!-- 出口关税 -->
+                            <div class="tab-pane fade" id="export">
+                                <form id="exportForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">出口商品类型 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="exportType" required>
+                                            <option value="">请选择</option>
+                                            <option value="rare_earth">稀土（20%）</option>
+                                            <option value="coke">焦炭（40%）</option>
+                                            <option value="steel">钢铁产品（0-20%）</option>
+                                            <option value="fertilizer">化肥（0-10%）</option>
+                                            <option value="other">其他（请输入税率）</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">完税价格（元） <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="exportValue" placeholder="FOB价格 - 出口关税" min="0" step="0.01" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">关税税率（%） <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="exportRate" placeholder="请输入税率" min="0" max="100" step="0.1" required>
+                                    </div>
+
+                                    <div class="alert alert-info">
+                                        <small>我国仅对少数资源性产品征收出口关税</small>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary w-100">计算出口关税</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div id="result" class="mt-4 d-none">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h5 class="mb-0">计算结果</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th width="40%">关税类型</th>
+                                                <td id="resultType">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>完税价格</th>
+                                                <td id="resultValue">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>计征方式</th>
+                                                <td id="resultMethod">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>适用税率/税额</th>
+                                                <td id="resultRate">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>应纳关税</th>
+                                                <td id="resultTax" class="text-danger fw-bold">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="mt-3">
+                                        <h6>计算公式</h6>
+                                        <div class="bg-white p-2 border rounded" id="formula">
+                                            <code></code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>
+                            <strong>政策依据：</strong>《中华人民共和国进出口关税条例》<br>
+                            <strong>注：</strong>关税税率根据商品编码(HS编码)确定，自贸协定优惠税率适用特定原产地
+                        </small>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="关税知识库/0_索引.md" class="btn btn-outline-secondary btn-sm" target="_blank">查看知识库</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

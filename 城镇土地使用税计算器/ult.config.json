@@ -1,0 +1,32 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": [
+    { "key": "large_city", "label": "大城市（50万人以上）", "min_rate": 1.5, "max_rate": 30, "unit": "元/㎡·年" },
+    { "key": "medium_city", "label": "中等城市（20-50万人）", "min_rate": 1.2, "max_rate": 24, "unit": "元/㎡·年" },
+    { "key": "small_city", "label": "小城市（20万人以下）", "min_rate": 0.9, "max_rate": 18, "unit": "元/㎡·年" },
+    { "key": "town", "label": "县城、建制镇、工矿区", "min_rate": 0.6, "max_rate": 12, "unit": "元/㎡·年" }
+  ],
+  "city_tiers": {
+    "large_city": { "population": "50万以上", "area_min": 1.5, "area_max": 30 },
+    "medium_city": { "population": "20-50万", "area_min": 1.2, "area_max": 24 },
+    "small_city": { "population": "20万以下", "area_min": 0.9, "area_max": 18 },
+    "town": { "population": "-", "area_min": 0.6, "area_max": 12 }
+  },
+  "notes": [
+    "各省可在国家基准税额幅度内确定具体适用税额",
+    "经济落后地区可适当降低，但不超过最低税额的30%",
+    "计算公式：年应纳税额 = 计税土地面积（㎡）× 适用税额",
+    "部分地区2026年1月1日起施行新税额标准"
+  ],
+  "policy_evidence": {
+    "source_url": "http://www.jlshuiyuan.com/index.php?s=/Index/contents/classid/8/id/2105.html",
+    "policy_name": "中华人民共和国城镇土地使用税暂行条例",
+    "publish_date": "1988-09-27",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

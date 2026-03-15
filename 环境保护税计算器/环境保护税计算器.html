@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>环境保护税计算器 - 财税小工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-green text-white">
+                        <h4 class="mb-0">环境保护税计算器</h4>
+                        <small>版本：2026.03-001 | 生效日期：2026-01-01</small>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs mb-3" id="pollutantTabs">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#air">大气污染物</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#water">水污染物</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#solid">固体废物</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#noise">噪声</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- 大气污染物 -->
+                            <div class="tab-pane fade show active" id="air">
+                                <form id="airForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">污染物类型 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="airPollutant" required>
+                                            <option value="">请选择</option>
+                                            <option value="so2">二氧化硫（污染当量值：0.95kg）</option>
+                                            <option value="nox">氮氧化物（污染当量值：0.95kg）</option>
+                                            <option value="co">一氧化碳（污染当量值：16.7kg）</option>
+                                            <option value="pm">一般性粉尘（污染当量值：4kg）</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">排放量（kg） <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="airEmission" placeholder="污染物排放量" min="0" step="0.01" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">适用税额（元/污染当量） <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="airTaxRate" value="1.2" min="1.2" max="12" step="0.1" required>
+                                            <small class="text-muted">范围：1.2-12元/当量</small>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100">计算环境保护税</button>
+                                </form>
+                            </div>
+
+                            <!-- 水污染物 -->
+                            <div class="tab-pane fade" id="water">
+                                <form id="waterForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">污染物类型 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="waterPollutant" required>
+                                            <option value="">请选择</option>
+                                            <option value="cod">化学需氧量COD（污染当量值：1kg）</option>
+                                            <option value="nh3n">氨氮（污染当量值：0.8kg）</option>
+                                            <option value="total_phosphorus">总磷（污染当量值：0.25kg）</option>
+                                            <option value="total_nitrogen">总氮（污染当量值：0.8kg）</option>
+                                        </select>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">排放量（kg） <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="waterEmission" placeholder="污染物排放量" min="0" step="0.01" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">适用税额（元/污染当量） <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="waterTaxRate" value="1.4" min="1.4" max="14" step="0.1" required>
+                                            <small class="text-muted">范围：1.4-14元/当量</small>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100">计算环境保护税</button>
+                                </form>
+                            </div>
+
+                            <!-- 固体废物 -->
+                            <div class="tab-pane fade" id="solid">
+                                <form id="solidForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">固体废物类型 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="solidType" required>
+                                            <option value="">请选择</option>
+                                            <option value="hazardous">危险废物（1000元/吨）</option>
+                                            <option value="smelting_slag">冶炼渣（25元/吨）</option>
+                                            <option value="fly_ash">粉煤灰（25元/吨）</option>
+                                            <option value="slag">炉渣（25元/吨）</option>
+                                            <option value="coal_gangue">煤矸石（5元/吨）</option>
+                                            <option value="tailings">尾矿（15元/吨）</option>
+                                            <option value="other">其他固体废物（25元/吨）</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">排放量（吨） <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="solidQuantity" placeholder="固体废物排放量" min="0" step="0.01" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100">计算环境保护税</button>
+                                </form>
+                            </div>
+
+                            <!-- 噪声 -->
+                            <div class="tab-pane fade" id="noise">
+                                <form id="noiseForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">噪声超标分贝数 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="noiseLevel" required>
+                                            <option value="">请选择</option>
+                                            <option value="level_1">超标1-3分贝（350元/月）</option>
+                                            <option value="level_2">超标4-6分贝（700元/月）</option>
+                                            <option value="level_3">超标7-9分贝（1400元/月）</option>
+                                            <option value="level_4">超标10-12分贝（2800元/月）</option>
+                                            <option value="level_5">超标13-15分贝（5600元/月）</option>
+                                            <option value="level_6">超标16分贝以上（11200元/月）</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">计税月数</label>
+                                        <input type="number" class="form-control" id="noiseMonths" value="1" min="1" max="12" step="1">
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100">计算环境保护税</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div id="result" class="mt-4 d-none">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h5 class="mb-0">计算结果</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th width="40%">污染物类型</th>
+                                                <td id="resultType">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>计税依据</th>
+                                                <td id="resultBasis">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>适用税额</th>
+                                                <td id="resultRate">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>应纳环境保护税</th>
+                                                <td id="resultTax" class="text-danger fw-bold">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="mt-3">
+                                        <h6>计算公式</h6>
+                                        <div class="bg-white p-2 border rounded" id="formula">
+                                            <code></code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>
+                            <strong>政策依据：</strong>《中华人民共和国环境保护税法》<br>
+                            <strong>注：</strong>大气/水污染物按污染当量数从大到小排序，对前几项征税
+                        </small>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="环境保护税知识库/0_索引.md" class="btn btn-outline-secondary btn-sm" target="_blank">查看知识库</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

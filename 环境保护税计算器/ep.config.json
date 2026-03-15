@@ -1,0 +1,69 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": {
+    "air_pollutants": {
+      "label": "大气污染物",
+      "unit": "污染当量",
+      "tax_per_unit": "1.2-12元",
+      "items": [
+        { "key": "so2", "label": "二氧化硫", "pollution_equivalent": 0.95 },
+        { "key": "nox", "label": "氮氧化物", "pollution_equivalent": 0.95 },
+        { "key": "co", "label": "一氧化碳", "pollution_equivalent": 16.7 },
+        { "key": "pm", "label": "一般性粉尘", "pollution_equivalent": 4 }
+      ]
+    },
+    "water_pollutants": {
+      "label": "水污染物",
+      "unit": "污染当量",
+      "tax_per_unit": "1.4-14元",
+      "items": [
+        { "key": "cod", "label": "化学需氧量(COD)", "pollution_equivalent": 1 },
+        { "key": "nh3n", "label": "氨氮", "pollution_equivalent": 0.8 },
+        { "key": "total_phosphorus", "label": "总磷", "pollution_equivalent": 0.25 },
+        { "key": "total_nitrogen", "label": "总氮", "pollution_equivalent": 0.8 }
+      ]
+    },
+    "solid_waste": {
+      "label": "固体废物",
+      "unit": "吨",
+      "items": [
+        { "key": "hazardous", "label": "危险废物", "tax_per_ton": 1000 },
+        { "key": "smelting_slag", "label": "冶炼渣", "tax_per_ton": 25 },
+        { "key": "fly_ash", "label": "粉煤灰", "tax_per_ton": 25 },
+        { "key": "slag", "label": "炉渣", "tax_per_ton": 25 },
+        { "key": "coal_gangue", "label": "煤矸石", "tax_per_ton": 5 },
+        { "key": "tailings", "label": "尾矿", "tax_per_ton": 15 },
+        { "key": "other", "label": "其他固体废物", "tax_per_ton": 25 }
+      ]
+    },
+    "noise": {
+      "label": "噪声",
+      "unit": "分贝(超标)",
+      "items": [
+        { "key": "level_1", "label": "超标1-3分贝", "monthly_tax": 350 },
+        { "key": "level_2", "label": "超标4-6分贝", "monthly_tax": 700 },
+        { "key": "level_3", "label": "超标7-9分贝", "monthly_tax": 1400 },
+        { "key": "level_4", "label": "超标10-12分贝", "monthly_tax": 2800 },
+        { "key": "level_5", "label": "超标13-15分贝", "monthly_tax": 5600 },
+        { "key": "level_6", "label": "超标16分贝以上", "monthly_tax": 11200 }
+      ]
+    }
+  },
+  "notes": [
+    "大气污染物：每一排放口或没有排放口的应税大气污染物，按污染当量数从大到小排序，对前三项征税",
+    "水污染物：每一排放口的应税水污染物，按污染当量数从大到小排序，对第一类水污染物按前五项征税",
+    "固体废物：按排放量计征",
+    "噪声：按超过国家规定标准的分贝数计征"
+  ],
+  "policy_evidence": {
+    "source_url": "http://www.npc.gov.cn/npc/c12488/201612/d7e96a5e5b5e4c5b8c8d8c8b8c8b8c8b.shtml",
+    "policy_name": "中华人民共和国环境保护税法",
+    "publish_date": "2016-12-25",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

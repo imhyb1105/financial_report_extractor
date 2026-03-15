@@ -1,0 +1,108 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "income_types": {
+    "wage_salary": {
+      "label": "综合所得（工资薪金）",
+      "deduction": {
+        "basic": 60000,
+        "monthly_basic": 5000,
+        "social_insurance": "实际缴纳的五险一金",
+        "special_deductions": {
+          "children_education": { "label": "子女教育", "amount": 2000, "unit": "元/月/孩" },
+          "continuing_education": { "label": "继续教育", "amount": 400, "unit": "元/月" },
+          "serious_illness": { "label": "大病医疗", "amount": "最高80000", "unit": "元/年" },
+          "housing_loan": { "label": "住房贷款利息", "amount": 1000, "unit": "元/月" },
+          "housing_rent": { "label": "住房租金", "amount": "800-1500", "unit": "元/月" },
+          "elderly_support": { "label": "赡养老人", "amount": "2000-3000", "unit": "元/月" },
+          "infant_care": { "label": "3岁以下婴幼儿照护", "amount": 2000, "unit": "元/月" }
+        }
+      },
+      "brackets": [
+        { "min": 0, "max": 36000, "rate": 0.03, "quick_deduction": 0 },
+        { "min": 36000, "max": 144000, "rate": 0.10, "quick_deduction": 2520 },
+        { "min": 144000, "max": 300000, "rate": 0.20, "quick_deduction": 16920 },
+        { "min": 300000, "max": 420000, "rate": 0.25, "quick_deduction": 31920 },
+        { "min": 420000, "max": 660000, "rate": 0.30, "quick_deduction": 52920 },
+        { "min": 660000, "max": 960000, "rate": 0.35, "quick_deduction": 85920 },
+        { "min": 960000, "max": null, "rate": 0.45, "quick_deduction": 181920 }
+      ]
+    },
+    "annual_bonus": {
+      "label": "全年一次性奖金",
+      "brackets": [
+        { "max": 3000, "rate": 0.03, "quick_deduction": 0 },
+        { "max": 12000, "rate": 0.10, "quick_deduction": 210 },
+        { "max": 25000, "rate": 0.20, "quick_deduction": 1410 },
+        { "max": 35000, "rate": 0.25, "quick_deduction": 2660 },
+        { "max": 55000, "rate": 0.30, "quick_deduction": 4410 },
+        { "max": 80000, "rate": 0.35, "quick_deduction": 7160 },
+        { "max": null, "rate": 0.45, "quick_deduction": 15160 }
+      ],
+      "note": "2027年12月31日前可选择单独计税或并入综合所得"
+    },
+    "business_income": {
+      "label": "经营所得",
+      "brackets": [
+        { "min": 0, "max": 30000, "rate": 0.05, "quick_deduction": 0 },
+        { "min": 30000, "max": 90000, "rate": 0.10, "quick_deduction": 1500 },
+        { "min": 90000, "max": 300000, "rate": 0.20, "quick_deduction": 10500 },
+        { "min": 300000, "max": 500000, "rate": 0.30, "quick_deduction": 40500 },
+        { "min": 500000, "max": null, "rate": 0.35, "quick_deduction": 65500 }
+      ]
+    },
+    "labor_remuneration": {
+      "label": "劳务报酬",
+      "pre_deduction_rate": 0.20,
+      "brackets": [
+        { "max": 20000, "rate": 0.20, "quick_deduction": 0 },
+        { "max": 50000, "rate": 0.30, "quick_deduction": 2000 },
+        { "max": null, "rate": 0.40, "quick_deduction": 7000 }
+      ]
+    },
+    "author_remuneration": {
+      "label": "稿酬所得",
+      "pre_deduction_rate": 0.20,
+      "additional_deduction": 0.30,
+      "rate": 0.20
+    },
+    "royalty": {
+      "label": "特许权使用费",
+      "pre_deduction_rate": 0.20,
+      "rate": 0.20
+    },
+    "interest_dividend": {
+      "label": "利息、股息、红利所得",
+      "rate": 0.20
+    },
+    "property_rental": {
+      "label": "财产租赁所得",
+      "rate": 0.20,
+      "note": "月收入≤4000元扣除800元，>4000元扣除20%"
+    },
+    "property_transfer": {
+      "label": "财产转让所得",
+      "rate": 0.20
+    },
+    "contingent_income": {
+      "label": "偶然所得",
+      "rate": 0.20
+    }
+  },
+  "notes": [
+    "综合所得包括：工资薪金、劳务报酬、稿酬、特许权使用费",
+    "综合所得年度汇算：次年3月1日至6月30日",
+    "专项附加扣除需据实申报",
+    "全年一次性奖金优惠政策延续至2027年12月31日"
+  ],
+  "policy_evidence": {
+    "source_url": "http://www.chinatax.gov.cn/n810219/n810744/n3752930/n3752974/n3752991/c3820588/content.html",
+    "policy_name": "中华人民共和国个人所得税法",
+    "publish_date": "2018-08-31",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

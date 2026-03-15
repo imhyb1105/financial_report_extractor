@@ -1,0 +1,57 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "import_duty": {
+    "description": "进口关税",
+    "calculation_methods": [
+      { "key": "ad_valorem", "label": "从价计征", "formula": "关税 = 完税价格 × 关税税率" },
+      { "key": "specific", "label": "从量计征", "formula": "关税 = 货物数量 × 单位税额" },
+      { "key": "compound", "label": "复合计征", "formula": "关税 = 完税价格 × 关税税率 + 货物数量 × 单位税额" }
+    ],
+    "common_rates": [
+      { "key": "electronics", "label": "电子产品", "rate_range": "0-20%" },
+      { "key": "automobiles", "label": "汽车", "rate_range": "15-25%" },
+      { "key": "luxury", "label": "奢侈品", "rate_range": "10-30%" },
+      { "key": "raw_materials", "label": "原材料", "rate_range": "0-10%" },
+      { "key": "machinery", "label": "机械设备", "rate_range": "5-15%" }
+    ]
+  },
+  "export_duty": {
+    "description": "出口关税",
+    "note": "我国仅对少数资源性产品征收出口关税",
+    "items": [
+      { "key": "rare_earth", "label": "稀土", "rate": "20%" },
+      { "key": "coke", "label": "焦炭", "rate": "40%" },
+      { "key": "steel", "label": "钢铁产品", "rate_range": "0-20%" },
+      { "key": "fertilizer", "label": "化肥", "rate_range": "0-10%" }
+    ]
+  },
+  "customs_value": {
+    "description": "完税价格确定",
+    "import_methods": [
+      "成交价格法",
+      "相同货物成交价格法",
+      "类似货物成交价格法",
+      "倒扣价格法",
+      "计算价格法",
+      "合理方法"
+    ],
+    "formula": "完税价格 = CIF价格（到岸价格）"
+  },
+  "notes": [
+    "进口关税税率根据商品编码(HS编码)确定",
+    "关税配额内、配额外税率不同",
+    "自由贸易协定(FTA)优惠税率适用特定原产地",
+    "跨境电商零售进口商品关税税率暂设为0%"
+  ],
+  "policy_evidence": {
+    "source_url": "http://www.customs.gov.cn/customs/302242/302246/index.html",
+    "policy_name": "中华人民共和国进出口关税条例",
+    "publish_date": "2003-11-23",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

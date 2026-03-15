@@ -1,0 +1,33 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": [
+    { "key": "loan_contract", "label": "借款合同", "rate": 0.00005, "unit": "金额" },
+    { "key": "sales_contract", "label": "买卖合同", "rate": 0.0003, "unit": "金额" },
+    { "key": "tech_contract", "label": "技术合同", "rate": 0.0003, "unit": "金额" },
+    { "key": "lease_contract", "label": "租赁合同", "rate": 0.001, "unit": "金额" },
+    { "key": "contracting", "label": "承揽合同", "rate": 0.0003, "unit": "金额" },
+    { "key": "transport_contract", "label": "运输合同", "rate": 0.0003, "unit": "金额" },
+    { "key": "storage_contract", "label": "仓储合同", "rate": 0.001, "unit": "金额" },
+    { "key": "custody_contract", "label": "保管合同", "rate": 0.001, "unit": "金额" },
+    { "key": "finance_lease", "label": "融资租赁合同", "rate": 0.00005, "unit": "金额" },
+    { "key": "property_transfer", "label": "产权转移书据", "rate": 0.0005, "unit": "金额" },
+    { "key": "business_ledger", "label": "营业账簿", "rate": 0.00025, "unit": "金额" },
+    { "key": "fixed_amount", "label": "定额贴花（按件）", "rate": 5, "unit": "件" }
+  ],
+  "notes": [
+    "印花税法明确：应税合同、产权转移书据的计税依据不包括列明的增值税税款",
+    "区块链电子合同、智能合约等新型凭证正式纳入应税范围",
+    "税率为万分之零点五(0.05‰)、万分之二点五(0.25‰)、万分之三(0.3‰)、万分之五(0.5‰)、千分之一(1‰)"
+  ],
+  "policy_evidence": {
+    "source_url": "https://www.sohu.com/a/976977292_122536266",
+    "policy_name": "中华人民共和国印花税法",
+    "publish_date": "2022-07-01",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

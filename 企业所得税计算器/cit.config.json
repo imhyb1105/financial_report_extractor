@@ -1,7 +1,7 @@
 {
-  "version": "2026.03-002",
+  "version": "2026.03-001",
   "effective_date": "2026-01-01",
-  "last_verified_date": "2026-03-15",
+  "last_verified_date": "2026-03-16",
   "needs_verification": false,
   "complexity": "complex",
   "calculator_mode": "wizard",
@@ -12,102 +12,77 @@
     { "step": 4, "title": "优惠扣除", "description": "加计扣除与亏损弥补" },
     { "step": 5, "title": "计算结果", "description": "应纳税所得额与税额" }
   ],
-  "tax_rates": {
-    "general": {
-      "label": "一般企业",
-      "rate": 0.25,
-      "description": "法定税率25%",
-      "legal_basis": "《中华人民共和国企业所得税法》第四条"
-    },
-    "small_tier1": {
-      "label": "小型微利企业（≤100万）",
-      "rate": 0.05,
-      "description": "减按25%计入应纳税所得额 × 20%税率 = 实际税负5%",
-      "threshold": 1000000,
-      "policy_period": "2023-01-01 至 2027-12-31"
-    },
-    "small_tier2": {
-      "label": "小型微利企业（100-300万）",
-      "rate": 0.05,
-      "description": "减按25%计入应纳税所得额 × 20%税率 = 实际税负5%",
-      "threshold_min": 1000000,
-      "threshold_max": 3000000,
-      "policy_period": "2023-01-01 至 2027-12-31"
-    },
-    "high_tech": {
-      "label": "高新技术企业",
-      "rate": 0.15,
-      "description": "减按15%税率征收",
-      "legal_basis": "《企业所得税法》第二十八条",
-      "loss_carryforward_years": 10
-    }
+  "standard_rate": {
+    "label": "法定税率",
+    "rate": 0.25
   },
+  "preferential_rates": [
+    {
+      "key": "small_micro",
+      "label": "小型微利企业",
+      "conditions": "年应纳税所得额≤300万元",
+      "rates": [
+        { "income_range": "≤100万元", "effective_rate": 0.025, "note": "2023-2027年" },
+        { "income_range": "100-300万元", "effective_rate": 0.05, "note": "2023-2027年" }
+      ]
+    },
+    {
+      "key": "high_tech",
+      "label": "高新技术企业",
+      "conditions": "经认定的高新技术企业",
+      "rate": 0.15
+    },
+    {
+      "key": "tech_sme",
+      "label": "技术先进型服务企业",
+      "conditions": "经认定的技术先进型服务企业",
+      "rate": 0.15
+    }
+  ],
   "small_micro_conditions": {
     "annual_income_limit": 3000000,
     "employee_limit": 300,
     "asset_limit": 50000000,
     "industry_restriction": "国家非限制和禁止行业"
   },
-  "deduction_limits": {
-    "entertainment": {
-      "label": "业务招待费",
-      "actual_rate": 0.60,
-      "revenue_rate": 0.005,
-      "calculation": "Min(实际发生额 × 60%, 销售(营业)收入 × 5‰)",
-      "legal_basis": "《企业所得税法实施条例》第四十三条",
-      "carryforward": false
+  "tax_adjustments": {
+    "deductible_items": [
+      { "key": "welfare", "label": "职工福利费", "limit": "工资薪金总额14%", "carryforward": false },
+      { "key": "union", "label": "工会经费", "limit": "工资薪金总额2%", "carryforward": false },
+      { "key": "education", "label": "职工教育经费", "limit": "工资薪金总额8%", "carryforward": true },
+      { "key": "advertising", "label": "广告费和业务宣传费", "limit": "销售(营业)收入15%(特殊行业30%)", "carryforward": true },
+      { "key": "entertainment", "label": "业务招待费", "limit": "发生额60%，但不超过销售(营业)收入5‰", "carryforward": false },
+      { "key": "donation", "label": "公益性捐赠", "limit": "年度利润总额12%", "carryforward": true, "carryforward_years": 3 },
+      { "key": "interest", "label": "利息支出", "limit": "按金融机构同类同期贷款利率", "carryforward": false }
+    ],
+    "non_deductible_items": [
+      "向投资者支付的股息、红利",
+      "企业所得税税款",
+      "税收滞纳金",
+      "罚金、罚款和被没收财物的损失",
+      "赞助支出",
+      "未经核定的准备金支出",
+      "与取得收入无关的其他支出"
+    ]
+  },
+  "asset_depreciation": {
+    "fixed_assets": {
+      "label": "固定资产",
+      "methods": ["直线法", "加速折旧"],
+      "years": {
+        "房屋、建筑物": "20年",
+        "飞机、火车、轮船、机器、机械和其他生产设备": "10年",
+        "与生产经营活动有关的器具、工具、家具": "5年",
+        "飞机、火车、轮船以外的运输工具": "4年",
+        "电子设备": "3年"
+      }
     },
-    "advertising": {
-      "label": "广告费和业务宣传费",
-      "rate": 0.15,
-      "special_rate": 0.30,
-      "special_industries": ["化妆品制造", "医药制造", "饮料制造（不含酒类）"],
-      "legal_basis": "《企业所得税法实施条例》第四十四条",
-      "carryforward": true
-    },
-    "welfare": {
-      "label": "职工福利费",
-      "rate": 0.14,
-      "base": "工资薪金总额",
-      "legal_basis": "《企业所得税法实施条例》第四十条",
-      "carryforward": false
-    },
-    "union": {
-      "label": "工会经费",
-      "rate": 0.02,
-      "base": "工资薪金总额",
-      "legal_basis": "《企业所得税法实施条例》第四十一条",
-      "carryforward": false
-    },
-    "education": {
-      "label": "职工教育经费",
-      "rate": 0.08,
-      "base": "工资薪金总额",
-      "legal_basis": "《企业所得税法实施条例》第四十二条",
-      "carryforward": true
-    },
-    "donation": {
-      "label": "公益性捐赠",
-      "rate": 0.12,
-      "base": "年度利润总额",
-      "legal_basis": "《企业所得税法实施条例》第五十一条",
-      "carryforward": true,
-      "carryforward_years": 3
+    "instant_deduction": {
+      "label": "一次性扣除",
+      "conditions": "单价≤500万元的设备、器具",
+      "note": "2018年1月1日至2027年12月31日"
     }
   },
-  "non_deductible_items": [
-    { "key": "fines", "label": "罚款、罚金、被没收财物损失", "adjust_type": "full_add" },
-    { "key": "late_fees", "label": "税收滞纳金", "adjust_type": "full_add" },
-    { "key": "sponsorship", "label": "赞助支出（非广告性质）", "adjust_type": "full_add" },
-    { "key": "unrelated_expense", "label": "与生产经营无关的支出", "adjust_type": "full_add" },
-    { "key": "penalty_interest", "label": "罚息（非银行）", "adjust_type": "full_add" }
-  ],
-  "exempt_income": [
-    { "key": "bond_interest", "label": "国债利息收入", "adjust_type": "full_subtract" },
-    { "key": "dividend", "label": "符合条件的股息红利", "adjust_type": "full_subtract" },
-    { "key": "fiscal_appropriation", "label": "财政拨款（不征税收入）", "adjust_type": "full_subtract" },
-    { "key": "non_profit_income", "label": "符合条件的非营利组织收入", "adjust_type": "full_subtract" }
-  ],
   "additional_deduction": {
     "rd_expense": {
       "label": "研发费用加计扣除",
@@ -118,8 +93,7 @@
     "disabled_wage": {
       "label": "残疾人工资加计扣除",
       "rate": 1.00,
-      "description": "残疾人工资100%加计扣除",
-      "conditions": ["签订1年以上劳动合同", "实际上岗工作", "足额缴纳社保", "支付不低于最低工资标准"]
+      "description": "残疾人工资100%加计扣除"
     }
   },
   "loss_carryforward": {
@@ -127,10 +101,17 @@
     "high_tech": { "years": 10, "description": "高新技术企业/科技型中小企业亏损可在以后10年内弥补" }
   },
   "notes": [
-    "应纳税所得额计算需经过纳税调整，不等于简单的收入减成本",
-    "限额扣除超限部分需调增应纳税所得额",
-    "免税收入和不征税收入需调减应纳税所得额",
-    "加计扣除可直接调减应纳税所得额",
-    "小微企业认定条件：应纳税所得额≤300万、从业人数≤300人、资产总额≤5000万元"
-  ]
+    "企业所得税按年计征，分月或分季预缴，年终汇算清缴",
+    "年度汇算清缴截止日期：次年5月31日",
+    "小型微利企业优惠政策延续至2027年12月31日",
+    "研发费用加计扣除比例提高至100%"
+  ],
+  "policy_evidence": {
+    "source_url": "http://www.chinatax.gov.cn/n810219/n810744/n3752930/n3752974/n3752991/c4203348/content.html",
+    "policy_name": "中华人民共和国企业所得税法",
+    "publish_date": "2007-03-16",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
 }

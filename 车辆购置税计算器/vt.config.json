@@ -1,0 +1,25 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": [
+    { "key": "fuel_vehicle", "label": "燃油汽车", "rate": 0.1, "unit": "计税价格" },
+    { "key": "nev_2024_2025", "label": "新能源汽车（2024-2025）", "rate": 0, "unit": "免税", "max_deduction": 30000 },
+    { "key": "nev_2026_2027", "label": "新能源汽车（2026-2027）", "rate": 0.05, "unit": "减半征收", "max_deduction": 15000 }
+  ],
+  "notes": [
+    "2024.1.1-2025.12.31：新能源汽车全额免征，每辆乘用车免税额不超过3万元",
+    "2026.1.1-2027.12.31：新能源汽车减半征收（5%），每辆乘用车减税额不超过1.5万元",
+    "燃油汽车购置税率固定为10%",
+    "计税价格 = 含税价格 ÷ (1 + 增值税率13%)"
+  ],
+  "policy_evidence": {
+    "source_url": "https://tianjin.chinatax.gov.cn/11200000000/0300/030005/20251229090659808.shtml",
+    "policy_name": "财政部税务总局关于延续和优化新能源汽车车辆购置税减免政策的公告",
+    "publish_date": "2023-06-01",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

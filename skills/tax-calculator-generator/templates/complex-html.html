@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>企业所得税计算器</title>
+  <link rel="stylesheet" href="../common/styles.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* 向导进度条样式 */
+    .wizard-progress { display: flex; justify-content: space-between; margin-bottom: 2rem; }
+    .wizard-step { flex: 1; text-align: center; position: relative; }
+    .wizard-step::after { content: ''; position: absolute; top: 20px; left: 50%; width: 100%; height: 2px; background: #dee2e6; z-index: -1; }
+    .wizard-step:last-child::after { display: none; }
+    .wizard-step .step-circle { width: 40px; height: 40px; border-radius: 50%; background: #dee2e6; color: #6c757d; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; }
+    .wizard-step.active .step-circle { background: #0d6efd; color: white; }
+    .wizard-step.completed .step-circle { background: #198754; color: white; }
+    .wizard-step.completed::after { background: #198754; }
+
+    /* 步骤面板 */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    /* 限额提示 */
+    .limit-indicator { font-size: 0.75rem; margin-top: 0.25rem; }
+    .limit-ok { color: #198754; }
+    .limit-exceeded { color: #dc3545; font-weight: bold; }
+
+    /* 调整汇总 */
+    .adjustment-summary { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 1rem; }
+    .adjustment-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #dee2e6; }
+    .adjustment-item:last-child { border-bottom: none; }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h1 class="mb-3">企业所得税计算器</h1>
+    <p class="text-muted">分步向导模式 - 准确计算应纳税所得额</p>
+
+    <!-- 向导进度条 -->
+    <div class="wizard-progress">
+      <div class="wizard-step active" data-step="1">
+        <div class="step-circle">1</div>
+        <div class="step-label small mt-1">基础数据</div>
+      </div>
+      <div class="wizard-step" data-step="2">
+        <div class="step-circle">2</div>
+        <div class="step-label small mt-1">限额扣除</div>
+      </div>
+      <div class="wizard-step" data-step="3">
+        <div class="step-circle">3</div>
+        <div class="step-label small mt-1">纳税调整</div>
+      </div>
+      <div class="wizard-step" data-step="4">
+        <div class="step-circle">4</div>
+        <div class="step-label small mt-1">优惠扣除</div>
+      </div>
+      <div class="wizard-step" data-step="5">
+        <div class="step-circle">5</div>
+        <div class="step-label small mt-1">计算结果</div>
+      </div>
+    </div>
+
+    <!-- 步骤1: 基础数据 -->
+    <div class="step-panel active" id="step1">
+      <div class="card">
+        <div class="card-header">步骤1: 收入与成本费用</div>
+        <div class="card-body">
+          <h6 class="text-muted mb-3">一、收入总额</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">主营业务收入（元）</label>
+              <input type="number" class="form-control" id="mainRevenue" min="0" step="0.01">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">其他业务收入（元）</label>
+              <input type="number" class="form-control" id="otherRevenue" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">营业外收入（元）</label>
+              <input type="number" class="form-control" id="nonOperatingRevenue" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">投资收益（元）</label>
+              <input type="number" class="form-control" id="investmentIncome" min="0" step="0.01" value="0">
+            </div>
+          </div>
+
+          <h6 class="text-muted mb-3 mt-4">二、成本费用</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">主营业务成本（元）</label>
+              <input type="number" class="form-control" id="mainCost" min="0" step="0.01">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">其他业务成本（元）</label>
+              <input type="number" class="form-control" id="otherCost" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">税金及附加（元）</label>
+              <input type="number" class="form-control" id="taxSurcharge" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">销售费用（元）</label>
+              <input type="number" class="form-control" id="salesExpense" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">管理费用（元）</label>
+              <input type="number" class="form-control" id="adminExpense" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">财务费用（元）</label>
+              <input type="number" class="form-control" id="financeExpense" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">资产减值损失（元）</label>
+              <input type="number" class="form-control" id="assetImpairment" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">营业外支出（元）</label>
+              <input type="number" class="form-control" id="nonOperatingExpense" min="0" step="0.01" value="0">
+            </div>
+          </div>
+
+          <div class="alert alert-info mt-3">
+            <strong>会计利润：</strong><span id="accountingProfit">0.00</span> 元
+            <small class="d-block text-muted">会计利润 = 收入总额 - 成本费用总额</small>
+          </div>
+
+          <div class="d-flex justify-content-between mt-3">
+            <button class="btn btn-outline-secondary" disabled>上一步</button>
+            <button class="btn btn-primary" onclick="nextStep(2)">下一步：限额扣除项目</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步骤2: 限额扣除项目 -->
+    <div class="step-panel" id="step2">
+      <div class="card">
+        <div class="card-header">步骤2: 限额扣除项目（自动计算超限部分）</div>
+        <div class="card-body">
+          <h6 class="text-muted mb-3">需要填写限额扣除项目的实际发生额</h6>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">工资薪金总额（元）</label>
+              <input type="number" class="form-control" id="salaryTotal" min="0" step="0.01" value="0">
+              <small class="text-muted">作为以下项目的扣除基数</small>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <div class="row g-3">
+            <!-- 业务招待费 -->
+            <div class="col-md-6">
+              <label class="form-label">业务招待费实际发生额（元）</label>
+              <input type="number" class="form-control" id="entertainmentExpense" min="0" step="0.01" value="0">
+              <div class="limit-indicator" id="entertainmentLimit"></div>
+            </div>
+
+            <!-- 广告费 -->
+            <div class="col-md-6">
+              <label class="form-label">广告费和业务宣传费（元）</label>
+              <input type="number" class="form-control" id="advertisingExpense" min="0" step="0.01" value="0">
+              <div class="limit-indicator" id="advertisingLimit"></div>
+            </div>
+
+            <!-- 职工福利费 -->
+            <div class="col-md-6">
+              <label class="form-label">职工福利费（元）</label>
+              <input type="number" class="form-control" id="welfareExpense" min="0" step="0.01" value="0">
+              <div class="limit-indicator" id="welfareLimit"></div>
+            </div>
+
+            <!-- 工会经费 -->
+            <div class="col-md-6">
+              <label class="form-label">工会经费（元）</label>
+              <input type="number" class="form-control" id="unionExpense" min="0" step="0.01" value="0">
+              <div class="limit-indicator" id="unionLimit"></div>
+            </div>
+
+            <!-- 职工教育经费 -->
+            <div class="col-md-6">
+              <label class="form-label">职工教育经费（元）</label>
+              <input type="number" class="form-control" id="educationExpense" min="0" step="0.01" value="0">
+              <div class="limit-indicator" id="educationLimit"></div>
+            </div>
+
+            <!-- 公益性捐赠 -->
+            <div class="col-md-6">
+              <label class="form-label">公益性捐赠（元）</label>
+              <input type="number" class="form-control" id="donationExpense" min="0" step="0.01" value="0">
+              <div class="limit-indicator" id="donationLimit"></div>
+            </div>
+          </div>
+
+          <div class="adjustment-summary mt-4">
+            <h6>限额扣除调整汇总</h6>
+            <div class="adjustment-item">
+              <span>业务招待费超限调增：</span>
+              <span id="entertainmentAdjust">0.00</span>
+            </div>
+            <div class="adjustment-item">
+              <span>广告费超限调增：</span>
+              <span id="advertisingAdjust">0.00</span>
+            </div>
+            <div class="adjustment-item">
+              <span>职工福利费超限调增：</span>
+              <span id="welfareAdjust">0.00</span>
+            </div>
+            <div class="adjustment-item">
+              <span>工会经费超限调增：</span>
+              <span id="unionAdjust">0.00</span>
+            </div>
+            <div class="adjustment-item">
+              <span>职工教育经费超限调增：</span>
+              <span id="educationAdjust">0.00</span>
+            </div>
+            <div class="adjustment-item">
+              <span>公益性捐赠超限调增：</span>
+              <span id="donationAdjust">0.00</span>
+            </div>
+            <div class="adjustment-item fw-bold text-primary">
+              <span>限额扣除调增合计：</span>
+              <span id="totalLimitAdjust">0.00</span>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between mt-3">
+            <button class="btn btn-outline-secondary" onclick="prevStep(1)">上一步</button>
+            <button class="btn btn-primary" onclick="nextStep(3)">下一步：纳税调整</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步骤3: 纳税调整 -->
+    <div class="step-panel" id="step3">
+      <div class="card">
+        <div class="card-header">步骤3: 不得扣除项目 & 免税收入</div>
+        <div class="card-body">
+          <h6 class="text-muted mb-3">一、不得扣除项目（需调增应纳税所得额）</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">罚款、罚金、没收财物损失（元）</label>
+              <input type="number" class="form-control" id="fines" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">税收滞纳金（元）</label>
+              <input type="number" class="form-control" id="lateFees" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">赞助支出（元）</label>
+              <input type="number" class="form-control" id="sponsorship" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">与经营无关的支出（元）</label>
+              <input type="number" class="form-control" id="unrelatedExpense" min="0" step="0.01" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">其他不得扣除项目（元）</label>
+              <input type="number" class="form-control" id="otherNonDeductible" min="0" step="0.01" value="0">
+            </div>
+          </div>
+
+          <h6 class="text-muted mb-3 mt-4">二、免税/不征税收入（需调减应纳税所得额）</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">国债利息收入（元）</label>
+              <input type="number" class="form-control" id="bondInterest" min="0" step="0.01" value="0">
+              <small class="text-muted">免税</small>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">符合条件的股息红利（元）</label>
+              <input type="number" class="form-control" id="dividendIncome" min="0" step="0.01" value="0">
+              <small class="text-muted">免税</small>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">财政拨款（元）</label>
+              <input type="number" class="form-control" id="fiscalAppropriation" min="0" step="0.01" value="0">
+              <small class="text-muted">不征税</small>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">其他免税收入（元）</label>
+              <input type="number" class="form-control" id="otherExempt" min="0" step="0.01" value="0">
+            </div>
+          </div>
+
+          <div class="adjustment-summary mt-4">
+            <h6>纳税调整汇总</h6>
+            <div class="adjustment-item text-danger">
+              <span>不得扣除项目调增：</span>
+              <span id="nonDeductibleTotal">0.00</span>
+            </div>
+            <div class="adjustment-item text-success">
+              <span>免税/不征税收入调减：</span>
+              <span id="exemptTotal">0.00</span>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between mt-3">
+            <button class="btn btn-outline-secondary" onclick="prevStep(2)">上一步</button>
+            <button class="btn btn-primary" onclick="nextStep(4)">下一步：优惠扣除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步骤4: 优惠扣除 -->
+    <div class="step-panel" id="step4">
+      <div class="card">
+        <div class="card-header">步骤4: 加计扣除 & 亏损弥补</div>
+        <div class="card-body">
+          <h6 class="text-muted mb-3">一、加计扣除项目</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">研发费用（元）</label>
+              <input type="number" class="form-control" id="rdExpense" min="0" step="0.01" value="0">
+              <div class="form-text">加计扣除100% = <span id="rdDeduction">0.00</span> 元</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">残疾人工资（元）</label>
+              <input type="number" class="form-control" id="disabledWage" min="0" step="0.01" value="0">
+              <div class="form-text">加计扣除100% = <span id="disabledDeduction">0.00</span> 元</div>
+            </div>
+          </div>
+
+          <h6 class="text-muted mb-3 mt-4">二、亏损弥补</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">以前年度亏损（元）</label>
+              <input type="number" class="form-control" id="priorYearLoss" min="0" step="0.01" value="0">
+              <div class="form-text">一般企业可弥补5年，高新技术企业10年</div>
+            </div>
+          </div>
+
+          <h6 class="text-muted mb-3 mt-4">三、企业类型选择</h6>
+          <div class="row g-3">
+            <div class="col-md-12">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="enterpriseType" id="typeGeneral" value="general" checked>
+                <label class="form-check-label" for="typeGeneral">一般企业（25%）</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="enterpriseType" id="typeSmall" value="small">
+                <label class="form-check-label" for="typeSmall">小型微利企业（2.5%/5%，应纳税所得额≤300万）</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="enterpriseType" id="typeHighTech" value="hightech">
+                <label class="form-check-label" for="typeHighTech">高新技术企业（15%）</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between mt-3">
+            <button class="btn btn-outline-secondary" onclick="prevStep(3)">上一步</button>
+            <button class="btn btn-primary" onclick="calculate()">计算应纳税额</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步骤5: 计算结果 -->
+    <div class="step-panel" id="step5">
+      <div class="card">
+        <div class="card-header bg-success text-white">步骤5: 计算结果</div>
+        <div class="card-body">
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="card text-center">
+                <div class="card-body">
+                  <small class="text-muted">会计利润</small>
+                  <h4 id="resultAccountingProfit" class="mb-0">0.00</h4>
+                  <small>元</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card text-center bg-warning">
+                <div class="card-body">
+                  <small>纳税调整额</small>
+                  <h4 id="resultAdjustment" class="mb-0">0.00</h4>
+                  <small>元</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card text-center bg-info text-white">
+                <div class="card-body">
+                  <small>应纳税所得额</small>
+                  <h4 id="resultTaxableIncome" class="mb-0">0.00</h4>
+                  <small>元</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card text-center bg-primary text-white">
+                <div class="card-body">
+                  <small>应纳税额</small>
+                  <h4 id="resultTaxPayable" class="mb-0">0.00</h4>
+                  <small>元</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 详细计算过程 -->
+          <div class="adjustment-summary">
+            <h6>应纳税所得额计算过程</h6>
+            <div id="calculationProcess"></div>
+          </div>
+
+          <!-- 纳税调整明细 -->
+          <div class="mt-4">
+            <h6>纳税调整明细</h6>
+            <table class="table table-sm">
+              <thead>
+                <tr><th>调整项目</th><th>金额（元）</th><th>调整方向</th></tr>
+              </thead>
+              <tbody id="adjustmentDetails"></tbody>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-between mt-3">
+            <button class="btn btn-outline-secondary" onclick="prevStep(4)">返回修改</button>
+            <button class="btn btn-success" onclick="exportResult()">导出结果</button>
+            <button class="btn btn-primary" onclick="resetAll()">重新计算</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="./script.js"></script>
+</body>
+</html>

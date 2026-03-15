@@ -1,0 +1,27 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": [
+    { "key": "first_under140", "label": "首套房≤140㎡", "rate": 0.01, "condition": "首套房且面积≤140㎡" },
+    { "key": "first_over140", "label": "首套房＞140㎡", "rate": 0.015, "condition": "首套房且面积＞140㎡" },
+    { "key": "second_under140", "label": "二套房≤140㎡", "rate": 0.01, "condition": "二套房且面积≤140㎡" },
+    { "key": "second_over140", "label": "二套房＞140㎡", "rate": 0.02, "condition": "二套房且面积＞140㎡" },
+    { "key": "third_plus", "label": "三套及以上", "rate": 0.03, "condition": "三套及以上住房" }
+  ],
+  "notes": [
+    "享受1%契税低税率优惠的面积标准由原来的90㎡提高到140㎡",
+    "二套房140㎡及以下从最高3%降至1%",
+    "北上广深等一线城市已与其他地区统一适用契税优惠新政",
+    "契税计算公式：契税 = 不含增值税的房屋成交价格 × 适用税率"
+  ],
+  "policy_evidence": {
+    "source_url": "https://www.6655.cn/toutiao/11633519095545.shtml",
+    "policy_name": "财政部、税务总局关于促进房地产市场平稳健康发展有关税收政策的公告",
+    "publish_date": "2024-11-01",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

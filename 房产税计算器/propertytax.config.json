@@ -1,0 +1,24 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": [
+    { "key": "ad_valorem", "label": "从价计征", "rate": 0.012, "unit": "房产原值×(1-扣除比例)", "deduction_ratio": "10%-30%" },
+    { "key": "rental", "label": "从租计征", "rate": 0.12, "unit": "租金收入" }
+  ],
+  "notes": [
+    "从价计征：应纳税额 = 应税房产原值 × (1 - 扣除比例) × 1.2%",
+    "从租计征：应纳税额 = 租金收入 × 12%",
+    "扣除比例由各省自行规定，一般为10%-30%",
+    "自2026年起，部分地区将从租计征房产税与增值税缴纳期限统一"
+  ],
+  "policy_evidence": {
+    "source_url": "https://guangdong.chinatax.gov.cn/gdsw/qysw_swxw/2025-12/30/content_d90e63740abd42249de57580be91e685.shtml",
+    "policy_name": "中华人民共和国房产税暂行条例",
+    "publish_date": "1986-09-15",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

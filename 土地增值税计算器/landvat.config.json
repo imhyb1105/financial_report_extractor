@@ -1,0 +1,33 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": [
+    { "key": "tier1", "label": "增值率≤50%", "rate": 0.30, "quick_deduction": 0 },
+    { "key": "tier2", "label": "50%＜增值率≤100%", "rate": 0.40, "quick_deduction": 0.05 },
+    { "key": "tier3", "label": "100%＜增值率≤200%", "rate": 0.50, "quick_deduction": 0.15 },
+    { "key": "tier4", "label": "增值率＞200%", "rate": 0.60, "quick_deduction": 0.35 }
+  ],
+  "notes": [
+    "土地增值税实行四级超率累进税率",
+    "增值额 = 应税收入 - 扣除项目金额",
+    "增值率 = 增值额 ÷ 扣除项目金额 × 100%",
+    "应纳税额 = 增值额 × 适用税率 - 扣除项目金额 × 速算扣除系数"
+  ],
+  "deduction_items": [
+    "取得土地使用权所支付的金额",
+    "房地产开发成本",
+    "房地产开发费用",
+    "与转让房地产有关的税金",
+    "财政部规定的其他扣除项目"
+  ],
+  "policy_evidence": {
+    "source_url": "https://www.chinaacc.com/kuaijishiwu/kjsw_dt/zh20250424141013.shtml",
+    "policy_name": "中华人民共和国土地增值税暂行条例",
+    "publish_date": "1993-12-13",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

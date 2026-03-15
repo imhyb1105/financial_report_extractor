@@ -1,0 +1,76 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": {
+    "urban_maintenance": {
+      "label": "城市维护建设税",
+      "key": "umct",
+      "rates": [
+        { "location": "市区", "rate": 0.07 },
+        { "location": "县城、镇", "rate": 0.05 },
+        { "location": "其他地区", "rate": 0.01 }
+      ],
+      "note": "以实际缴纳的增值税、消费税税额为计税依据"
+    },
+    "education_surcharge": {
+      "label": "教育费附加",
+      "key": "edu",
+      "rate": 0.03,
+      "note": "以实际缴纳的增值税、消费税税额为计费依据"
+    },
+    "local_education_surcharge": {
+      "label": "地方教育附加",
+      "key": "local_edu",
+      "rate": 0.02,
+      "note": "以实际缴纳的增值税、消费税税额为计费依据"
+    }
+  },
+  "calculation": {
+    "formula": "附加税费 = (增值税 + 消费税) × 各项附加税费率之和",
+    "base_taxes": ["增值税", "消费税"],
+    "note": "进口环节不征收城市维护建设税和教育费附加"
+  },
+  "location_rates": {
+    "urban": {
+      "label": "市区",
+      "umct": 0.07,
+      "edu": 0.03,
+      "local_edu": 0.02,
+      "total": 0.12
+    },
+    "county_town": {
+      "label": "县城、镇",
+      "umct": 0.05,
+      "edu": 0.03,
+      "local_edu": 0.02,
+      "total": 0.10
+    },
+    "other": {
+      "label": "其他地区",
+      "umct": 0.01,
+      "edu": 0.03,
+      "local_edu": 0.02,
+      "total": 0.06
+    }
+  },
+  "exemptions": [
+    { "condition": "月销售额≤10万元的小规模纳税人", "exemption": "免征教育费附加、地方教育附加" },
+    { "condition": "进口货物", "exemption": "不征收城市维护建设税和教育费附加" }
+  ],
+  "notes": [
+    "附加税费以增值税、消费税为计税（费）依据",
+    "增值税、消费税减免时，附加税费相应减免",
+    "出口退税不退还已缴纳的附加税费",
+    "2026年继续执行小规模纳税人附加税费减免政策"
+  ],
+  "policy_evidence": {
+    "source_url": "http://www.chinatax.gov.cn/n810219/n810744/n3752930/n3752974/n3752991/c4203345/content.html",
+    "policy_name": "中华人民共和国城市维护建设税法",
+    "publish_date": "2020-08-11",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

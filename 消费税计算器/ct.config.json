@@ -1,0 +1,44 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": [
+    { "key": "cigarette_a", "label": "甲类卷烟", "ad_valorem_rate": 0.56, "specific_rate": 0.003, "unit": "元/支" },
+    { "key": "cigarette_b", "label": "乙类卷烟", "ad_valorem_rate": 0.36, "specific_rate": 0.003, "unit": "元/支" },
+    { "key": "cigarette_wholesale", "label": "卷烟批发", "ad_valorem_rate": 0.11, "specific_rate": 0.005, "unit": "元/支" },
+    { "key": "cigar", "label": "雪茄烟", "ad_valorem_rate": 0.36, "specific_rate": 0, "unit": "" },
+    { "key": "cut_tobacco", "label": "烟丝", "ad_valorem_rate": 0.30, "specific_rate": 0, "unit": "" },
+    { "key": "baijiu", "label": "白酒", "ad_valorem_rate": 0.20, "specific_rate": 0.5, "unit": "元/500克" },
+    { "key": "yellow_wine", "label": "黄酒", "ad_valorem_rate": 0, "specific_rate": 240, "unit": "元/吨" },
+    { "key": "beer_a", "label": "甲类啤酒", "ad_valorem_rate": 0, "specific_rate": 250, "unit": "元/吨" },
+    { "key": "beer_b", "label": "乙类啤酒", "ad_valorem_rate": 0, "specific_rate": 220, "unit": "元/吨" },
+    { "key": "other_alcohol", "label": "其他酒", "ad_valorem_rate": 0.10, "specific_rate": 0, "unit": "" },
+    { "key": "high_cosmetics", "label": "高档化妆品", "ad_valorem_rate": 0.15, "specific_rate": 0, "unit": "" },
+    { "key": "jewelry", "label": "贵重首饰珠宝玉石", "ad_valorem_rate": 0.10, "specific_rate": 0, "unit": "" },
+    { "key": "fireworks", "label": "鞭炮焰火", "ad_valorem_rate": 0.15, "specific_rate": 0, "unit": "" },
+    { "key": "gasoline", "label": "汽油", "ad_valorem_rate": 0, "specific_rate": 1.52, "unit": "元/升" },
+    { "key": "diesel", "label": "柴油", "ad_valorem_rate": 0, "specific_rate": 1.20, "unit": "元/升" },
+    { "key": "car_small", "label": "小汽车（≤1.0L）", "ad_valorem_rate": 0.01, "specific_rate": 0, "unit": "" },
+    { "key": "car_1_0_1_5", "label": "小汽车（1.0L-1.5L）", "ad_valorem_rate": 0.03, "specific_rate": 0, "unit": "" },
+    { "key": "car_1_5_2_0", "label": "小汽车（1.5L-2.0L）", "ad_valorem_rate": 0.05, "specific_rate": 0, "unit": "" },
+    { "key": "car_2_0_2_5", "label": "小汽车（2.0L-2.5L）", "ad_valorem_rate": 0.09, "specific_rate": 0, "unit": "" },
+    { "key": "car_2_5_3_0", "label": "小汽车（2.5L-3.0L）", "ad_valorem_rate": 0.12, "specific_rate": 0, "unit": "" },
+    { "key": "car_3_0_4_0", "label": "小汽车（3.0L-4.0L）", "ad_valorem_rate": 0.25, "specific_rate": 0, "unit": "" },
+    { "key": "car_over4_0", "label": "小汽车（＞4.0L）", "ad_valorem_rate": 0.40, "specific_rate": 0, "unit": "" }
+  ],
+  "notes": [
+    "2026年起：成品油、卷烟、小汽车等征管成熟领域试点征收环节后移",
+    "2027-2028年：扩展至酒类、高档化妆品、贵重首饰等",
+    "卷烟实行复合计税：从价税+从量税",
+    "计税方式：从价计征、从量计征、复合计征"
+  ],
+  "policy_evidence": {
+    "source_url": "http://jlshuiyuan.com/index.php?s=/Index/contents/classid/8/id/2107.html",
+    "policy_name": "中华人民共和国消费税暂行条例",
+    "publish_date": "2008-11-10",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

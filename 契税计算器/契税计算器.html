@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>契税计算器 - 财税小工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">契税计算器</h4>
+                        <small>版本：2026.03-001 | 生效日期：2026-01-01</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="deedTaxForm">
+                            <div class="mb-3">
+                                <label class="form-label">购房类型 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="houseType" required>
+                                    <option value="">请选择</option>
+                                    <option value="first_small">首套房（≤140㎡）</option>
+                                    <option value="first_large">首套房（＞140㎡）</option>
+                                    <option value="second_small">二套房（≤140㎡）</option>
+                                    <option value="second_large">二套房（＞140㎡）</option>
+                                    <option value="third">三套及以上</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">房屋成交价格（元） <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="housePrice" placeholder="请输入成交价格" min="0" step="0.01" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">房屋面积（㎡）</label>
+                                <input type="number" class="form-control" id="houseArea" placeholder="用于验证面积档位" min="0" step="0.01">
+                            </div>
+
+                            <div class="alert alert-info">
+                                <small><strong>说明：</strong>首套房、二套房以≤140㎡为界；三套及以上统一按3%征收。实际适用税率以当地政策为准。</small>
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100">计算契税</button>
+                        </form>
+
+                        <div id="result" class="mt-4 d-none">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h5 class="mb-0">计算结果</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th width="40%">购房类型</th>
+                                                <td id="resultType">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>房屋成交价格</th>
+                                                <td id="resultPrice">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>适用税率</th>
+                                                <td id="resultRate">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>应纳契税</th>
+                                                <td id="resultTax" class="text-danger fw-bold">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="mt-3">
+                                        <h6>计算公式</h6>
+                                        <div class="bg-white p-2 border rounded" id="formula">
+                                            <code></code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>
+                            <strong>政策依据：</strong>《中华人民共和国契税法》<br>
+                            <strong>注：</strong>各地可在3%-5%幅度内确定具体税率，本工具按法定基准税率计算
+                        </small>
+                    </div>
+                </div>
+
+                <div class="card mt-3 shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0">契税税率表</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>购房类型</th>
+                                        <th>面积</th>
+                                        <th>税率</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>首套房</td><td>≤140㎡</td><td>1%</td></tr>
+                                    <tr><td>首套房</td><td>＞140㎡</td><td>1.5%</td></tr>
+                                    <tr><td>二套房</td><td>≤140㎡</td><td>1%</td></tr>
+                                    <tr><td>二套房</td><td>＞140㎡</td><td>2%</td></tr>
+                                    <tr><td>三套及以上</td><td>-</td><td>3%</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="契税知识库/0_索引.md" class="btn btn-outline-secondary btn-sm" target="_blank">查看知识库</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人所得税计算器 - 财税小工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-pit text-white">
+                        <h4 class="mb-0">个人所得税计算器</h4>
+                        <small>版本：2026.03-001 | 生效日期：2026-01-01</small>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs mb-3" id="incomeTabs">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#wage">工资薪金</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#bonus">全年一次性奖金</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#labor">劳务报酬</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#other">其他所得</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- 工资薪金 -->
+                            <div class="tab-pane fade show active" id="wage">
+                                <form id="wageForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">年收入（元） <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="wageIncome" placeholder="税前年收入" min="0" step="0.01" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">五险一金（年，元）</label>
+                                            <input type="number" class="form-control" id="wageInsurance" placeholder="年度五险一金合计" min="0" step="0.01" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">专项附加扣除（年，元）</label>
+                                            <input type="number" class="form-control" id="wageDeduction" placeholder="子女教育、房贷等" min="0" step="0.01" value="0">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">其他扣除（年，元）</label>
+                                            <input type="number" class="form-control" id="wageOther" placeholder="企业年金、商业健康险等" min="0" step="0.01" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info">
+                                        <small>
+                                            <strong>计算公式：</strong><br>
+                                            应纳税所得额 = 年收入 - 60000 - 五险一金 - 专项附加扣除 - 其他扣除<br>
+                                            应纳税额 = 应纳税所得额 × 适用税率 - 速算扣除数
+                                        </small>
+                                    </div>
+                                    <button type="submit" class="btn btn-pit w-100">计算个人所得税</button>
+                                </form>
+                            </div>
+
+                            <!-- 全年一次性奖金 -->
+                            <div class="tab-pane fade" id="bonus">
+                                <form id="bonusForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">全年一次性奖金（元） <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="bonusAmount" placeholder="奖金金额" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">计税方式</label>
+                                        <select class="form-select" id="bonusMethod">
+                                            <option value="alone">单独计税（2027年底前）</option>
+                                            <option value="combined">并入综合所得</option>
+                                        </select>
+                                    </div>
+                                    <div class="alert alert-info">
+                                        <small>
+                                            <strong>单独计税公式：</strong><br>
+                                            应纳税额 = 全年一次性奖金 × 适用税率 - 速算扣除数<br>
+                                            （除以12个月找对应税率）
+                                        </small>
+                                    </div>
+                                    <button type="submit" class="btn btn-pit w-100">计算个人所得税</button>
+                                </form>
+                            </div>
+
+                            <!-- 劳务报酬 -->
+                            <div class="tab-pane fade" id="labor">
+                                <form id="laborForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">劳务报酬收入（元） <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="laborIncome" placeholder="单次或累计收入" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="alert alert-info">
+                                        <small>
+                                            <strong>预扣预缴公式：</strong><br>
+                                            收入≤4000元：应纳税所得额 = 收入 - 800<br>
+                                            收入>4000元：应纳税所得额 = 收入 × (1-20%)<br>
+                                            应纳税额 = 应纳税所得额 × 适用税率 - 速算扣除数
+                                        </small>
+                                    </div>
+                                    <button type="submit" class="btn btn-pit w-100">计算个人所得税</button>
+                                </form>
+                            </div>
+
+                            <!-- 其他所得 -->
+                            <div class="tab-pane fade" id="other">
+                                <form id="otherForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">所得类型 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="otherType" required>
+                                            <option value="">请选择</option>
+                                            <option value="interest">利息、股息、红利所得（20%）</option>
+                                            <option value="property_rental">财产租赁所得（20%）</option>
+                                            <option value="property_transfer">财产转让所得（20%）</option>
+                                            <option value="contingent">偶然所得（20%）</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">收入金额（元） <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="otherIncome" placeholder="收入金额" min="0" step="0.01" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-pit w-100">计算个人所得税</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div id="result" class="mt-4 d-none">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h5 class="mb-0">计算结果</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th width="40%">所得类型</th>
+                                                <td id="resultType">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>应纳税所得额</th>
+                                                <td id="resultBasis">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>适用税率</th>
+                                                <td id="resultRate">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>速算扣除数</th>
+                                                <td id="resultQuickDeduction">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>应纳个人所得税</th>
+                                                <td id="resultTax" class="text-danger fw-bold">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="mt-3">
+                                        <h6>计算公式</h6>
+                                        <div class="bg-white p-2 border rounded" id="formula">
+                                            <code></code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>
+                            <strong>政策依据：</strong>《中华人民共和国个人所得税法》<br>
+                            <strong>注：</strong>综合所得年度汇算时间为次年3月1日至6月30日
+                        </small>
+                    </div>
+                </div>
+
+                <div class="card mt-3 shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0">综合所得税率表（七级超额累进）</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>级数</th>
+                                        <th>全年应纳税所得额</th>
+                                        <th>税率</th>
+                                        <th>速算扣除数</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>1</td><td>≤36,000</td><td>3%</td><td>0</td></tr>
+                                    <tr><td>2</td><td>36,000-144,000</td><td>10%</td><td>2,520</td></tr>
+                                    <tr><td>3</td><td>144,000-300,000</td><td>20%</td><td>16,920</td></tr>
+                                    <tr><td>4</td><td>300,000-420,000</td><td>25%</td><td>31,920</td></tr>
+                                    <tr><td>5</td><td>420,000-660,000</td><td>30%</td><td>52,920</td></tr>
+                                    <tr><td>6</td><td>660,000-960,000</td><td>35%</td><td>85,920</td></tr>
+                                    <tr><td>7</td><td>＞960,000</td><td>45%</td><td>181,920</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="个人所得税知识库/0_索引.md" class="btn btn-outline-secondary btn-sm" target="_blank">查看知识库</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

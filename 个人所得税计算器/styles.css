@@ -1,0 +1,138 @@
+/* 个人所得税计算器样式 */
+
+body {
+    background-color: #f5f5f5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.card {
+    border: none;
+    border-radius: 8px;
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.card-header.bg-pit {
+    background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%) !important;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #333;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #9c27b0;
+    box-shadow: 0 0 0 0.2rem rgba(156, 39, 176, 0.15);
+}
+
+.btn-pit {
+    background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+    border: none;
+    padding: 10px 20px;
+    font-weight: 500;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-pit:hover {
+    background: linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+    color: white;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 500;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.text-danger.fw-bold {
+    font-size: 1.1em;
+}
+
+#formula code {
+    display: block;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-family: "Courier New", monospace;
+    color: #333;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.card-footer {
+    background-color: #fff;
+    border-top: 1px solid #eee;
+}
+
+.nav-tabs .nav-link {
+    color: #9c27b0;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #9c27b0;
+    color: white;
+    border-color: #9c27b0;
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+    border-color: #9c27b0;
+    color: #7b1fa2;
+}
+
+.alert-info {
+    background-color: #f3e5f5;
+    border-color: #e1bee7;
+    color: #6a1b9a;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .card-header h4 {
+        font-size: 1.2rem;
+    }
+
+    .btn-pit {
+        padding: 12px 20px;
+    }
+
+    .nav-tabs .nav-link {
+        font-size: 0.85rem;
+        padding: 8px 10px;
+    }
+}
+
+/* 动画效果 */
+#result {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 输入框数字右对齐 */
+input[type="number"] {
+    text-align: right;
+}

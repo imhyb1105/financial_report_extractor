@@ -1,9 +1,13 @@
-/* 企业所得税计算器样式 */
+/* 企业所得税计算器样式 - 分步向导版 */
 
 /* 状态栏样式 */
 .status-bar {
     color: #666;
     font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
 }
 
 .status-bar span {
@@ -12,6 +16,38 @@
 
 .status-bar strong {
     color: #333;
+}
+
+/* 步骤导航 */
+#stepTabs {
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+#stepTabs .nav-link {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+    border-radius: 0.25rem;
+}
+
+#stepTabs .nav-link.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+#stepTabs .nav-link:not(.disabled):hover {
+    background-color: #e9ecef;
+}
+
+#stepTabs .nav-link.disabled {
+    color: #adb5bd;
+    cursor: not-allowed;
+}
+
+#stepTabs .badge {
+    font-size: 0.75rem;
 }
 
 /* 错误提示 */

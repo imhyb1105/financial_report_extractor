@@ -1,419 +1,560 @@
-// 企业所得税计算器功能实现
-// 版本：2026.03-001
-// 更新：小型微利企业分档税率（≤100万：2.5%，100-300万：5%）
+// 企业所得税计算器 - 分步向导版
+// 版本：2026.03-002
+// 核心功能：应纳税所得额分步计算，自动计算限额扣除
 
-document.addEventListener('DOMContentLoaded', function() {
+// 全局变量存储计算数据
+let calcData = {
+    // 基础数据
+    revenue: 0,                    // 销售(营业)收入
+    accountingProfit: 0,           // 会计利润总额
+    totalWages: 0,                 // 工资薪金总额
+    employeeCount: 0,              // 从业人数
+    totalAssets: 0,                // 资产总额
+
+    // 限额扣除项目
+    entertainment: { actual: 0, limit: 0, excess: 0 },
+    advertising: { actual: 0, limit: 0, excess: 0, carryforward: 0 },
+    welfare: { actual: 0, limit: 0, excess: 0 },
+    union: { actual: 0, limit: 0, excess: 0 },
+    education: { actual: 0, limit: 0, excess: 0, carryforward: 0 },
+    donation: { actual: 0, limit: 0, excess: 0, carryforward: 0 },
+
+    // 不得扣除项目
+    nonDeductible: {
+        fines: 0,
+        lateFees: 0,
+        sponsorship: 0,
+        unrelatedExpense: 0
+    },
+
+    // 免税/不征税收入
+    exemptIncome: {
+        bondInterest: 0,
+        dividend: 0,
+        fiscalAppropriation: 0,
+        nonProfitIncome: 0
+    },
+
+    // 加计扣除
+    rdExpense: 0,
+    disabledWage: 0,
+
+    // 亏损弥补
+    lossCarryforward: 0,
+
+    // 企业类型
+    enterpriseType: 'general',
+
+    // 计算结果
+    taxableIncome: 0,
+    taxPayable: 0,
+    taxRate: 0
+};
+
+// 当前步骤
+let currentStep = 1;
+
+// 格式化数字
+function formatNumber(num) {
+    if (num === null || num === undefined || isNaN(num)) return '0.00';
+    return Number(num).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// 获取输入值
+function getInputValue(id) {
+    const el = document.getElementById(id);
+    if (!el) return 0;
+    const val = el.value;
+    if (val === '' || val === undefined || val === null) return 0;
+    const num = parseFloat(val);
+    return isNaN(num) ? 0 : num;
+}
+
+// 设置显示值
+function setDisplayValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = formatNumber(value);
+}
+
+// 显示错误
+function showError(msg) {
     const errorsEl = document.getElementById('errors');
-    const citVersionEl = document.getElementById('citVersion');
-    const citEffectiveDateEl = document.getElementById('citEffectiveDate');
-    const citVersionTopEl = document.getElementById('citVersionTop');
-    const citEffectiveDateTopEl = document.getElementById('citEffectiveDateTop');
-    const btnCopyResult = document.getElementById('btnCopyResult');
-    const btnExportPDF = document.getElementById('btnExportPDF');
-    const resultCard = document.getElementById('resultCard');
+    if (errorsEl) errorsEl.textContent = msg || '';
+}
 
-    // 配置数据
-    let config = {
-        version: '2026.03-001',
-        effective_date: '2026-01-01',
-        tax_rates: {
-            general: { rate: 0.25, label: '一般企业' },
-            small_micro_tier1: { rate: 0.025, label: '小型微利企业（≤100万）' },
-            small_micro_tier2: { rate: 0.05, label: '小型微利企业（100-300万）' },
-            high_tech: { rate: 0.15, label: '高新技术企业' }
-        },
-        small_micro_policy: {
-            tier1_limit: 1000000,
-            tier2_limit: 3000000
+// 清除错误
+function clearError() {
+    showError('');
+}
+
+// 步骤导航
+function updateStepTabs() {
+    const tabs = document.querySelectorAll('#stepTabs .nav-link');
+    tabs.forEach((tab, index) => {
+        const stepNum = index + 1;
+        tab.classList.remove('active', 'disabled');
+        tab.querySelector('.badge').classList.remove('bg-primary', 'bg-secondary');
+        tab.querySelector('.badge').classList.add('bg-secondary');
+
+        if (stepNum === currentStep) {
+            tab.classList.add('active');
+            tab.querySelector('.badge').classList.remove('bg-secondary');
+            tab.querySelector('.badge').classList.add('bg-primary');
+        } else if (stepNum > currentStep) {
+            tab.classList.add('disabled');
         }
+    });
+}
+
+function showStep(step) {
+    document.querySelectorAll('.step-content').forEach(el => el.style.display = 'none');
+    const stepEl = document.getElementById('step' + step);
+    if (stepEl) stepEl.style.display = 'block';
+    currentStep = step;
+    updateStepTabs();
+}
+
+function nextStep(current) {
+    clearError();
+
+    // 验证当前步骤
+    if (current === 1) {
+        calcData.revenue = getInputValue('revenue');
+        calcData.accountingProfit = getInputValue('accountingProfit');
+        calcData.totalWages = getInputValue('totalWages');
+        calcData.employeeCount = getInputValue('employeeCount');
+        calcData.totalAssets = getInputValue('totalAssets');
+
+        if (calcData.revenue <= 0) {
+            showError('请输入销售(营业)收入');
+            return;
+        }
+        if (calcData.accountingProfit === 0 && !confirm('会计利润总额为0，是否继续？')) {
+            return;
+        }
+        if (calcData.totalWages <= 0) {
+            showError('请输入工资薪金总额');
+            return;
+        }
+    }
+
+    if (current === 2) {
+        collectLimitDeductionData();
+    }
+
+    if (current === 3) {
+        collectNonDeductibleData();
+        collectExemptIncomeData();
+    }
+
+    if (current === 4) {
+        collectAdditionalDeductionData();
+        calcData.enterpriseType = document.querySelector('input[name="enterpriseType"]:checked')?.value || 'general';
+        calculate();
+        return;
+    }
+
+    showStep(current + 1);
+}
+
+function prevStep(current) {
+    showStep(current - 1);
+}
+
+// 步骤2：限额扣除计算
+function calculateLimitDeductions() {
+    const revenue = calcData.revenue;
+    const totalWages = calcData.totalWages;
+    const profit = calcData.accountingProfit;
+
+    // 业务招待费：Min(60%, 5‰)
+    const entertainmentActual = getInputValue('entertainmentActual');
+    const entertainment60 = entertainmentActual * 0.60;
+    const entertainment5Permil = revenue * 0.005;
+    const entertainmentLimit = Math.min(entertainment60, entertainment5Permil);
+    const entertainmentExcess = Math.max(0, entertainmentActual - entertainmentLimit);
+
+    setDisplayValue('entertainmentLimit', entertainmentLimit);
+    setDisplayValue('entertainmentExcess', entertainmentExcess);
+
+    calcData.entertainment = {
+        actual: entertainmentActual,
+        limit: entertainmentLimit,
+        excess: entertainmentExcess
     };
 
-    function setErrors(msg) {
-        if (errorsEl) errorsEl.textContent = msg || '';
-    }
-    function clearErrors() { setErrors(''); }
+    // 广告费：15% (可结转)
+    const advertisingActual = getInputValue('advertisingActual');
+    const advertisingLimit = revenue * 0.15;
+    const advertisingExcess = Math.max(0, advertisingActual - advertisingLimit);
 
-    // 读取配置文件
-    fetch('./cit.config.json').then(r => r.json()).then(cfg => {
-        config = cfg;
-        const v = cfg.version || '—';
-        const d = cfg.effective_date || '—';
-        if (citVersionEl) citVersionEl.textContent = v;
-        if (citEffectiveDateEl) citEffectiveDateEl.textContent = d;
-        if (citVersionTopEl) citVersionTopEl.textContent = v;
-        if (citEffectiveDateTopEl) citEffectiveDateTopEl.textContent = d;
-    }).catch(() => {
-        const v = config.version;
-        const d = config.effective_date;
-        if (citVersionEl) citVersionEl.textContent = v;
-        if (citEffectiveDateEl) citEffectiveDateEl.textContent = d;
-        if (citVersionTopEl) citVersionTopEl.textContent = v;
-        if (citEffectiveDateTopEl) citEffectiveDateTopEl.textContent = d;
-    });
+    setDisplayValue('advertisingLimit', advertisingLimit);
+    setDisplayValue('advertisingExcess', advertisingExcess);
+    setDisplayValue('advertisingCarryforward', advertisingExcess);
 
-    // 获取计算按钮
-    const generalCalculateBtn = document.getElementById('generalCalculateBtn');
-    const smallCalculateBtn = document.getElementById('smallCalculateBtn');
-    const hightechCalculateBtn = document.getElementById('hightechCalculateBtn');
-    const generalResetBtn = document.getElementById('generalResetBtn');
-    const smallResetBtn = document.getElementById('smallResetBtn');
-    const hightechResetBtn = document.getElementById('hightechResetBtn');
+    calcData.advertising = {
+        actual: advertisingActual,
+        limit: advertisingLimit,
+        excess: advertisingExcess,
+        carryforward: advertisingExcess
+    };
 
-    // 绑定计算按钮事件
-    if (generalCalculateBtn) generalCalculateBtn.addEventListener('click', () => { clearErrors(); calculateGeneralTax(); });
-    if (smallCalculateBtn) smallCalculateBtn.addEventListener('click', () => { clearErrors(); calculateSmallTax(); });
-    if (hightechCalculateBtn) hightechCalculateBtn.addEventListener('click', () => { clearErrors(); calculateHightechTax(); });
+    // 职工福利费：14%
+    const welfareActual = getInputValue('welfareActual');
+    const welfareLimit = totalWages * 0.14;
+    const welfareExcess = Math.max(0, welfareActual - welfareLimit);
 
-    // 绑定重置按钮事件
-    if (generalResetBtn) generalResetBtn.addEventListener('click', () => {
-        document.getElementById('generalRevenue').value = '';
-        document.getElementById('generalCost').value = '';
-        document.getElementById('generalAdjustAdd').value = '0';
-        document.getElementById('generalAdjustSub').value = '0';
-        document.getElementById('generalRndCost').value = '';
-        document.getElementById('generalLoss').value = '';
-        resultCard.style.display = 'none';
-        clearErrors();
-    });
-    if (smallResetBtn) smallResetBtn.addEventListener('click', () => {
-        document.getElementById('smallRevenue').value = '';
-        document.getElementById('smallCost').value = '';
-        document.getElementById('smallAdjustAdd').value = '0';
-        document.getElementById('smallAdjustSub').value = '0';
-        document.getElementById('smallRndCost').value = '';
-        document.getElementById('smallLoss').value = '';
-        resultCard.style.display = 'none';
-        clearErrors();
-    });
-    if (hightechResetBtn) hightechResetBtn.addEventListener('click', () => {
-        document.getElementById('hightechRevenue').value = '';
-        document.getElementById('hightechCost').value = '';
-        document.getElementById('hightechAdjustAdd').value = '0';
-        document.getElementById('hightechAdjustSub').value = '0';
-        document.getElementById('hightechRndCost').value = '';
-        document.getElementById('hightechLoss').value = '';
-        resultCard.style.display = 'none';
-        clearErrors();
-    });
+    setDisplayValue('welfareLimit', welfareLimit);
+    setDisplayValue('welfareExcess', welfareExcess);
 
-    // 复制和导出功能
-    if (btnCopyResult) {
-        btnCopyResult.addEventListener('click', () => { window.utils?.copyNodeTextById('resultCard'); });
-    }
-    if (btnExportPDF) {
-        btnExportPDF.addEventListener('click', () => { window.exporter?.printSection('resultCard','企业所得税计算结果'); });
-    }
+    calcData.welfare = {
+        actual: welfareActual,
+        limit: welfareLimit,
+        excess: welfareExcess
+    };
 
-    // 格式化数字
-    function formatNumber(num) {
-        return (window.utils && window.utils.formatMoney) ? window.utils.formatMoney(num) : (Number(num||0).toFixed(2));
-    }
+    // 工会经费：2%
+    const unionActual = getInputValue('unionActual');
+    const unionLimit = totalWages * 0.02;
+    const unionExcess = Math.max(0, unionActual - unionLimit);
 
-    // 获取输入值
-    function getInputValue(id) {
-        const val = document.getElementById(id)?.value;
-        if (val === '' || val === undefined || val === null) return 0;
-        const num = parseFloat(val);
-        return isNaN(num) ? 0 : num;
-    }
+    setDisplayValue('unionLimit', unionLimit);
+    setDisplayValue('unionExcess', unionExcess);
 
-    // 验证输入
-    function validateInput(revenue, cost) {
-        if (isNaN(revenue) || revenue < 0) {
-            setErrors('请输入有效的收入总额（非负数字）。');
-            return false;
-        }
-        if (isNaN(cost) || cost < 0) {
-            setErrors('请输入有效的成本费用总额（非负数字）。');
-            return false;
-        }
-        return true;
-    }
+    calcData.union = {
+        actual: unionActual,
+        limit: unionLimit,
+        excess: unionExcess
+    };
 
-    // 一般企业所得税计算
-    function calculateGeneralTax() {
-        const revenue = getInputValue('generalRevenue');
-        const cost = getInputValue('generalCost');
-        const adjustAdd = getInputValue('generalAdjustAdd');
-        const adjustSub = getInputValue('generalAdjustSub');
-        const rndCost = getInputValue('generalRndCost');
-        const loss = getInputValue('generalLoss');
+    // 职工教育经费：8% (可结转)
+    const educationActual = getInputValue('educationActual');
+    const educationLimit = totalWages * 0.08;
+    const educationExcess = Math.max(0, educationActual - educationLimit);
 
-        if (!validateInput(revenue, cost)) return;
+    setDisplayValue('educationLimit', educationLimit);
+    setDisplayValue('educationExcess', educationExcess);
+    setDisplayValue('educationCarryforward', educationExcess);
 
-        // 计算应纳税所得额
-        let taxableIncome = revenue - cost + adjustAdd - adjustSub;
+    calcData.education = {
+        actual: educationActual,
+        limit: educationLimit,
+        excess: educationExcess,
+        carryforward: educationExcess
+    };
 
-        // 研发费用加计扣除
-        let rndDeduction = 0;
-        if (rndCost > 0) {
-            rndDeduction = rndCost * 1.0; // 100%加计扣除
-            taxableIncome -= rndDeduction;
-        }
+    // 公益性捐赠：12% (可结转3年)
+    const donationActual = getInputValue('donationActual');
+    const donationLimit = Math.max(0, profit) * 0.12;
+    const donationExcess = Math.max(0, donationActual - donationLimit);
 
-        // 弥补亏损
-        let lossDeducted = 0;
-        if (loss > 0 && taxableIncome > 0) {
-            lossDeducted = Math.min(loss, taxableIncome);
-            taxableIncome -= lossDeducted;
-        }
+    setDisplayValue('donationLimit', donationLimit);
+    setDisplayValue('donationExcess', donationExcess);
+    setDisplayValue('donationCarryforward', donationExcess);
 
-        // 确保应纳税所得额非负
-        if (taxableIncome < 0) taxableIncome = 0;
+    calcData.donation = {
+        actual: donationActual,
+        limit: donationLimit,
+        excess: donationExcess,
+        carryforward: donationExcess
+    };
 
-        const taxRate = 0.25;
-        const taxPayable = taxableIncome * taxRate;
-        const effectiveRate = revenue > 0 ? (taxPayable / revenue * 100) : 0;
+    // 更新限额扣除合计
+    const totalLimitExcess = entertainmentExcess + advertisingExcess + welfareExcess +
+                              unionExcess + educationExcess + donationExcess;
+    document.getElementById('totalLimitExcess').textContent = formatNumber(totalLimitExcess);
+}
 
-        let note = `计算依据：一般企业所得税，法定税率25%（《企业所得税法》第四条）`;
-        if (rndDeduction > 0) {
-            note += `；研发费用加计扣除${formatNumber(rndDeduction)}元（100%加计扣除）`;
-        }
-        if (lossDeducted > 0) {
-            note += `；弥补以前年度亏损${formatNumber(lossDeducted)}元`;
-        }
+function collectLimitDeductionData() {
+    calculateLimitDeductions();
+}
 
-        displayResults({
-            taxableIncome,
-            taxRate,
-            taxPayable,
-            effectiveRate,
-            note,
-            type: 'general',
-            revenue,
-            rndDeduction,
-            lossDeducted
-        });
-    }
+// 步骤3：不得扣除和免税收入
+function calculateNonDeductible() {
+    const total = getInputValue('fines') + getInputValue('lateFees') +
+                  getInputValue('sponsorship') + getInputValue('unrelatedExpense');
+    document.getElementById('totalNonDeductible').textContent = formatNumber(total);
 
-    // 小型微利企业所得税计算（分档）
-    function calculateSmallTax() {
-        const revenue = getInputValue('smallRevenue');
-        const cost = getInputValue('smallCost');
-        const adjustAdd = getInputValue('smallAdjustAdd');
-        const adjustSub = getInputValue('smallAdjustSub');
-        const rndCost = getInputValue('smallRndCost');
-        const loss = getInputValue('smallLoss');
+    calcData.nonDeductible = {
+        fines: getInputValue('fines'),
+        lateFees: getInputValue('lateFees'),
+        sponsorship: getInputValue('sponsorship'),
+        unrelatedExpense: getInputValue('unrelatedExpense')
+    };
+}
 
-        if (!validateInput(revenue, cost)) return;
+function calculateExemptIncome() {
+    const total = getInputValue('bondInterest') + getInputValue('dividend') +
+                  getInputValue('fiscalAppropriation') + getInputValue('nonProfitIncome');
+    document.getElementById('totalExemptIncome').textContent = formatNumber(total);
 
-        // 计算应纳税所得额
-        let taxableIncome = revenue - cost + adjustAdd - adjustSub;
+    calcData.exemptIncome = {
+        bondInterest: getInputValue('bondInterest'),
+        dividend: getInputValue('dividend'),
+        fiscalAppropriation: getInputValue('fiscalAppropriation'),
+        nonProfitIncome: getInputValue('nonProfitIncome')
+    };
+}
 
-        // 研发费用加计扣除
-        let rndDeduction = 0;
-        if (rndCost > 0) {
-            rndDeduction = rndCost * 1.0;
-            taxableIncome -= rndDeduction;
-        }
+function collectNonDeductibleData() {
+    calculateNonDeductible();
+}
 
-        // 弥补亏损
-        let lossDeducted = 0;
-        if (loss > 0 && taxableIncome > 0) {
-            lossDeducted = Math.min(loss, taxableIncome);
-            taxableIncome -= lossDeducted;
-        }
+function collectExemptIncomeData() {
+    calculateExemptIncome();
+}
 
-        // 确保应纳税所得额非负
-        if (taxableIncome < 0) taxableIncome = 0;
+// 步骤4：加计扣除
+function calculateAdditionalDeductions() {
+    const rdExpense = getInputValue('rdExpense');
+    const rdDeduction = rdExpense * 1.0; // 100%加计扣除
+    document.getElementById('rdDeduction').textContent = formatNumber(rdDeduction);
 
-        // 小微企业分档税率
-        const tier1Limit = config.small_micro_policy?.tier1_limit || 1000000; // 100万
-        const tier2Limit = config.small_micro_policy?.tier2_limit || 3000000; // 300万
+    const disabledWage = getInputValue('disabledWage');
+    const disabledDeduction = disabledWage * 1.0; // 100%加计扣除
+    document.getElementById('disabledDeduction').textContent = formatNumber(disabledDeduction);
 
-        let note;
-        let taxPayable;
-        let effectiveRate;
-        let displayRate;
-        let breakdown = [];
+    const totalAdditional = rdDeduction + disabledDeduction;
+    document.getElementById('totalAdditionalDeduction').textContent = formatNumber(totalAdditional);
 
-        if (taxableIncome <= tier2Limit) {
-            // 符合小微企业条件，分档计算
-            displayRate = '分档税率';
-            taxPayable = 0;
+    calcData.rdExpense = rdExpense;
+    calcData.disabledWage = disabledWage;
+    calcData.rdDeduction = rdDeduction;
+    calcData.disabledDeduction = disabledDeduction;
+}
 
-            if (taxableIncome <= tier1Limit) {
-                // 全部在第一档：2.5%
-                taxPayable = taxableIncome * 0.025;
-                breakdown.push(`≤100万部分：${formatNumber(taxableIncome)} × 2.5% = ${formatNumber(taxPayable)}`);
-            } else {
-                // 分两档计算
-                const tier1Tax = tier1Limit * 0.025;
-                const tier2Tax = (taxableIncome - tier1Limit) * 0.05;
-                taxPayable = tier1Tax + tier2Tax;
+function collectAdditionalDeductionData() {
+    calculateAdditionalDeductions();
+    calcData.lossCarryforward = getInputValue('lossCarryforward');
+}
 
-                breakdown.push(`≤100万部分：${formatNumber(tier1Limit)} × 2.5% = ${formatNumber(tier1Tax)}`);
-                breakdown.push(`100万-300万部分：${formatNumber(taxableIncome - tier1Limit)} × 5% = ${formatNumber(tier2Tax)}`);
-            }
+// 主计算函数
+function calculate() {
+    clearError();
 
-            effectiveRate = revenue > 0 ? (taxPayable / revenue * 100) : 0;
-            note = `计算依据：小型微利企业所得税优惠（财政部 税务总局公告2023年第6号，有效期至2027-12-31）`;
-            note += `；年应纳税所得额${formatNumber(taxableIncome)}元 ≤ 300万元，符合小微企业条件`;
+    // 计算纳税调整增加额
+    const limitExcessTotal = calcData.entertainment.excess + calcData.advertising.excess +
+                             calcData.welfare.excess + calcData.union.excess +
+                             calcData.education.excess + calcData.donation.excess;
 
-            displayResults({
-                taxableIncome,
-                taxRate: taxPayable / (taxableIncome || 1), // 实际税率
-                taxPayable,
-                effectiveRate,
-                note,
-                type: 'small',
-                revenue,
-                rndDeduction,
-                lossDeducted,
-                breakdown,
-                displayRate
-            });
+    const nonDeductibleTotal = calcData.nonDeductible.fines + calcData.nonDeductible.lateFees +
+                               calcData.nonDeductible.sponsorship + calcData.nonDeductible.unrelatedExpense;
+
+    const totalIncrease = limitExcessTotal + nonDeductibleTotal;
+
+    // 计算纳税调整减少额
+    const exemptIncomeTotal = calcData.exemptIncome.bondInterest + calcData.exemptIncome.dividend +
+                              calcData.exemptIncome.fiscalAppropriation + calcData.exemptIncome.nonProfitIncome;
+
+    const additionalDeductionTotal = (calcData.rdDeduction || 0) + (calcData.disabledDeduction || 0);
+
+    const totalDecrease = exemptIncomeTotal + additionalDeductionTotal + calcData.lossCarryforward;
+
+    // 计算应纳税所得额
+    let taxableIncome = calcData.accountingProfit + totalIncrease - totalDecrease;
+
+    // 确保非负
+    if (taxableIncome < 0) taxableIncome = 0;
+
+    calcData.taxableIncome = taxableIncome;
+
+    // 根据企业类型计算税额
+    let taxPayable = 0;
+    let taxRate = 0;
+    let rateDisplay = '';
+
+    const enterpriseType = calcData.enterpriseType;
+
+    if (enterpriseType === 'high_tech') {
+        // 高新技术企业：15%
+        taxRate = 0.15;
+        taxPayable = taxableIncome * taxRate;
+        rateDisplay = '15%';
+    } else if (enterpriseType === 'small') {
+        // 小型微利企业：实际税负5%
+        // 检查是否符合小微企业条件
+        const isSmallMicro = taxableIncome <= 3000000 &&
+                             calcData.employeeCount <= 300 &&
+                             calcData.totalAssets <= 50000000;
+
+        if (isSmallMicro) {
+            // 2023年起统一按5%实际税负
+            taxRate = 0.05;
+            taxPayable = taxableIncome * taxRate;
+            rateDisplay = '5%（实际税负）';
         } else {
-            // 超过300万，按一般企业25%计算
-            taxPayable = taxableIncome * 0.25;
-            effectiveRate = revenue > 0 ? (taxPayable / revenue * 100) : 0;
-            displayRate = 0.25;
-
-            note = `⚠️ 提示：年应纳税所得额${formatNumber(taxableIncome)}元 > 300万元，不符合小微企业条件`;
-            note += `；按一般企业25%税率计算`;
-            note += `；如符合条件可节税${formatNumber(taxableIncome * 0.25 - taxableIncome * 0.05)}元`;
-
-            displayResults({
-                taxableIncome,
-                taxRate: 0.25,
-                taxPayable,
-                effectiveRate,
-                note,
-                type: 'general', // 超过临界点按一般企业显示
-                revenue,
-                rndDeduction,
-                lossDeducted,
-                displayRate
-            });
+            // 不符合条件，按25%
+            taxRate = 0.25;
+            taxPayable = taxableIncome * taxRate;
+            rateDisplay = '25%（不符合小微企业条件）';
         }
+    } else {
+        // 一般企业：25%
+        taxRate = 0.25;
+        taxPayable = taxableIncome * taxRate;
+        rateDisplay = '25%';
     }
 
-    // 高新技术企业所得税计算
-    function calculateHightechTax() {
-        const revenue = getInputValue('hightechRevenue');
-        const cost = getInputValue('hightechCost');
-        const adjustAdd = getInputValue('hightechAdjustAdd');
-        const adjustSub = getInputValue('hightechAdjustSub');
-        const rndCost = getInputValue('hightechRndCost');
-        const loss = getInputValue('hightechLoss');
-
-        if (!validateInput(revenue, cost)) return;
-
-        // 计算应纳税所得额
-        let taxableIncome = revenue - cost + adjustAdd - adjustSub;
-
-        // 研发费用加计扣除
-        let rndDeduction = 0;
-        if (rndCost > 0) {
-            rndDeduction = rndCost * 1.0;
-            taxableIncome -= rndDeduction;
-        }
-
-        // 弥补亏损（高新技术企业可结转10年）
-        let lossDeducted = 0;
-        if (loss > 0 && taxableIncome > 0) {
-            lossDeducted = Math.min(loss, taxableIncome);
-            taxableIncome -= lossDeducted;
-        }
-
-        // 确保应纳税所得额非负
-        if (taxableIncome < 0) taxableIncome = 0;
-
-        const taxRate = 0.15;
-        const taxPayable = taxableIncome * taxRate;
-        const effectiveRate = revenue > 0 ? (taxPayable / revenue * 100) : 0;
-
-        let note = `计算依据：高新技术企业，减按15%税率征收（《企业所得税法》第二十八条）`;
-        if (rndDeduction > 0) {
-            note += `；研发费用加计扣除${formatNumber(rndDeduction)}元`;
-        }
-        if (lossDeducted > 0) {
-            note += `；弥补以前年度亏损${formatNumber(lossDeducted)}元（高新技术企业可结转10年）`;
-        }
-        const saved = taxableIncome * (0.25 - 0.15);
-        if (saved > 0 && taxableIncome > 0) {
-            note += `；相比一般企业节税${formatNumber(saved)}元`;
-        }
-
-        displayResults({
-            taxableIncome,
-            taxRate,
-            taxPayable,
-            effectiveRate,
-            note,
-            type: 'hightech',
-            revenue,
-            rndDeduction,
-            lossDeducted
-        });
-    }
+    calcData.taxPayable = taxPayable;
+    calcData.taxRate = taxRate;
 
     // 显示结果
-    function displayResults(results) {
-        document.getElementById('resultTaxableIncome').textContent = formatNumber(results.taxableIncome);
+    showStep(5);
+    displayResults(totalIncrease, totalDecrease, rateDisplay);
+}
 
-        // 税率显示
-        if (results.displayRate) {
-            document.getElementById('resultTaxRate').textContent = results.displayRate;
-        } else {
-            document.getElementById('resultTaxRate').textContent = (results.taxRate * 100).toFixed(results.taxRate < 0.1 ? 1 : 0) + '%';
+// 显示结果
+function displayResults(totalIncrease, totalDecrease, rateDisplay) {
+    // 显示主要结果
+    document.getElementById('taxableIncomeDisplay').textContent = formatNumber(calcData.taxableIncome);
+    document.getElementById('taxAmountDisplay').textContent = formatNumber(calcData.taxPayable);
+
+    // 计算明细
+    const breakdown = document.getElementById('calculationBreakdown');
+    let breakdownHtml = '';
+
+    breakdownHtml += `<div class="line">会计利润总额：${formatNumber(calcData.accountingProfit)} 元</div>`;
+    breakdownHtml += `<div class="line">+ 纳税调整增加额：${formatNumber(totalIncrease)} 元</div>`;
+    breakdownHtml += `<div class="line">- 纳税调整减少额：${formatNumber(totalDecrease)} 元</div>`;
+    breakdownHtml += `<div class="line"><strong>= 应纳税所得额：${formatNumber(calcData.taxableIncome)} 元</strong></div>`;
+    breakdownHtml += `<div class="line">适用税率：${rateDisplay}</div>`;
+    breakdownHtml += `<div class="line"><strong>= 应纳企业所得税：${formatNumber(calcData.taxPayable)} 元</strong></div>`;
+
+    breakdown.innerHTML = breakdownHtml;
+
+    // 纳税调整汇总表
+    const tableBody = document.getElementById('adjustmentTable');
+    let tableHtml = '';
+
+    // 限额扣除项目
+    const limitItems = [
+        { name: '业务招待费超限', actual: calcData.entertainment.actual, tax: calcData.entertainment.limit, increase: calcData.entertainment.excess, decrease: 0 },
+        { name: '广告费超限', actual: calcData.advertising.actual, tax: calcData.advertising.limit, increase: calcData.advertising.excess, decrease: 0 },
+        { name: '职工福利费超限', actual: calcData.welfare.actual, tax: calcData.welfare.limit, increase: calcData.welfare.excess, decrease: 0 },
+        { name: '工会经费超限', actual: calcData.union.actual, tax: calcData.union.limit, increase: calcData.union.excess, decrease: 0 },
+        { name: '职工教育经费超限', actual: calcData.education.actual, tax: calcData.education.limit, increase: calcData.education.excess, decrease: 0 },
+        { name: '公益性捐赠超限', actual: calcData.donation.actual, tax: calcData.donation.limit, increase: calcData.donation.excess, decrease: 0 }
+    ];
+
+    // 不得扣除项目
+    const nonDeductibleItems = [
+        { name: '罚款罚金', actual: calcData.nonDeductible.fines, tax: 0, increase: calcData.nonDeductible.fines, decrease: 0 },
+        { name: '税收滞纳金', actual: calcData.nonDeductible.lateFees, tax: 0, increase: calcData.nonDeductible.lateFees, decrease: 0 },
+        { name: '赞助支出', actual: calcData.nonDeductible.sponsorship, tax: 0, increase: calcData.nonDeductible.sponsorship, decrease: 0 },
+        { name: '无关支出', actual: calcData.nonDeductible.unrelatedExpense, tax: 0, increase: calcData.nonDeductible.unrelatedExpense, decrease: 0 }
+    ];
+
+    // 免税/不征税收入
+    const exemptItems = [
+        { name: '国债利息收入', actual: calcData.exemptIncome.bondInterest, tax: 0, increase: 0, decrease: calcData.exemptIncome.bondInterest },
+        { name: '股息红利', actual: calcData.exemptIncome.dividend, tax: 0, increase: 0, decrease: calcData.exemptIncome.dividend },
+        { name: '财政拨款', actual: calcData.exemptIncome.fiscalAppropriation, tax: 0, increase: 0, decrease: calcData.exemptIncome.fiscalAppropriation },
+        { name: '非营利收入', actual: calcData.exemptIncome.nonProfitIncome, tax: 0, increase: 0, decrease: calcData.exemptIncome.nonProfitIncome }
+    ];
+
+    // 加计扣除
+    const additionalItems = [
+        { name: '研发费用加计扣除', actual: calcData.rdExpense, tax: calcData.rdDeduction || calcData.rdExpense * 1, increase: 0, decrease: calcData.rdDeduction || calcData.rdExpense * 1 },
+        { name: '残疾人工资加计扣除', actual: calcData.disabledWage, tax: calcData.disabledDeduction || calcData.disabledWage * 1, increase: 0, decrease: calcData.disabledDeduction || calcData.disabledWage * 1 },
+        { name: '亏损弥补', actual: calcData.lossCarryforward, tax: calcData.lossCarryforward, increase: 0, decrease: calcData.lossCarryforward }
+    ];
+
+    const allItems = [...limitItems, ...nonDeductibleItems, ...exemptItems, ...additionalItems];
+
+    allItems.forEach(item => {
+        if (item.actual > 0 || item.increase > 0 || item.decrease > 0) {
+            tableHtml += `<tr>
+                <td>${item.name}</td>
+                <td class="text-end">${formatNumber(item.actual)}</td>
+                <td class="text-end">${formatNumber(item.tax)}</td>
+                <td class="text-end ${item.increase > 0 ? 'text-danger' : ''}">${item.increase > 0 ? formatNumber(item.increase) : '-'}</td>
+                <td class="text-end ${item.decrease > 0 ? 'text-success' : ''}">${item.decrease > 0 ? formatNumber(item.decrease) : '-'}</td>
+            </tr>`;
         }
+    });
 
-        document.getElementById('resultTaxPayable').textContent = formatNumber(results.taxPayable);
-        document.getElementById('resultEffectiveRate').textContent = results.effectiveRate.toFixed(2) + '%';
-        document.getElementById('resultNote').textContent = results.note;
+    tableBody.innerHTML = tableHtml;
 
-        // 根据类型设置样式
-        if (results.type === 'small') {
-            document.getElementById('resultNote').className = 'alert alert-success mt-3 mb-0';
-        } else if (results.type === 'hightech') {
-            document.getElementById('resultNote').className = 'alert alert-success mt-3 mb-0';
-        } else {
-            document.getElementById('resultNote').className = 'alert alert-info mt-3 mb-0';
-        }
+    // 更新合计
+    document.getElementById('totalIncrease').textContent = formatNumber(totalIncrease);
+    document.getElementById('totalDecrease').textContent = formatNumber(totalDecrease);
+}
 
-        renderBreakdown(results);
-        resultCard.style.display = 'block';
-    }
+// 重置表单
+function resetForm() {
+    // 重置所有输入
+    document.querySelectorAll('input[type="number"]').forEach(el => {
+        el.value = '';
+    });
 
-    // 渲染计算明细
-    function renderBreakdown(r) {
-        const el = document.getElementById('resultBreakdown');
-        if (!el) return;
+    // 重置只读字段
+    document.querySelectorAll('input[readonly]').forEach(el => {
+        el.value = '';
+    });
 
-        const lines = [];
+    // 重置单选按钮
+    document.getElementById('typeGeneral').checked = true;
 
-        // 基础计算
-        lines.push(`应纳税所得额 = 收入总额 - 成本费用 ± 纳税调整 - 加计扣除 - 弥补亏损`);
+    // 重置显示字段
+    document.getElementById('totalLimitExcess').textContent = '0.00';
+    document.getElementById('totalNonDeductible').textContent = '0.00';
+    document.getElementById('totalExemptIncome').textContent = '0.00';
+    document.getElementById('rdDeduction').textContent = '0.00';
+    document.getElementById('disabledDeduction').textContent = '0.00';
+    document.getElementById('totalAdditionalDeduction').textContent = '0.00';
 
-        if (r.rndDeduction > 0) {
-            lines.push(`研发费用加计扣除 = ${formatNumber(r.rndDeduction)}（100%加计）`);
-        }
-        if (r.lossDeducted > 0) {
-            lines.push(`弥补以前年度亏损 = ${formatNumber(r.lossDeducted)}`);
-        }
+    // 重置计算数据
+    calcData = {
+        revenue: 0, accountingProfit: 0, totalWages: 0, employeeCount: 0, totalAssets: 0,
+        entertainment: { actual: 0, limit: 0, excess: 0 },
+        advertising: { actual: 0, limit: 0, excess: 0, carryforward: 0 },
+        welfare: { actual: 0, limit: 0, excess: 0 },
+        union: { actual: 0, limit: 0, excess: 0 },
+        education: { actual: 0, limit: 0, excess: 0, carryforward: 0 },
+        donation: { actual: 0, limit: 0, excess: 0, carryforward: 0 },
+        nonDeductible: { fines: 0, lateFees: 0, sponsorship: 0, unrelatedExpense: 0 },
+        exemptIncome: { bondInterest: 0, dividend: 0, fiscalAppropriation: 0, nonProfitIncome: 0 },
+        rdExpense: 0, disabledWage: 0, lossCarryforward: 0,
+        enterpriseType: 'general', taxableIncome: 0, taxPayable: 0, taxRate: 0
+    };
 
-        lines.push(`应纳税所得额 = ${formatNumber(r.taxableIncome)} 元`);
+    // 返回第一步
+    showStep(1);
+    clearError();
+}
 
-        // 分档计算明细
-        if (r.breakdown && r.breakdown.length > 0) {
-            lines.push('---');
-            lines.push('分档计算明细：');
-            r.breakdown.forEach(b => lines.push(b));
-        }
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 绑定限额扣除实时计算
+    document.querySelectorAll('.limit-item').forEach(el => {
+        el.addEventListener('input', calculateLimitDeductions);
+    });
 
-        // 税额计算
-        if (r.type === 'small' && r.taxableIncome <= 3000000) {
-            lines.push('---');
-            lines.push(`应纳税额合计 = ${formatNumber(r.taxPayable)} 元`);
-            lines.push(`实际税负率 = ${r.effectiveRate.toFixed(2)}%`);
-        } else {
-            const ratePct = r.taxRate < 0.1 ? (r.taxRate * 100).toFixed(1) : (r.taxRate * 100).toFixed(0);
-            lines.push('---');
-            lines.push(`应纳税额 = 应纳税所得额 × 税率 = ${formatNumber(r.taxableIncome)} × ${ratePct}% = ${formatNumber(r.taxPayable)}`);
-            lines.push(`实际税负率 = ${r.effectiveRate.toFixed(2)}%`);
-        }
+    // 绑定不得扣除项目实时计算
+    document.querySelectorAll('.non-deductible').forEach(el => {
+        el.addEventListener('input', calculateNonDeductible);
+    });
 
-        el.innerHTML = lines.map(l => `<div class="line">${l}</div>`).join('');
-    }
+    // 绑定免税收入实时计算
+    document.querySelectorAll('.exempt-income').forEach(el => {
+        el.addEventListener('input', calculateExemptIncome);
+    });
+
+    // 绑定加计扣除实时计算
+    document.querySelectorAll('.additional-deduction').forEach(el => {
+        el.addEventListener('input', calculateAdditionalDeductions);
+    });
+
+    // 步骤导航点击
+    document.querySelectorAll('#stepTabs .nav-link').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const step = parseInt(this.dataset.step);
+            if (step <= currentStep) {
+                showStep(step);
+            }
+        });
+    });
+
+    showStep(1);
 });

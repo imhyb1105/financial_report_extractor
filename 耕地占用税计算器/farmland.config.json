@@ -1,0 +1,107 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2019-09-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": {
+    "tax_rates": {
+      "label": "耕地占用税税额标准",
+      "description": "根据人均耕地面积确定适用税额",
+      "tiers": [
+        {
+          "per_capita_farmland_max": 1,
+          "unit": "亩/人",
+          "rate_range": { "min": 10, "max": 50 },
+          "unit_price": "元/平方米"
+        },
+        {
+          "per_capita_farmland_min": 1,
+          "per_capita_farmland_max": 2,
+          "unit": "亩/人",
+          "rate_range": { "min": 8, "max": 40 },
+          "unit_price": "元/平方米"
+        },
+        {
+          "per_capita_farmland_min": 2,
+          "per_capita_farmland_max": 3,
+          "unit": "亩/人",
+          "rate_range": { "min": 6, "max": 30 },
+          "unit_price": "元/平方米"
+        },
+        {
+          "per_capita_farmland_min": 3,
+          "per_capita_farmland_max": null,
+          "unit": "亩/人",
+          "rate_range": { "min": 5, "max": 25 },
+          "unit_price": "元/平方米"
+        }
+      ]
+    }
+  },
+  "occupation_types": [
+    { "key": "permanent", "label": "永久占用", "multiplier": 1 },
+    { "key": "temporary", "label": "临时占用", "multiplier": 1, "refundable": true, "note": "临时占用耕地经批准的，应当缴纳耕地占用税，在批准临时占用耕地期限内恢复耕地原状的，全额退还已缴纳的耕地占用税" }
+  ],
+  "exemptions": [
+    {
+      "category": "军事设施",
+      "items": ["军事设施占用耕地"]
+    },
+    {
+      "category": "学校",
+      "items": ["幼儿园、学校占用耕地"]
+    },
+    {
+      "category": "医疗机构",
+      "items": ["养老服务机构、医疗机构占用耕地"]
+    },
+    {
+      "category": "社会福利",
+      "items": ["社会福利机构、殡葬服务机构占用耕地"]
+    },
+    {
+      "category": "交通设施",
+      "items": ["铁路线路、公路线路、飞机场跑道、停机坪、港口、航道占用耕地"]
+    },
+    {
+      "category": "水利设施",
+      "items": ["水利工程占用耕地"]
+    }
+  ],
+  "reductions": [
+    {
+      "category": "农村居民建房",
+      "description": "农村居民在户口所在地占用耕地新建自用住宅",
+      "reduction_rate": 0.5,
+      "note": "按照当地适用税额减半征收"
+    },
+    {
+      "category": "烈士家属等",
+      "description": "农村烈士家属、残疾军人、鳏寡孤独以及革命老根据地、少数民族聚居区和边远贫困山区生活困难的农村居民",
+      "conditions": "在规定用地标准以内新建住宅缴纳耕地占用税确有困难的",
+      "note": "可以免征或者减征"
+    }
+  ],
+  "surcharges": [
+    {
+      "condition": "占用基本农田",
+      "surcharge_rate": 1.5,
+      "note": "按照当地适用税额的150%征收"
+    }
+  ],
+  "notes": [
+    "耕地占用税由税务机关负责征收",
+    "纳税人应当自收到农用地转用批准文件之日起30日内申报缴纳耕地占用税",
+    "未经批准占用耕地的，应当自实际占用之日起30日内申报缴纳",
+    "临时占用耕地经批准的，在批准临时占用耕地期限内恢复耕地原状的，全额退还已缴纳的耕地占用税"
+  ],
+  "policy_evidence": {
+    "source_url": "http://www.chinatax.gov.cn/chinatax/n810219/n810744/n3752930/n3752956/n4949806/c4215882/content.html",
+    "policy_name": "中华人民共和国耕地占用税法",
+    "publish_date": "2018-12-29",
+    "effective_date": "2019-09-01",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

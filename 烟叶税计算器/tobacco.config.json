@@ -1,0 +1,55 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2006-04-28",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": {
+    "tax_rate": {
+      "label": "烟叶税税率",
+      "rate": 0.20,
+      "rate_percent": "20%",
+      "description": "烟叶税实行比例税率，税率为20%"
+    },
+    "purchase_amount": {
+      "label": "收购金额",
+      "description": "收购金额包括收购价款和价外补贴",
+      "formula": "收购金额 = 收购价款 + 价外补贴",
+      "subsidy_rate": 0.10,
+      "subsidy_rate_percent": "10%",
+      "subsidy_note": "价外补贴统一按收购价款的10%计算"
+    }
+  },
+  "taxable_objects": [
+    {
+      "category": "晾晒烟叶",
+      "description": "经过晾晒处理的烟叶",
+      "included": true
+    },
+    {
+      "category": "烤烟叶",
+      "description": "经过烘烤处理的烟叶",
+      "included": true
+    }
+  ],
+  "taxpayers": [
+    "在中华人民共和国境内收购烟叶的单位"
+  ],
+  "collection_points": [
+    "烟叶收购地"
+  ],
+  "notes": [
+    "烟叶税由税务机关负责征收",
+    "纳税人应当自纳税义务发生之日起30日内申报缴纳烟叶税",
+    "烟叶税的纳税义务发生时间为纳税人收购烟叶的当日",
+    "价外补贴统一按收购价款的10%计算，实际补贴超过10%的按实际计算"
+  ],
+  "policy_evidence": {
+    "source_url": "http://www.chinatax.gov.cn/chinatax/n810219/n810744/n3752930/n3752956/n4949806/c4216016/content.html",
+    "policy_name": "中华人民共和国烟叶税法",
+    "publish_date": "2017-12-27",
+    "effective_date": "2006-04-28",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

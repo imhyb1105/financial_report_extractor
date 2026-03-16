@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>烟叶税计算器 - 财税小工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-tobacco text-white">
+                        <h4 class="mb-0">烟叶税计算器</h4>
+                        <small>版本：2026.03-001 | 生效日期：2006-04-28</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="tobaccoForm">
+                            <div class="mb-3">
+                                <label class="form-label">收购价款（元） <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="purchasePrice" placeholder="请输入收购价款" min="0.01" step="0.01" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">价外补贴比例（%）</label>
+                                <input type="number" class="form-control" id="subsidyRate" value="10" min="0" max="100" step="0.1">
+                                <div class="form-text">按规定统一按10%计算，实际超过10%的按实际计算</div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>计算说明：</strong><br>
+                                    • 收购金额 = 收购价款 + 价外补贴（收购价款 × 补贴比例）<br>
+                                    • 应纳税额 = 收购金额 × 20%<br>
+                                    • 烟叶税纳税人为收购烟叶的单位
+                                </small>
+                            </div>
+
+                            <button type="submit" class="btn btn-tobacco w-100">计算烟叶税</button>
+                        </form>
+
+                        <div id="result" class="mt-4 d-none">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h5 class="mb-0">计算结果</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th width="40%">收购价款</th>
+                                                <td id="resultPrice">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>价外补贴</th>
+                                                <td id="resultSubsidy">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>收购金额</th>
+                                                <td id="resultAmount">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>适用税率</th>
+                                                <td id="resultRate">20%</td>
+                                            </tr>
+                                            <tr>
+                                                <th>应纳烟叶税</th>
+                                                <td id="resultTax" class="text-danger fw-bold">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="mt-3">
+                                        <h6>计算公式</h6>
+                                        <div class="bg-white p-2 border rounded" id="formula">
+                                            <code></code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>
+                            <strong>政策依据：</strong>《中华人民共和国烟叶税法》<br>
+                            <strong>征收机关：</strong>税务机关
+                        </small>
+                    </div>
+                </div>
+
+                <div class="card mt-3 shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0">烟叶税计算说明</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>征税对象</h6>
+                        <ul>
+                            <li>晾晒烟叶</li>
+                            <li>烤烟叶</li>
+                        </ul>
+
+                        <h6>纳税人</h6>
+                        <p>在中华人民共和国境内收购烟叶的单位</p>
+
+                        <h6>税率</h6>
+                        <p>烟叶税实行比例税率，税率为<strong>20%</strong></p>
+
+                        <h6>纳税义务发生时间</h6>
+                        <p>纳税人收购烟叶的当日</p>
+
+                        <h6>纳税期限</h6>
+                        <p>自纳税义务发生之日起30日内申报缴纳</p>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="烟叶税知识库/0_索引.md" class="btn btn-outline-secondary btn-sm" target="_blank">查看知识库</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+{
+  "version": "2026.03-001",
+  "effective_date": "2026-01-01",
+  "last_verified_date": "2026-03-16",
+  "needs_verification": false,
+  "tax_items": {
+    "normal_rates": {
+      "label": "普通税率",
+      "license_30": [
+        { "min_tonnage": 0, "max_tonnage": 2000, "rate": 2.9 },
+        { "min_tonnage": 2001, "max_tonnage": 10000, "rate": 3.4 },
+        { "min_tonnage": 10001, "max_tonnage": 50000, "rate": 3.9 },
+        { "min_tonnage": 50001, "max_tonnage": null, "rate": 4.6 }
+      ],
+      "license_90": [
+        { "min_tonnage": 0, "max_tonnage": 2000, "rate": 8.7 },
+        { "min_tonnage": 2001, "max_tonnage": 10000, "rate": 10.2 },
+        { "min_tonnage": 10001, "max_tonnage": 50000, "rate": 11.7 },
+        { "min_tonnage": 50001, "max_tonnage": null, "rate": 13.8 }
+      ]
+    },
+    "preferential_rates": {
+      "label": "优惠税率",
+      "description": "与中华人民共和国签订含有相互给予船舶税费最惠国待遇条款的国家或地区的船舶",
+      "license_30": [
+        { "min_tonnage": 0, "max_tonnage": 2000, "rate": 1.5 },
+        { "min_tonnage": 2001, "max_tonnage": 10000, "rate": 1.7 },
+        { "min_tonnage": 10001, "max_tonnage": 50000, "rate": 2.0 },
+        { "min_tonnage": 50001, "max_tonnage": null, "rate": 2.3 }
+      ],
+      "license_90": [
+        { "min_tonnage": 0, "max_tonnage": 2000, "rate": 4.5 },
+        { "min_tonnage": 2001, "max_tonnage": 10000, "rate": 5.1 },
+        { "min_tonnage": 10001, "max_tonnage": 50000, "rate": 6.0 },
+        { "min_tonnage": 50001, "max_tonnage": null, "rate": 6.9 }
+      ]
+    }
+  },
+  "license_periods": [
+    { "key": "30", "label": "30天", "multiplier": 1 },
+    { "key": "90", "label": "90天", "multiplier": 1 },
+    { "key": "365", "label": "1年", "multiplier": 4, "note": "按90天税额标准的4倍计算" }
+  ],
+  "exemptions": [
+    "应纳税额在人民币50元以下的船舶",
+    "自境外以购买、受赠、继承等方式取得船舶所有权的初次进口船舶",
+    "吨税执照期满后24小时内不上下客货的船舶",
+    "非机动船舶（不包括非机动驳船）",
+    "捕捞、养殖渔船",
+    "避难、防疫隔离、修理、改造、终止运营的船舶",
+    "船舶吨税执照期满后24小时内不上下客货的船舶",
+    "其他免税情形"
+  ],
+  "notes": [
+    "船舶吨税由海关负责征收",
+    "吨税执照期限内船舶多次进出境的，不重复征税",
+    "应税船舶负责人应当自海关填发吨税缴款书之日起15日内缴清税款",
+    "未缴纳吨税的船舶，海关有权不予放行"
+  ],
+  "policy_evidence": {
+    "source_url": "http://www.customs.gov.cn/customs/302242/302246/index.html",
+    "policy_name": "中华人民共和国船舶吨税法",
+    "publish_date": "2017-12-27",
+    "capture_date": "2026-03-16",
+    "confidence": "high",
+    "verification_status": "verified"
+  }
+}

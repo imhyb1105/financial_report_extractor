@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>船舶吨税计算器 - 财税小工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-ocean text-white">
+                        <h4 class="mb-0">船舶吨税计算器</h4>
+                        <small>版本：2026.03-001 | 生效日期：2026-01-01</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="tonnageForm">
+                            <div class="mb-3">
+                                <label class="form-label">船舶净吨位（吨） <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="netTonnage" placeholder="请输入船舶净吨位" min="1" step="1" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">执照期限 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="licensePeriod" required>
+                                    <option value="">请选择</option>
+                                    <option value="30">30天</option>
+                                    <option value="90">90天</option>
+                                    <option value="365">1年（按90天税额×4）</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">适用税率类型 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="rateType" required>
+                                    <option value="">请选择</option>
+                                    <option value="normal">普通税率</option>
+                                    <option value="preferential">优惠税率（与我国签订最惠国待遇条款的国家）</option>
+                                </select>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>优惠税率适用条件：</strong><br>
+                                    与中华人民共和国签订含有相互给予船舶税费最惠国待遇条款的国家或地区的船舶适用优惠税率。
+                                </small>
+                            </div>
+
+                            <button type="submit" class="btn btn-ocean w-100">计算船舶吨税</button>
+                        </form>
+
+                        <div id="result" class="mt-4 d-none">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h5 class="mb-0">计算结果</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th width="40%">船舶净吨位</th>
+                                                <td id="resultTonnage">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>执照期限</th>
+                                                <td id="resultPeriod">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>适用税率类型</th>
+                                                <td id="resultRateType">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>适用税额标准</th>
+                                                <td id="resultRate">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>应纳船舶吨税</th>
+                                                <td id="resultTax" class="text-danger fw-bold">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="mt-3">
+                                        <h6>计算公式</h6>
+                                        <div class="bg-white p-2 border rounded" id="formula">
+                                            <code></code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>
+                            <strong>政策依据：</strong>《中华人民共和国船舶吨税法》<br>
+                            <strong>征收机关：</strong>海关
+                        </small>
+                    </div>
+                </div>
+
+                <div class="card mt-3 shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0">船舶吨税税率表</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th rowspan="2">净吨位</th>
+                                        <th colspan="2">普通税率（元/吨）</th>
+                                        <th colspan="2">优惠税率（元/吨）</th>
+                                    </tr>
+                                    <tr>
+                                        <th>30天</th>
+                                        <th>90天</th>
+                                        <th>30天</th>
+                                        <th>90天</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>≤2000</td>
+                                        <td>2.9</td>
+                                        <td>8.7</td>
+                                        <td>1.5</td>
+                                        <td>4.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2001-10000</td>
+                                        <td>3.4</td>
+                                        <td>10.2</td>
+                                        <td>1.7</td>
+                                        <td>5.1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>10001-50000</td>
+                                        <td>3.9</td>
+                                        <td>11.7</td>
+                                        <td>2.0</td>
+                                        <td>6.0</td>
+                                    </tr>
+                                    <tr>
+                                        <td>＞50000</td>
+                                        <td>4.6</td>
+                                        <td>13.8</td>
+                                        <td>2.3</td>
+                                        <td>6.9</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted">注：1年期执照按90天税额标准×4计算</small>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="船舶吨税知识库/0_索引.md" class="btn btn-outline-secondary btn-sm" target="_blank">查看知识库</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

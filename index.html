@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财税小工具 - 中国现行18个税种计算器</title>
+    <meta name="description" content="免费在线使用中国现行18个税种计算器，包括增值税、企业所得税、个人所得税、消费税、印花税等，提供详细计算公式和政策依据。">
+    <meta name="keywords" content="税种计算器,增值税计算器,企业所得税计算器,个人所得税计算器,财税工具,税务计算">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/common.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-calculator"></i> 财税小工具
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#categories">税种分类</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">关于</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主横幅 -->
+    <header class="hero-section">
+        <div class="container">
+            <div class="row align-items-center min-vh-50">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="display-4 fw-bold text-white mb-4">中国现行18个税种计算器</h1>
+                    <p class="lead text-white-50 mb-4">免费、专业、便捷的在线税务计算工具</p>
+                    <div class="input-group input-group-lg search-box">
+                        <input type="text" class="form-control" id="searchInput" placeholder="搜索税种计算器...">
+                        <button class="btn btn-light" type="button" id="searchBtn">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 统计数据 -->
+    <section class="stats-section py-4 bg-light">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <h2 class="text-primary mb-0">18</h2>
+                        <small class="text-muted">税种计算器</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <h2 class="text-primary mb-0">90+</h2>
+                        <small class="text-muted">知识库文档</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <h2 class="text-primary mb-0">100%</h2>
+                        <small class="text-muted">免费使用</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item">
+                        <h2 class="text-primary mb-0">2026</h2>
+                        <small class="text-muted">最新政策</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 热门推荐 -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="section-title">
+                <i class="bi bi-star-fill text-warning"></i> 热门计算器
+            </h2>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="card calculator-card hot">
+                        <div class="card-body">
+                            <div class="card-icon bg-danger">
+                                <i class="bi bi-cash-stack"></i>
+                            </div>
+                            <h5 class="card-title">个人所得税计算器</h5>
+                            <p class="card-text text-muted">计算工资薪金、年终奖等个人所得税</p>
+                            <a href="个人所得税计算器/个人所得税计算器.html" class="btn btn-outline-danger">立即使用</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card calculator-card hot">
+                        <div class="card-body">
+                            <div class="card-icon bg-primary">
+                                <i class="bi bi-percent"></i>
+                            </div>
+                            <h5 class="card-title">增值税计算器</h5>
+                            <p class="card-text text-muted">一般纳税人/小规模纳税人增值税计算</p>
+                            <a href="增值税计算器/增值税计算器.html" class="btn btn-outline-primary">立即使用</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card calculator-card hot">
+                        <div class="card-body">
+                            <div class="card-icon bg-success">
+                                <i class="bi bi-building"></i>
+                            </div>
+                            <h5 class="card-title">企业所得税计算器</h5>
+                            <p class="card-text text-muted">居民企业/非居民企业所得税计算</p>
+                            <a href="企业所得税计算器/企业所得税计算器.html" class="btn btn-outline-success">立即使用</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card calculator-card hot">
+                        <div class="card-body">
+                            <div class="card-icon bg-info">
+                                <i class="bi bi-file-text"></i>
+                            </div>
+                            <h5 class="card-title">印花税计算器</h5>
+                            <p class="card-text text-muted">合同、证照等印花税计算</p>
+                            <a href="印花税计算器/印花税计算器.html" class="btn btn-outline-info">立即使用</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 税种分类 -->
+    <section class="py-5 bg-light" id="categories">
+        <div class="container">
+            <h2 class="section-title">
+                <i class="bi bi-grid-3x3-gap-fill text-primary"></i> 全部税种
+            </h2>
+
+            <!-- 筛选按钮 -->
+            <div class="filter-buttons mb-4">
+                <button class="btn btn-outline-secondary active" data-filter="all">全部</button>
+                <button class="btn btn-outline-secondary" data-filter="turnover">流转税</button>
+                <button class="btn btn-outline-secondary" data-filter="income">所得税</button>
+                <button class="btn btn-outline-secondary" data-filter="property">财产税</button>
+                <button class="btn btn-outline-secondary" data-filter="resource">资源税</button>
+                <button class="btn btn-outline-secondary" data-filter="behavior">行为税</button>
+                <button class="btn btn-outline-secondary" data-filter="special">特殊税</button>
+            </div>
+
+            <!-- 流转税类 -->
+            <div class="category-section" data-category="turnover">
+                <h3 class="category-title">
+                    <span class="badge bg-danger">流转税类</span>
+                </h3>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-primary">
+                                        <i class="bi bi-percent"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">增值税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对商品生产、流通、劳务服务中多个环节新增价值征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="增值税计算器/增值税计算器.html" class="btn btn-sm btn-primary">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-warning">
+                                        <i class="bi bi-currency-yen"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">消费税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对特定消费品和消费行为征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="消费税计算器/消费税计算器.html" class="btn btn-sm btn-warning">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-secondary">
+                                        <i class="bi bi-globe"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">关税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对进出口货物征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="关税计算器/关税计算器.html" class="btn btn-sm btn-secondary">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 所得税类 -->
+            <div class="category-section" data-category="income">
+                <h3 class="category-title">
+                    <span class="badge bg-success">所得税类</span>
+                </h3>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-success">
+                                        <i class="bi bi-building"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">企业所得税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对企业生产经营所得和其他所得征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 6篇知识库</small>
+                                    <a href="企业所得税计算器/企业所得税计算器.html" class="btn btn-sm btn-success">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-danger">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">个人所得税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对个人取得的各项应税所得征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="个人所得税计算器/个人所得税计算器.html" class="btn btn-sm btn-danger">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 财产税类 -->
+            <div class="category-section" data-category="property">
+                <h3 class="category-title">
+                    <span class="badge bg-info">财产税类</span>
+                </h3>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-info">
+                                        <i class="bi bi-house"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">房产税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对房产的计税余值或租金收入征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="房产税计算器/房产税计算器.html" class="btn btn-sm btn-info">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-primary">
+                                        <i class="bi bi-file-earmark-text"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">契税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对土地、房屋权属转移征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="契税计算器/契税计算器.html" class="btn btn-sm btn-primary">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-warning">
+                                        <i class="bi bi-car-front"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">车船税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对车辆和船舶征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="车船税计算器/车船税计算器.html" class="btn btn-sm btn-warning">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-success">
+                                        <i class="bi bi-truck"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">车辆购置税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对购置车辆征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="车辆购置税计算器/车辆购置税计算器.html" class="btn btn-sm btn-success">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 资源税类 -->
+            <div class="category-section" data-category="resource">
+                <h3 class="category-title">
+                    <span class="badge bg-success">资源税类</span>
+                </h3>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-success">
+                                        <i class="bi bi-gem"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">资源税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对自然资源开采征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="资源税计算器/资源税计算器.html" class="btn btn-sm btn-success">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-warning">
+                                        <i class="bi bi-layers"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">城镇土地使用税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对使用城镇土地征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="城镇土地使用税计算器/城镇土地使用税计算器.html" class="btn btn-sm btn-warning">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-info">
+                                        <i class="bi bi-tree"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">耕地占用税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对占用耕地建房或非农业建设征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="耕地占用税计算器/耕地占用税计算器.html" class="btn btn-sm btn-info">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 行为税类 -->
+            <div class="category-section" data-category="behavior">
+                <h3 class="category-title">
+                    <span class="badge bg-purple">行为税类</span>
+                </h3>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-info">
+                                        <i class="bi bi-file-text"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">印花税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对经济活动中的应税凭证征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="印花税计算器/印花税计算器.html" class="btn btn-sm btn-info">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-warning">
+                                        <i class="bi bi-graph-up-arrow"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">土地增值税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对转让房地产取得的增值额征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="土地增值税计算器/土地增值税计算器.html" class="btn btn-sm btn-warning">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-success">
+                                        <i class="bi bi-bank"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">城市维护建设税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对缴纳增值税、消费税的单位和个人征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="城市维护建设税计算器/城市维护建设税计算器.html" class="btn btn-sm btn-success">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-primary">
+                                        <i class="bi bi-leaf"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">环境保护税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对污染环境行为征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="环境保护税计算器/环境保护税计算器.html" class="btn btn-sm btn-primary">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 特殊税类 -->
+            <div class="category-section" data-category="special">
+                <h3 class="category-title">
+                    <span class="badge bg-secondary">特殊税类</span>
+                </h3>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-ocean">
+                                        <i class="bi bi-tsunami"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">船舶吨税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对自境外进入境内港口的船舶征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="船舶吨税计算器/船舶吨税计算器.html" class="btn btn-sm btn-ocean">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card calculator-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="card-icon-sm bg-tobacco">
+                                        <i class="bi bi-symmetry-horizontal"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0 ms-3">烟叶税</h5>
+                                </div>
+                                <p class="card-text text-muted small">对收购烟叶的单位征收</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted"><i class="bi bi-book"></i> 5篇知识库</small>
+                                    <a href="烟叶税计算器/烟叶税计算器.html" class="btn btn-sm btn-tobacco">进入</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 关于 -->
+    <section class="py-5" id="about">
+        <div class="container">
+            <h2 class="section-title">
+                <i class="bi bi-info-circle-fill text-primary"></i> 关于本站
+            </h2>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-shield-check text-success"></i> 数据准确</h5>
+                            <p class="card-text text-muted">所有计算公式和税率均依据国家最新税收法规，确保计算结果的准确性和权威性。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-lightning-charge-fill text-warning"></i> 即时计算</h5>
+                            <p class="card-text text-muted">无需安装任何软件，打开网页即可使用，计算结果即时呈现，方便快捷。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-book-half text-info"></i> 知识丰富</h5>
+                            <p class="card-text text-muted">每个税种配备完整的知识库，包含基础知识、税率规定、计算方法等详细说明。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-phone-fill text-primary"></i> 多端适配</h5>
+                            <p class="card-text text-muted">支持电脑、平板、手机等多种设备访问，随时随地完成税务计算。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 免责声明 -->
+    <section class="py-4 bg-light">
+        <div class="container">
+            <div class="alert alert-warning mb-0">
+                <h6 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> 免责声明</h6>
+                <p class="mb-0 small">本站提供的计算器仅供参考使用，具体税额以税务机关核定为准。如有疑问，请咨询专业税务人员或当地税务机关。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <h5><i class="bi bi-calculator"></i> 财税小工具</h5>
+                    <p class="text-muted small">中国现行18个税种在线计算器</p>
+                </div>
+                <div class="col-lg-6 text-lg-end">
+                    <p class="text-muted small mb-0">版本：2026.03-001 | 政策更新日期：2026年3月</p>
+                    <p class="text-muted small mb-0">© 2026 财税小工具. 保留所有权利.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 回到顶部 -->
+    <button class="btn btn-primary btn-back-to-top" id="backToTop" title="回到顶部">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/common.js"></script>
+</body>
+</html>

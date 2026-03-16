@@ -22,3 +22,14 @@ build/
 # 环境配置
 .env
 .env.local
+
+# Claude 相关
+.claude-home/
+skills/
+
+# 开发参考文件
+common/
+参考/
+统一性说明文档.md
+项目测试报告.md
+How+to+create+Skills+for+Claude+steps+and+examples++Claude.md

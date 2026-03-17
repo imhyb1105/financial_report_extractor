@@ -1,0 +1,370 @@
+/* 知识库手风琴组件样式 */
+
+/* 知识库容器 */
+.knowledge-base {
+  margin-top: 1.5rem;
+}
+
+.knowledge-base .card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.knowledge-base .card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px 12px 0 0 !important;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.knowledge-base .card-header h5 {
+  color: #fff;
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.knowledge-base .card-header .btn-expand-all {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+}
+
+.knowledge-base .card-header .btn-expand-all:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.knowledge-base .card-body {
+  padding: 0;
+}
+
+/* 手风琴项 */
+.knowledge-accordion {
+  border: none;
+}
+
+.knowledge-item {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.knowledge-item:last-child {
+  border-bottom: none;
+}
+
+/* 手风琴标题 */
+.knowledge-header {
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.knowledge-header:hover {
+  background-color: #f8f9fa;
+}
+
+.knowledge-header.active {
+  background-color: #f0f4ff;
+}
+
+/* 图标 */
+.knowledge-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.knowledge-icon.basics {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+.knowledge-icon.rates {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #fff;
+}
+
+.knowledge-icon.rules {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: #fff;
+}
+
+.knowledge-icon.calc {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: #fff;
+}
+
+.knowledge-icon.adjust {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: #fff;
+}
+
+/* 标题文字 */
+.knowledge-title {
+  flex: 1;
+  font-weight: 500;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+/* 箭头图标 */
+.knowledge-arrow {
+  color: #6c757d;
+  transition: transform 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.knowledge-header.active .knowledge-arrow {
+  transform: rotate(180deg);
+  color: #667eea;
+}
+
+/* 内容区域 */
+.knowledge-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+  background-color: #fafbfc;
+}
+
+.knowledge-content.show {
+  max-height: 2000px;
+  transition: max-height 0.5s ease-in;
+}
+
+.knowledge-content-inner {
+  padding: 1rem 1.25rem 1.25rem;
+  padding-left: 4rem;
+  color: #495057;
+  line-height: 1.7;
+}
+
+/* Markdown 渲染内容样式 */
+.knowledge-content-inner h1,
+.knowledge-content-inner h2,
+.knowledge-content-inner h3,
+.knowledge-content-inner h4 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.knowledge-content-inner h1 { font-size: 1.25rem; }
+.knowledge-content-inner h2 { font-size: 1.1rem; }
+.knowledge-content-inner h3 { font-size: 1rem; }
+.knowledge-content-inner h4 { font-size: 0.95rem; }
+
+.knowledge-content-inner h1:first-child,
+.knowledge-content-inner h2:first-child {
+  margin-top: 0;
+}
+
+.knowledge-content-inner p {
+  margin-bottom: 0.75rem;
+}
+
+.knowledge-content-inner table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+}
+
+.knowledge-content-inner table th,
+.knowledge-content-inner table td {
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.knowledge-content-inner table th {
+  background-color: #e9ecef;
+  font-weight: 600;
+}
+
+.knowledge-content-inner table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.knowledge-content-inner ul,
+.knowledge-content-inner ol {
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.knowledge-content-inner li {
+  margin-bottom: 0.25rem;
+}
+
+.knowledge-content-inner code {
+  background-color: #e9ecef;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.knowledge-content-inner pre {
+  background-color: #282c34;
+  color: #abb2bf;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+.knowledge-content-inner pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+.knowledge-content-inner blockquote {
+  border-left: 4px solid #667eea;
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: #6c757d;
+  background-color: #f8f9fa;
+  padding: 0.75rem 1rem;
+  border-radius: 0 8px 8px 0;
+}
+
+.knowledge-content-inner hr {
+  border: none;
+  border-top: 1px solid #dee2e6;
+  margin: 1rem 0;
+}
+
+/* 查看完整链接 */
+.knowledge-full-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #667eea;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+  text-decoration: none;
+  padding: 0.35rem 0.75rem;
+  background-color: #fff;
+  border-radius: 20px;
+  border: 1px solid #667eea;
+  transition: all 0.2s ease;
+}
+
+.knowledge-full-link:hover {
+  background-color: #667eea;
+  color: #fff;
+}
+
+/* 加载状态 */
+.knowledge-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.knowledge-loading .spinner-border {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 0.75rem;
+}
+
+/* 加载失败时的fallback样式 */
+.knowledge-fallback {
+  text-align: center;
+  padding: 1rem;
+}
+
+.knowledge-fallback .alert {
+  display: inline-block;
+  text-align: left;
+}
+
+.knowledge-fallback .btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.knowledge-fallback .btn-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* 移动端适配 */
+@media (max-width: 576px) {
+  .knowledge-base .card-header {
+    padding: 0.85rem 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .knowledge-base .card-header h5 {
+    font-size: 1rem;
+  }
+
+  .knowledge-base .card-header .btn-expand-all {
+    align-self: flex-end;
+  }
+
+  .knowledge-header {
+    padding: 0.85rem 1rem;
+  }
+
+  .knowledge-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+
+  .knowledge-title {
+    font-size: 0.9rem;
+  }
+
+  .knowledge-content-inner {
+    padding: 0.85rem 1rem 1rem;
+    padding-left: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .knowledge-content-inner table {
+    font-size: 0.85rem;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .knowledge-content-inner table th,
+  .knowledge-content-inner table td {
+    padding: 0.4rem 0.5rem;
+  }
+}
+
+/* 平板适配 */
+@media (min-width: 577px) and (max-width: 768px) {
+  .knowledge-content-inner {
+    padding-left: 3.5rem;
+  }
+}

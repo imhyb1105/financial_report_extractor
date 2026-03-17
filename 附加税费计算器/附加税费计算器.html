@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>附加税费计算器</title>
   <link rel="stylesheet" href="../common/styles.css" />
+  <link rel="stylesheet" href="../common/components/knowledge-base.css" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
@@ -74,14 +75,8 @@
       </div>
     </section>
 
-    <section class="card">
-      <h2>计算依据与知识库</h2>
-      <ul class="kb-links">
-        <li>税率与档位：<a href="./附加税费知识库/2_附加税费税率.md" target="_blank" rel="noopener">附加税费税率</a></li>
-        <li>征收规定：<a href="./附加税费知识库/3_附加税费征收规定.md" target="_blank" rel="noopener">附加税费征收规定</a></li>
-        <li>公式与示例：<a href="./附加税费知识库/4_附加税费计算方法.md" target="_blank" rel="noopener">附加税费计算方法</a></li>
-      </ul>
-    </section>
+    <!-- 知识库组件 -->
+    <div id="knowledgeBaseContainer"></div>
 
     <footer>
       <p class="footnote">若享受免税、零税率或即征即退：附加税费随同税款先征后退或冲减，以“实际缴纳税额”计征。</p>
@@ -89,9 +84,26 @@
     </footer>
   </div>
 
+  <script src="../common/components/knowledge-base.js"></script>
   <script src="../common/components/utils.js"></script>
   <script src="../common/components/version.js"></script>
   <script src="../common/components/export.js"></script>
   <script src="./script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const kbContainer = document.getElementById('knowledgeBaseContainer');
+      if (kbContainer && typeof KnowledgeBase !== 'undefined') {
+        new KnowledgeBase(kbContainer, {
+          knowledgePath: './附加税费知识库/',
+          items: [
+            { title: '附加税费基础知识', file: '1_附加税费基础知识.md' },
+            { title: '附加税费税率', file: '2_附加税费税率.md' },
+            { title: '附加税费规定', file: '3_附加税费规定.md' },
+            { title: '附加税费计算方法', file: '4_附加税费计算方法.md' }
+          ]
+        });
+      }
+    });
+  </script>
 </body>
 </html>

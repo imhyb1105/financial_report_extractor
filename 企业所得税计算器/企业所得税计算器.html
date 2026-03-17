@@ -6,6 +6,7 @@
     <title>企业所得税计算器</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../common/components/knowledge-base.css">
 </head>
 <body>
     <div class="container py-4">
@@ -629,16 +630,36 @@
                     </div>
                     <div class="card-footer text-muted text-center">
                         <small>
-                            <a href="企业所得税知识库/0_索引.md" class="knowledge-link" target="_blank">📚 查看企业所得税知识库</a>
-                            | 政策更新时间：2026年3月
+                            政策更新时间：2026年3月
                         </small>
                     </div>
                 </div>
+
+                <!-- 知识库组件 -->
+                <div id="knowledgeBaseContainer"></div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../common/components/knowledge-base.js"></script>
     <script src="script.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const kbContainer = document.getElementById('knowledgeBaseContainer');
+        if (kbContainer && typeof KnowledgeBase !== 'undefined') {
+          new KnowledgeBase(kbContainer, {
+            knowledgePath: './企业所得税知识库/',
+            items: [
+              { title: '企业所得税基础知识', file: '1_企业所得税基础知识.md' },
+              { title: '企业所得税税率', file: '2_企业所得税税率.md' },
+              { title: '企业所得税规定', file: '3_企业所得税规定.md' },
+              { title: '企业所得税计算方法', file: '4_企业所得税计算方法.md' },
+              { title: '纳税调整详解', file: '5_企业所得税纳税调整详解.md' }
+            ]
+          });
+        }
+      });
+    </script>
 </body>
 </html>

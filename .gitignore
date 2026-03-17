@@ -28,7 +28,10 @@ build/
 skills/
 
 # 开发参考文件
-common/
+common/*
+!common/components/
+!common/components/*
+!common/styles.css
 参考/
 统一性说明文档.md
 项目测试报告.md

@@ -371,17 +371,29 @@ function calculate() {
         taxPayable = taxableIncome * taxRate;
         rateDisplay = '15%';
     } else if (enterpriseType === 'small') {
-        // 小型微利企业：实际税负5%
+        // 小型微利企业：分档税率
         // 检查是否符合小微企业条件
         const isSmallMicro = taxableIncome <= 3000000 &&
                              calcData.employeeCount <= 300 &&
                              calcData.totalAssets <= 50000000;
 
         if (isSmallMicro) {
-            // 2023年起统一按5%实际税负
-            taxRate = 0.05;
-            taxPayable = taxableIncome * taxRate;
-            rateDisplay = '5%（实际税负）';
+            // 2023-2027年小型微利企业分档税率
+            if (taxableIncome <= 1000000) {
+                // 100万以下：实际税负2.5%
+                taxRate = 0.025;
+                taxPayable = taxableIncome * taxRate;
+                rateDisplay = '2.5%（实际税负，≤100万）';
+            } else {
+                // 100-300万：分段计算
+                // 100万以下部分：2.5%
+                // 100万以上部分：5%
+                const taxUnder100 = 1000000 * 0.025;
+                const taxAbove100 = (taxableIncome - 1000000) * 0.05;
+                taxPayable = taxUnder100 + taxAbove100;
+                taxRate = taxPayable / taxableIncome; // 计算实际税负率
+                rateDisplay = `2.5%+5%（分段，实际税负${(taxRate * 100).toFixed(2)}%）`;
+            }
         } else {
             // 不符合条件，按25%
             taxRate = 0.25;

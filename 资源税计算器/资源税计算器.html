@@ -15,55 +15,89 @@
                 <div class="card shadow-sm">
                     <div class="card-header bg-brown text-white">
                         <h4 class="mb-0">资源税计算器</h4>
-                        <small>版本：2026.03-001 | 生效日期：2020-09-01</small>
+                        <small>版本：2026.03-002 | 生效日期：2020-09-01</small>
                     </div>
                     <div class="card-body">
                         <form id="resourceTaxForm">
                             <div class="mb-3">
-                                <label class="form-label">资源类型 <span class="text-danger">*</span></label>
-                                <select class="form-select" id="resourceType" required>
-                                    <option value="">请选择</option>
-                                    <optgroup label="能源矿产">
-                                        <option value="crude_oil">原油（6-30元/吨）</option>
-                                        <option value="natural_gas">天然气（2-15元/千立方米）</option>
-                                        <option value="coal">煤炭（2-20元/吨）</option>
-                                        <option value="other_coal">其他煤炭（0.3-5元/吨）</option>
-                                    </optgroup>
-                                    <optgroup label="金属矿产">
-                                        <option value="iron_ore">铁矿（5-25元/吨）</option>
-                                        <option value="gold_ore">金矿（2-10元/吨）</option>
-                                        <option value="copper_ore">铜矿（3-15元/吨）</option>
-                                        <option value="aluminum_ore">铝土矿（3-20元/吨）</option>
-                                        <option value="rare_earth">稀土（7.5-30元/吨）</option>
-                                        <option value="other_metal">其他有色金属矿（2-20元/吨）</option>
-                                    </optgroup>
-                                    <optgroup label="非金属矿产">
-                                        <option value="salt">盐（2-10元/吨）</option>
-                                        <option value="limestone">石灰石（1-10元/吨）</option>
-                                        <option value="clay">粘土、砂石（0.1-5元/吨或立方米）</option>
-                                        <option value="granite">花岗岩（3-15元/立方米）</option>
-                                        <option value="marble">大理石（3-15元/立方米）</option>
-                                        <option value="other_nonmetal">其他非金属矿（0.5-20元/吨或立方米）</option>
-                                    </optgroup>
+                                <label class="form-label">计征方式 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="taxType" required>
+                                    <option value="ad_valorem">从价计征（按销售额比例）</option>
+                                    <option value="from_quantity">从量计征（按销售数量）</option>
                                 </select>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">销售/开采数量 <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="quantity" placeholder="请输入数量" min="0" step="0.01" required>
-                                    <select class="form-select" id="unit" style="max-width: 120px;">
-                                        <option value="ton">吨</option>
-                                        <option value="cubic">立方米</option>
-                                        <option value="thousand_cubic">千立方米</option>
+                            <div id="adValoremSection">
+                                <div class="mb-3">
+                                    <label class="form-label">资源类型 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="resourceTypeAdValorem" required>
+                                        <option value="">请选择</option>
+                                        <optgroup label="能源矿产">
+                                            <option value="crude_oil">原油（6%）</option>
+                                            <option value="natural_gas">天然气（6%）</option>
+                                            <option value="coal">煤炭（2%-10%）</option>
+                                            <option value="shale_gas">页岩气（1%-2%）</option>
+                                        </optgroup>
+                                        <optgroup label="金属矿产">
+                                            <option value="iron_ore">铁矿（1%-9%）</option>
+                                            <option value="gold_ore">金矿（2%-6%）</option>
+                                            <option value="copper_ore">铜矿（2%-8%）</option>
+                                            <option value="aluminum_ore">铝土矿（2%-9%）</option>
+                                            <option value="rare_earth">稀土（7%-12%）</option>
+                                            <option value="lead_zinc_ore">铅锌矿（2%-8%）</option>
+                                            <option value="other_metal">其他有色金属矿（2%-8%）</option>
+                                        </optgroup>
+                                        <optgroup label="非金属矿产">
+                                            <option value="salt">盐（1%-5%）</option>
+                                            <option value="limestone">石灰岩（1%-6%）</option>
+                                            <option value="granite">花岗岩（2%-6%）</option>
+                                            <option value="marble">大理岩（2%-6%）</option>
+                                            <option value="clay_sand">粘土、砂石（1%-5%）</option>
+                                            <option value="other_nonmetal">其他非金属矿（2%-6%）</option>
+                                        </optgroup>
                                     </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">销售额（元） <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="salesAmount" placeholder="请输入应税产品销售额" min="0" step="0.01">
+                                    <small class="text-muted">应税销售额为纳税人销售应税产品向购买方收取的全部价款</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">适用税率（%） <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="taxRateAdValorem" placeholder="请输入当地适用税率" min="0" max="20" step="0.1">
+                                    <small class="text-muted">各省可在幅度内确定具体税率，请查询当地税务机关</small>
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">适用税额（元） <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="taxRate" placeholder="请输入当地适用税额" min="0" step="0.1" required>
-                                <small class="text-muted">各省可在幅度内确定具体税额，请查询当地税务机关</small>
+                            <div id="fromQuantitySection" class="d-none">
+                                <div class="mb-3">
+                                    <label class="form-label">资源类型 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="resourceTypeQuantity">
+                                        <option value="">请选择</option>
+                                        <option value="geothermal">地热（1-30元/立方米）</option>
+                                        <option value="mineral_water">矿泉水（1-30元/立方米）</option>
+                                        <option value="sand_gravel">砂石（0.1-5元/立方米）</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">销售数量 <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="quantity" placeholder="请输入数量" min="0" step="0.01">
+                                        <select class="form-select" id="unit" style="max-width: 120px;">
+                                            <option value="cubic">立方米</option>
+                                            <option value="ton">吨</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">适用税额（元/单位） <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="taxRateQuantity" placeholder="请输入当地适用税额" min="0" step="0.1">
+                                    <small class="text-muted">各省可在幅度内确定具体税额，请查询当地税务机关</small>
+                                </div>
                             </div>
 
                             <button type="submit" class="btn btn-brown w-100">计算资源税</button>
@@ -78,15 +112,19 @@
                                     <table class="table table-bordered">
                                         <tbody>
                                             <tr>
-                                                <th width="40%">资源类型</th>
+                                                <th width="40%">计征方式</th>
+                                                <td id="resultTaxType">-</td>
+                                            </tr>
+                                            <tr>
+                                                <th>资源类型</th>
                                                 <td id="resultType">-</td>
                                             </tr>
                                             <tr>
-                                                <th>销售/开采数量</th>
-                                                <td id="resultQuantity">-</td>
+                                                <th>计税依据</th>
+                                                <td id="resultBasis">-</td>
                                             </tr>
                                             <tr>
-                                                <th>适用税额</th>
+                                                <th>适用税率/税额</th>
                                                 <td id="resultRate">-</td>
                                             </tr>
                                             <tr>
@@ -108,8 +146,8 @@
                     </div>
                     <div class="card-footer text-muted">
                         <small>
-                            <strong>政策依据：</strong>《中华人民共和国资源税法》<br>
-                            <strong>注：</strong>开采共伴生矿、低品位矿可按规定减征资源税
+                            <strong>政策依据：</strong>《中华人民共和国资源税法》（2020年9月1日起施行）<br>
+                            <strong>注：</strong>开采共伴生矿、低品位矿可按规定减征资源税；具体税率以各省规定为准
                         </small>
                     </div>
                 </div>

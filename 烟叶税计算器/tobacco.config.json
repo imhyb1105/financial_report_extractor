@@ -1,6 +1,6 @@
 {
   "version": "2026.03-001",
-  "effective_date": "2006-04-28",
+  "effective_date": "2018-07-01",
   "last_verified_date": "2026-03-16",
   "needs_verification": false,
   "tax_items": {
@@ -47,7 +47,7 @@
     "source_url": "http://www.chinatax.gov.cn/chinatax/n810219/n810744/n3752930/n3752956/n4949806/c4216016/content.html",
     "policy_name": "中华人民共和国烟叶税法",
     "publish_date": "2017-12-27",
-    "effective_date": "2006-04-28",
+    "effective_date": "2018-07-01",
     "capture_date": "2026-03-16",
     "confidence": "high",
     "verification_status": "verified"

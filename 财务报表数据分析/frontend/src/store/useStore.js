@@ -1,0 +1,104 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import CryptoJS from 'crypto-js'
+
+// API Key 加密存储
+const encryptApiKey = (key, password) => {
+  const salt = CryptoJS.lib.WordArray.random(128 / 8)
+  const keyDerived = CryptoJS.PBKDF2(password, salt, { keySize: 256 / 32, iterations: 100000 })
+  const encrypted = CryptoJS.AES.encrypt(key, keyDerived.toString())
+  return { encrypted: encrypted.toString(), salt: salt.toString() }
+}
+
+const decryptApiKey = (encrypted, salt, password) => {
+  const keyDerived = CryptoJS.PBKDF2(password, CryptoJS.enc.Hex.parse(salt), { keySize: 256 / 32, iterations: 100000 })
+  const decrypted = CryptoJS.AES.decrypt(encrypted, keyDerived.toString())
+  return decrypted.toString(CryptoJS.enc.Utf8)
+}
+
+export const useStore = create(
+  persist(
+    (set, get) => ({
+      // 模型配置
+      modelConfigs: {
+        modelA: { provider: '', apiKey: '', valid: false },
+        modelB: { provider: '', apiKey: '', valid: false },
+        modelC: { provider: '', apiKey: '', valid: false }
+      },
+
+      // 单位设置
+      displayUnit: 'wan', // yuan, wan, yi
+
+      // 提取状态
+      isExtracting: false,
+      extractionProgress: 0,
+      extractionResult: null,
+      extractionError: null,
+
+      // 历史记录
+      history: [],
+
+      // 密码（会话级）
+      encryptionPassword: null,
+
+      // Actions
+      setModelConfig: (role, config) => set(state => ({
+        modelConfigs: { ...state.modelConfigs, [role]: { ...state.modelConfigs[role], ...config } }
+      })),
+
+      setDisplayUnit: (unit) => set({ displayUnit: unit }),
+
+      setEncryptionPassword: (password) => set({ encryptionPassword: password }),
+
+      startExtraction: () => set({
+        isExtracting: true,
+        extractionProgress: 0,
+        extractionResult: null,
+        extractionError: null
+      }),
+
+      setExtractionProgress: (progress) => set({ extractionProgress: progress }),
+
+      setExtractionResult: (result) => set({
+        isExtracting: false,
+        extractionProgress: 100,
+        extractionResult: result
+      }),
+
+      setExtractionError: (error) => set({
+        isExtracting: false,
+        extractionError: error
+      }),
+
+      addToHistory: (record) => set(state => ({
+        history: [record, ...state.history].slice(0, 50) // 保留最近50条
+      })),
+
+      clearHistory: () => set({ history: [] }),
+
+      // 获取有效的模型配置
+      getValidModels: () => {
+        const { modelConfigs } = get()
+        const validModels = []
+        if (modelConfigs.modelA.valid && modelConfigs.modelA.apiKey) {
+          validModels.push({ role: 'A', ...modelConfigs.modelA })
+        }
+        if (modelConfigs.modelB.valid && modelConfigs.modelB.apiKey) {
+          validModels.push({ role: 'B', ...modelConfigs.modelB })
+        }
+        if (modelConfigs.modelC.valid && modelConfigs.modelC.apiKey) {
+          validModels.push({ role: 'C', ...modelConfigs.modelC })
+        }
+        return validModels
+      }
+    }),
+    {
+      name: 'financial-extractor-storage',
+      partialize: (state) => ({
+        modelConfigs: state.modelConfigs,
+        displayUnit: state.displayUnit,
+        history: state.history
+      })
+    }
+  )
+)

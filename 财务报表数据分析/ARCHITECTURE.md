@@ -1,6 +1,6 @@
 # 智能财务报表数据提取工具 - 架构设计蓝图
 
-> **版本**: V1.0 (MVP)
+> **版本**: V1.1 (MVP)
 > **创建日期**: 2026-03-20
 > **最后更新**: 2026-03-20
 
@@ -45,13 +45,23 @@
                                         │
                     ┌───────────────────┼───────────────────┐
                     ▼                   ▼                   ▼
-┌───────────────────────┐ ┌───────────────────────┐ ┌───────────────────────┐
-│     PDF处理服务        │ │    提取协调服务        │ │     验证服务          │
-│  ┌─────────────────┐  │ │  ┌─────────────────┐  │ │  ┌─────────────────┐  │
-│  │ PDF → Images    │  │ │  │ 并行调用多模型  │  │ │  │ 结果对比        │  │
-│  │ 页面解析        │  │ │  │ 结果聚合        │  │ │  │ 置信度计算      │  │
-│  └─────────────────┘  │ │  └─────────────────┘  │ │  └─────────────────┘  │
-└───────────────────────┘ └───────────────────────┘ └───────────────────────┘
+┌───────────────────────┐ ┌───────────────────────┐ ┌───────────────────────┐ ┌───────────────────────┐
+│     PDF处理服务        │ │    提取协调服务        │ │     验证服务          │ │  勾稽核对服务    ←新增 │
+│  ┌─────────────────┐  │ │  ┌─────────────────┐  │ │  ┌─────────────────┐  │ │  ┌─────────────────┐  │
+│  │ PDF → Images    │  │ │  │ 并行调用多模型  │  │ │  │ 结果对比        │  │ │  │ 勾稽关系核对    │  │
+│  │ 页面解析        │  │ │  │ 结果聚合        │  │ │  │ 置信度计算      │  │ │  │ 自动重试机制    │  │
+│  └─────────────────┘  │ │  └─────────────────┘  │ │  └─────────────────┘  │ │  └─────────────────┘  │
+└───────────────────────┘ └───────────────────────┘ └───────────────────────┘ └───────────────────────┘
+                                        │
+                    ┌───────────────────┴───────────────────┐
+                    ▼                                       ▼
+          ┌───────────────────────┐             ┌───────────────────────┐
+          │   单位转换服务   ←新增 │             │    导出服务           │
+          │  ┌─────────────────┐  │             │  ┌─────────────────┐  │
+          │  │ 元/万元/亿元    │  │             │  │ Excel生成       │  │
+          │  │ 自动转换        │  │             │  │ 格式化输出      │  │
+          │  └─────────────────┘  │             │  └─────────────────┘  │
+          └───────────────────────┘             └───────────────────────┘
                                         │
                                         ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -77,7 +87,7 @@
 
 ## 二、核心流程图
 
-### 2.1 数据提取主流程
+### 2.1 数据提取主流程（含勾稽核对）
 
 ```mermaid
 flowchart TD
@@ -105,13 +115,66 @@ flowchart TD
     M --> O
     N --> O
 
-    O --> P[生成结构化结果]
-    P --> Q[返回前端展示]
-    Q --> R[用户确认/修正]
-    R --> S[导出Excel]
+    O --> P{勾稽关系核对}
+    P -->|通过| Q[单位转换]
+    P -->|失败| R{重试次数 < 3?}
+    R -->|是| S[优化Prompt重新提取]
+    R -->|否| T[标记低置信度+警告]
+    S --> E
+
+    Q --> U[生成结构化结果]
+    T --> U
+    U --> V[返回前端展示]
+    V --> W[用户确认/修正]
+    W --> X[导出Excel]
 ```
 
-### 2.2 三模型验证流程
+### 2.2 勾稽关系核对流程（新增）
+
+```mermaid
+flowchart TD
+    A[获取提取结果] --> B[核对资产负债表平衡]
+    B --> C{资产 = 负债 + 权益?}
+    C -->|是| D[核对毛利润计算]
+    C -->|否| E{差异 ≤ 1%?}
+    E -->|是| F[标记警告]
+    E -->|否| G[记录勾稽错误]
+
+    D --> H{毛利润 = 收入 - 成本?}
+    H -->|是| I[核对其他勾稽关系]
+    H -->|否| G
+
+    I --> J{所有检查通过?}
+    J -->|是| K[返回通过]
+    J -->|否| L[返回失败+错误列表]
+
+    F --> K
+    G --> L
+```
+
+### 2.3 单位转换流程（新增）
+
+```mermaid
+flowchart LR
+    A[原始数据] --> B{识别原始单位}
+    B -->|元| C[基准值]
+    B -->|万元| D[×10000]
+    B -->|亿元| E[×100000000]
+
+    D --> C
+    E --> C
+
+    C --> F{用户选择单位}
+    F -->|元| G[直接输出]
+    F -->|万元| H[÷10000]
+    F -->|亿元| I[÷100000000]
+
+    H --> J[格式化输出]
+    I --> J
+    G --> J
+```
+
+### 2.4 三模型验证流程
 
 ```mermaid
 sequenceDiagram
@@ -183,12 +246,21 @@ src/
 │   │   ├── DropZone.jsx           # 拖拽区域
 │   │   └── FileInfo.jsx           # 文件信息显示
 │   │
+│   ├── UnitSelector/              # ← 新增
+│   │   ├── index.jsx              # 单位选择器组件
+│   │   └── UnitOption.jsx         # 单位选项
+│   │
 │   ├── ExtractionResult/
 │   │   ├── index.jsx              # 结果展示主组件
 │   │   ├── CompanyInfo.jsx        # 公司信息卡片
 │   │   ├── MetricsTable.jsx       # 财务指标表格
 │   │   ├── NonFinancialInfo.jsx   # 非财务信息
-│   │   └── ValidationDetail.jsx   # 验证详情
+│   │   ├── ValidationDetail.jsx   # 验证详情
+│   │   └── AccountingCheckPanel.jsx  # ← 新增：勾稽核对面板
+│   │
+│   ├── HistoryPanel/
+│   │   ├── index.jsx              # 历史记录面板
+│   │   └── HistoryItem.jsx        # 历史记录项
 │   │
 │   ├── HistoryPanel/
 │   │   ├── index.jsx              # 历史记录面板
@@ -237,6 +309,8 @@ backend/
 │   │   ├── PDFService.js          # PDF处理服务
 │   │   ├── ExtractionService.js   # 提取协调服务
 │   │   ├── ValidationService.js   # 验证服务
+│   │   ├── AccountingCheckService.js  # ← 新增：勾稽核对服务
+│   │   ├── UnitConvertService.js      # ← 新增：单位转换服务
 │   │   └── ExportService.js       # 导出服务
 │   │
 │   ├── adapters/
@@ -328,6 +402,7 @@ backend/
 | POST | /api/extract | 提取数据 | FormData | ExtractionResult |
 | POST | /api/validate-key | 验证API Key | ValidateKeyRequest | ValidateKeyResponse |
 | GET | /api/models | 获取支持的模型列表 | - | ModelList |
+| POST | /api/convert-unit | 单位转换 | UnitConvertRequest | UnitConvertResponse |
 
 ### 4.2 接口详细设计
 
@@ -346,7 +421,9 @@ backend/
   modelCKey: 'sk-xxx...',       // 模型C API Key
   options: JSON.stringify({     // 可选参数
     metrics: ['营业收入', '净利润'],  // 指定指标
-    infoTypes: ['risk', 'plan']      // 指定非财务信息类型
+    infoTypes: ['risk', 'plan'],     // 指定非财务信息类型
+    displayUnit: 'wan',              // ← 新增：显示单位（yuan/wan/yi）
+    maxRetries: 3                    // ← 新增：勾稽失败最大重试次数
   })
 }
 ```
@@ -364,9 +441,29 @@ backend/
     },
     financialMetrics: [...],
     nonFinancialInfo: [...],
+    // ← 新增：勾稽核对结果
+    accountingCheck: {
+      isValid: true,
+      retryCount: 0,
+      checks: [
+        {
+          name: "资产负债表平衡",
+          formula: "总资产 = 总负债 + 净资产",
+          passed: true,
+          difference: 0,
+          differencePercent: 0
+        }
+      ]
+    },
+    // ← 新增：单位信息
+    unitInfo: {
+      originalUnit: "yi",      // PDF原始单位
+      displayUnit: "wan"       // 显示单位
+    },
     metadata: {
       extractedAt: "2026-03-20T10:30:00Z",
       processingTimeMs: 32000,
+      retryCount: 0,           // ← 新增：重试次数
       modelsUsed: {
         modelA: "claude-3-5-sonnet",
         modelB: "gpt-4o",
@@ -606,7 +703,319 @@ module.exports = AdapterFactory;
 
 ---
 
-## 六、Prompt设计
+## 六、勾稽核对服务设计（新增）
+
+### 6.1 服务职责
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    AccountingCheckService                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  职责:                                                          │
+│  1. 对AI提取的财务数据进行勾稽关系核对                           │
+│  2. 发现勾稽关系错误时，触发重新提取                             │
+│  3. 记录核对结果，生成用户可理解的警告信息                       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 6.2 核心代码实现
+
+```javascript
+// AccountingCheckService.js
+class AccountingCheckService {
+  constructor() {
+    // 定义勾稽关系规则
+    this.rules = [
+      {
+        name: '资产负债表平衡',
+        formula: '总资产 = 总负债 + 净资产',
+        check: (data) => {
+          const left = data.totalAssets;
+          const right = data.totalLiabilities + data.netAssets;
+          const diff = Math.abs(left - right);
+          const diffPercent = left > 0 ? (diff / left) * 100 : 0;
+          return {
+            passed: diffPercent <= 1, // 1%容差
+            leftSide: left,
+            rightSide: right,
+            difference: diff,
+            differencePercent: diffPercent
+          };
+        }
+      },
+      {
+        name: '毛利润计算',
+        formula: '毛利润 = 营业收入 - 营业成本',
+        check: (data) => {
+          const expected = data.revenue - data.cost;
+          const actual = data.grossProfit;
+          const diff = Math.abs(expected - actual);
+          const diffPercent = expected > 0 ? (diff / expected) * 100 : 0;
+          return {
+            passed: diffPercent <= 1,
+            expected: expected,
+            actual: actual,
+            difference: diff,
+            differencePercent: diffPercent
+          };
+        }
+      },
+      {
+        name: '流动资产校验',
+        formula: '流动资产 ≤ 总资产',
+        check: (data) => ({
+          passed: data.currentAssets <= data.totalAssets,
+          currentAssets: data.currentAssets,
+          totalAssets: data.totalAssets
+        })
+      },
+      {
+        name: '流动负债校验',
+        formula: '流动负债 ≤ 总负债',
+        check: (data) => ({
+          passed: data.currentLiabilities <= data.totalLiabilities,
+          currentLiabilities: data.currentLiabilities,
+          totalLiabilities: data.totalLiabilities
+        })
+      }
+    ];
+  }
+
+  /**
+   * 执行勾稽关系核对
+   * @param {Object} extractedData - AI提取的数据
+   * @returns {Object} 核对结果
+   */
+  check(extractedData) {
+    const results = this.rules.map(rule => {
+      const checkResult = rule.check(extractedData);
+      return {
+        name: rule.name,
+        formula: rule.formula,
+        passed: checkResult.passed,
+        ...checkResult
+      };
+    });
+
+    const allPassed = results.every(r => r.passed);
+    const failedChecks = results.filter(r => !r.passed);
+
+    return {
+      isValid: allPassed,
+      checks: results,
+      failedChecks: failedChecks,
+      summary: this.generateSummary(allPassed, failedChecks)
+    };
+  }
+
+  /**
+   * 生成核对摘要
+   */
+  generateSummary(allPassed, failedChecks) {
+    if (allPassed) {
+      return '所有勾稽关系核对通过';
+    }
+    return `发现 ${failedChecks.length} 项勾稽关系异常：${failedChecks.map(c => c.name).join('、')}`;
+  }
+}
+
+module.exports = AccountingCheckService;
+```
+
+### 6.3 重试机制
+
+```javascript
+// ExtractionService.js 中的重试逻辑
+class ExtractionService {
+  constructor() {
+    this.accountingCheckService = new AccountingCheckService();
+    this.maxRetries = 3;
+  }
+
+  async extractWithRetry(pdfImages, config, retryCount = 0) {
+    // 1. 执行AI提取
+    const extractedData = await this.extract(pdfImages, config);
+
+    // 2. 执行勾稽核对
+    const checkResult = this.accountingCheckService.check(extractedData);
+
+    // 3. 如果勾稽失败且未超过重试次数
+    if (!checkResult.isValid && retryCount < this.maxRetries) {
+      console.log(`勾稽核对失败（第${retryCount + 1}次），准备重试...`);
+
+      // 优化Prompt，强调勾稽关系
+      const enhancedPrompt = this.enhancePromptWithAccountingHints(
+        config.prompt,
+        checkResult.failedChecks,
+        retryCount
+      );
+
+      // 重新提取
+      return this.extractWithRetry(
+        pdfImages,
+        { ...config, prompt: enhancedPrompt },
+        retryCount + 1
+      );
+    }
+
+    // 4. 返回最终结果（包含勾稽核对信息）
+    return {
+      ...extractedData,
+      accountingCheck: {
+        ...checkResult,
+        retryCount: retryCount
+      }
+    };
+  }
+
+  /**
+   * 根据重试次数优化Prompt
+   */
+  enhancePromptWithAccountingHints(originalPrompt, failedChecks, retryCount) {
+    const hints = failedChecks.map(c => `【${c.formula}】`).join('、');
+
+    if (retryCount === 0) {
+      return `${originalPrompt}\n\n⚠️ 特别注意：请确保以下勾稽关系成立：${hints}`;
+    } else if (retryCount === 1) {
+      return `${originalPrompt}\n\n🔴 重要警告：上次提取的数据勾稽关系不正确，请仔细核对以下关系：\n${failedChecks.map(c => `  - ${c.name}：${c.formula}`).join('\n')}`;
+    } else {
+      return `${originalPrompt}\n\n🚨 最终警告：这是最后一次尝试，请务必确保勾稽关系正确：\n${failedChecks.map(c => `  - ${c.name}：${c.formula}（上次差异：${c.differencePercent?.toFixed(2)}%）`).join('\n')}`;
+    }
+  }
+}
+```
+
+---
+
+## 七、单位转换服务设计（新增）
+
+### 7.1 服务职责
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     UnitConvertService                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  职责:                                                          │
+│  1. 识别PDF中财务数据的原始单位                                  │
+│  2. 将所有数据转换为统一单位（元为基准）                         │
+│  3. 根据用户选择显示单位进行转换                                 │
+│  4. 格式化输出（千分位、小数位）                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 7.2 核心代码实现
+
+```javascript
+// UnitConvertService.js
+class UnitConvertService {
+  constructor() {
+    // 单位转换系数（以"元"为基准）
+    this.factors = {
+      yuan: 1,
+      wan: 10000,        // 万
+      yi: 100000000      // 亿
+    };
+
+    // 单位显示名称
+    this.unitNames = {
+      yuan: '元',
+      wan: '万元',
+      yi: '亿元'
+    };
+  }
+
+  /**
+   * 将值从源单位转换为目标单位
+   */
+  convert(value, fromUnit, toUnit, decimalPlaces = 2) {
+    // 先转换为元（基准单位）
+    const valueInYuan = value * this.factors[fromUnit];
+    // 再转换为目标单位
+    const convertedValue = valueInYuan / this.factors[toUnit];
+    // 格式化
+    return this.format(convertedValue, decimalPlaces);
+  }
+
+  /**
+   * 格式化数字（千分位 + 小数位）
+   */
+  format(value, decimalPlaces = 2) {
+    return value.toLocaleString('zh-CN', {
+      minimumFractionDigits: decimalPlaces,
+      maximumFractionDigits: decimalPlaces
+    });
+  }
+
+  /**
+   * 批量转换财务指标
+   */
+  convertMetrics(metrics, originalUnit, displayUnit) {
+    return metrics.map(metric => {
+      // 比率类指标不转换
+      if (metric.category === 'calculated' && metric.name.includes('率')) {
+        return metric;
+      }
+
+      return {
+        ...metric,
+        value: this.convert(metric.value, originalUnit, displayUnit),
+        unit: displayUnit,
+        originalValue: metric.value,
+        originalUnit: originalUnit
+      };
+    });
+  }
+
+  /**
+   * 获取单位显示名称
+   */
+  getUnitName(unit) {
+    return this.unitNames[unit] || unit;
+  }
+}
+
+module.exports = UnitConvertService;
+```
+
+### 7.3 前端单位选择组件
+
+```jsx
+// UnitSelector/index.jsx
+import React from 'react';
+import { Radio, Typography } from 'antd';
+
+const { Text } = Typography;
+
+const UnitSelector = ({ value, onChange }) => {
+  return (
+    <div className="unit-selector">
+      <Text strong>📐 显示单位</Text>
+      <Radio.Group
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ marginTop: 8 }}
+      >
+        <Radio.Button value="yuan">元</Radio.Button>
+        <Radio.Button value="wan">万元</Radio.Button>
+        <Radio.Button value="yi">亿元</Radio.Button>
+      </Radio.Group>
+      <Text type="secondary" style={{ display: 'block', marginTop: 4, fontSize: 12 }}>
+        所有数据将以选定单位统一显示
+      </Text>
+    </div>
+  );
+};
+
+export default UnitSelector;
+```
+
+---
+
+## 八、Prompt设计
 
 ### 6.1 数据提取Prompt
 

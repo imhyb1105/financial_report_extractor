@@ -63,6 +63,25 @@ class UnitConvertService {
       })
     }
 
+    // 转换模型对比数据中的财务指标
+    if (result.modelResults) {
+      result.modelResults = { ...result.modelResults }
+
+      if (result.modelResults.modelA) {
+        result.modelResults.modelA = {
+          ...result.modelResults.modelA,
+          financialMetrics: this.convertMetrics(result.modelResults.modelA.financialMetrics, targetUnit)
+        }
+      }
+
+      if (result.modelResults.modelB) {
+        result.modelResults.modelB = {
+          ...result.modelResults.modelB,
+          financialMetrics: this.convertMetrics(result.modelResults.modelB.financialMetrics, targetUnit)
+        }
+      }
+    }
+
     // 记录单位信息
     result.unitInfo = {
       displayUnit: targetUnit,
@@ -70,6 +89,41 @@ class UnitConvertService {
     }
 
     return result
+  }
+
+  /**
+   * 转换财务指标数组
+   * @param {Array} metrics - 财务指标数组
+   * @param {string} targetUnit - 目标单位
+   */
+  convertMetrics(metrics, targetUnit) {
+    if (!metrics || !Array.isArray(metrics)) return metrics
+
+    return metrics.map(metric => {
+      // 比率类指标不转换
+      if (this.isRatioMetric(metric.name)) {
+        return metric
+      }
+
+      const originalUnit = metric.unit || 'yuan'
+      const originalValue = metric.value
+
+      if (originalValue === null || originalValue === undefined) {
+        return metric
+      }
+
+      // 先转换为元
+      const valueInYuan = originalValue * this.toYuan[originalUnit]
+
+      // 再转换为目标单位
+      const convertedValue = valueInYuan / this.toYuan[targetUnit]
+
+      return {
+        ...metric,
+        value: convertedValue,
+        unit: targetUnit
+      }
+    })
   }
 
   /**

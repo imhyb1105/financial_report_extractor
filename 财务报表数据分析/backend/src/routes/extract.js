@@ -34,6 +34,7 @@ const upload = multer({
 })
 
 // 数据提取接口
+// V1.7: 返回debugLog字段用于调试
 router.post('/', upload.single('pdf'), async (req, res, next) => {
   try {
     if (!req.file) {
@@ -61,15 +62,21 @@ router.post('/', upload.single('pdf'), async (req, res, next) => {
     const parsedModels = typeof models === 'string' ? JSON.parse(models) : models
 
     const extractionService = new ExtractionService()
-    const result = await extractionService.extract(
+    const { data, debugLog } = await extractionService.extract(
       req.file.path,
       parsedModels,
       displayUnit || 'wan'
     )
 
+    // 调试日志：检查 modelResults 结构
+    console.log(`[ExtractRoute] Result keys: ${Object.keys(data).join(', ')}`)
+    console.log(`[ExtractRoute] modelResults exists: ${!!data.modelResults}`)
+    console.log(`[ExtractRoute] debugLog.modelCalls: ${debugLog?.modelCalls?.length || 0}`)
+
     res.json({
       success: true,
-      data: result
+      data,
+      debugLog // V1.7: 新增调试日志字段
     })
   } catch (error) {
     next(error)

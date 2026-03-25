@@ -7,14 +7,14 @@ import { validateApiKey } from '../../services/apiService'
 const { Password } = Input
 
 const MODEL_PROVIDERS = [
-  { value: 'claude', label: 'Anthropic Claude', models: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'] },
-  { value: 'openai', label: 'OpenAI GPT-4', models: ['gpt-4o', 'gpt-4-turbo'] },
-  { value: 'gemini', label: 'Google Gemini', models: ['gemini-1.5-pro', 'gemini-1.5-flash'] },
-  { value: 'deepseek', label: 'DeepSeek', models: ['deepseek-chat', 'deepseek-coder'] },
-  { value: 'kimi', label: 'Moonshot Kimi', models: ['moonshot-v1-8k', 'moonshot-v1-32k'] },
-  { value: 'glm', label: '智谱AI GLM-4', models: ['glm-4', 'glm-4-flash'] },
-  { value: 'minimax', label: 'MiniMax', models: ['abab6.5-chat', 'abab5.5-chat'] },
-  { value: 'doubao', label: '豆包(火山引擎)', models: ['doubao-seed-2-0-pro-260215'] }
+  { value: 'claude', label: 'Anthropic（Claude系列）', models: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'], helpText: '支持 Claude-3.5-Sonnet、 Claude-3-Opus 等' },
+  { value: 'openai', label: 'OpenAI（GPT系列）', models: ['gpt-4o', 'gpt-4-turbo'], helpText: '支持 GPT-4o, GPT-4-Turbo 等' },
+  { value: 'gemini', label: 'Google（Gemini系列）', models: ['gemini-1.5-pro', 'gemini-1.5-flash'], helpText: '支持 Gemini-1.5-Pro, Gemini-1.5-Flash 等' },
+  { value: 'deepseek', label: 'DeepSeek（深度求索）', models: ['deepseek-chat', 'deepseek-coder'], helpText: '支持 DeepSeek-Chat, DeepSeek-Coder 等' },
+  { value: 'kimi', label: 'Moonshot（Kimi系列）', models: ['moonshot-v1-8k', 'moonshot-v1-32k'], helpText: '支持 moonshot-v1-8k, moonshot-v1-32k 等' },
+  { value: 'glm', label: '智谱AI（GLM系列）', models: ['glm-4', 'glm-4-flash', 'glm-5'], helpText: '支持 GLM-4, GLM-4-Flash, GLM-5 等' },
+  { value: 'minimax', label: 'MiniMax', models: ['abab6.5-chat', 'abab5.5-chat'], helpText: '支持 abab6.5-chat, abab5.5-chat 等' },
+  { value: 'doubao', label: '豆包（火山方舟）', models: ['doubao-seed-2-0-pro-260215'], helpText: '支持 Doubao-Seed-2.0-pro/lite/mini 等' }
 ]
 
 function ModelConfig() {
@@ -50,6 +50,7 @@ function ModelConfig() {
   const renderModelItem = (role, label) => {
     const config = modelConfigs[role]
     const isTesting = testing[role]
+    const selectedProvider = MODEL_PROVIDERS.find(p => p.value === config.provider)
 
     return (
       <div style={{ marginBottom: 16 }}>
@@ -64,9 +65,15 @@ function ModelConfig() {
           placeholder="选择模型提供商"
           value={config.provider || undefined}
           onChange={(value) => setModelConfig(role, { provider: value, valid: false })}
-          style={{ width: '100%', marginBottom: 8 }}
+          style={{ width: '100%', marginBottom: 4 }}
           options={MODEL_PROVIDERS.map(p => ({ value: p.value, label: p.label }))}
         />
+
+        {selectedProvider && (
+          <div style={{ fontSize: 11, color: '#888', marginBottom: 8, paddingLeft: 4 }}>
+            💡 {selectedProvider.helpText}
+          </div>
+        )}
 
         <Space.Compact style={{ width: '100%' }}>
           <Password

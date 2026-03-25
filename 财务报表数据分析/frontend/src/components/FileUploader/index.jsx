@@ -71,11 +71,13 @@ function FileUploader() {
     startExtraction()
 
     try {
-      const result = await extractData(file, validModels, displayUnit, (progress) => {
+      // V1.7: extractData 返回 { data, debugLog }
+      const { data: result, debugLog } = await extractData(file, validModels, displayUnit, (progress) => {
         setExtractionProgress(progress)
       })
 
-      setExtractionResult(result)
+      // V1.7: 传递 debugLog 到 store
+      setExtractionResult(result, debugLog)
 
       // 添加到历史记录
       addToHistory({

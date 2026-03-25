@@ -1,6 +1,7 @@
 /**
  * 勾稽关系核对服务
  * 检查财务数据之间的逻辑关系
+ * V1.10: 增强计算详情输出，添加calculationDetail字段
  */
 class AccountingCheckService {
   constructor() {
@@ -8,19 +9,37 @@ class AccountingCheckService {
     this.rules = [
       {
         name: '资产负债表平衡',
-        formula: '总资产 = 总负债 + 净资产',
+        formula: '总资产 = 总负债 + 所有者权益合计',
         check: (data) => {
           const totalAssets = this.getMetricValue(data, '总资产')
           const totalLiabilities = this.getMetricValue(data, '总负债')
-          const netAssets = this.getMetricValue(data, '净资产')
+          // V1.9: 使用"所有者权益合计"而非"净资产"进行平衡校验
+          const totalEquity = this.getMetricValue(data, '所有者权益合计') || this.getMetricValue(data, '净资产')
 
-          if (!totalAssets || !totalLiabilities || !netAssets) {
+          if (!totalAssets || !totalLiabilities || !totalEquity) {
             return { passed: true, status: 'pass', note: '数据不完整，跳过检查' }
           }
 
-          const expected = totalLiabilities + netAssets
+          const expected = totalLiabilities + totalEquity
           const diff = Math.abs(totalAssets - expected)
           const diffPercent = (diff / totalAssets) * 100
+
+          // V1.10: 添加详细计算过程
+          const calculationDetail = {
+            items: [
+              { label: '总资产', value: totalAssets },
+              { label: '总负债', value: totalLiabilities },
+              { label: '所有者权益合计', value: totalEquity }
+            ],
+            calculation: `总负债 + 所有者权益合计 = ${this.formatNumber(totalLiabilities)} + ${this.formatNumber(totalEquity)} = ${this.formatNumber(expected)}`,
+            expected: expected,
+            actual: totalAssets,
+            difference: diff,
+            differencePercent: diffPercent,
+            conclusion: diffPercent <= 1
+              ? '差异在容差范围内，核对通过'
+              : '差异超过容差，请检查数据'
+          }
 
           return {
             passed: diffPercent <= 1,
@@ -30,12 +49,96 @@ class AccountingCheckService {
             difference: diff,
             differencePercent: diffPercent,
             tolerance: 1,
-            suggestion: diffPercent > 0.01
+            note: diffPercent > 0.01
               ? `差异${diffPercent.toFixed(2)}%，可能是四舍五入导致`
-              : '完全平衡'
+              : '完全平衡',
+            suggestion: diffPercent > 1
+              ? `请检查：总资产(${totalAssets.toFixed(2)}) 应等于 总负债(${totalLiabilities.toFixed(2)}) + 所有者权益合计(${totalEquity.toFixed(2)}) = ${expected.toFixed(2)}`
+              : '数据核对通过',
+            calculationDetail // V1.10: 新增
           }
         },
         priority: 0
+      },
+      {
+        name: '所有者权益构成',
+        formula: '所有者权益合计 = 归母权益 + 少数股东权益',
+        check: (data) => {
+          const totalEquity = this.getMetricValue(data, '所有者权益合计')
+          const parentEquity = this.getMetricValue(data, '归属于母公司所有者权益合计') || this.getMetricValue(data, '归母权益')
+          const minorityEquity = this.getMetricValue(data, '少数股东权益')
+
+          if (!totalEquity) {
+            return { passed: true, status: 'pass', note: '数据不完整，跳过检查' }
+          }
+
+          // 如果有归母权益但没有少数股东权益，计算少数股东权益
+          if (parentEquity && !minorityEquity) {
+            const calculatedMinority = totalEquity - parentEquity
+            if (Math.abs(calculatedMinority) < totalEquity * 0.01) {
+              return {
+                passed: true,
+                status: 'pass',
+                note: `少数股东权益接近0，所有者权益主要由归母权益构成`,
+                suggestion: '数据核对通过',
+                calculationDetail: {
+                  items: [
+                    { label: '所有者权益合计', value: totalEquity },
+                    { label: '归母权益', value: parentEquity },
+                    { label: '少数股东权益', value: 0, note: '（推算）' }
+                  ],
+                  calculation: `归母权益 + 少数股东权益 = ${this.formatNumber(parentEquity)} + 0 ≈ ${this.formatNumber(totalEquity)}`,
+                  expected: totalEquity,
+                  actual: totalEquity,
+                  difference: 0,
+                  differencePercent: 0,
+                  conclusion: '少数股东权益可忽略，核对通过'
+                }
+              }
+            }
+          }
+
+          if (!parentEquity || !minorityEquity) {
+            return { passed: true, status: 'pass', note: '缺少细分数据，跳过检查' }
+          }
+
+          const expected = parentEquity + minorityEquity
+          const diff = Math.abs(totalEquity - expected)
+          const diffPercent = (diff / totalEquity) * 100
+
+          // V1.10: 添加详细计算过程
+          const calculationDetail = {
+            items: [
+              { label: '所有者权益合计', value: totalEquity },
+              { label: '归母权益', value: parentEquity },
+              { label: '少数股东权益', value: minorityEquity }
+            ],
+            calculation: `归母权益 + 少数股东权益 = ${this.formatNumber(parentEquity)} + ${this.formatNumber(minorityEquity)} = ${this.formatNumber(expected)}`,
+            expected: expected,
+            actual: totalEquity,
+            difference: diff,
+            differencePercent: diffPercent,
+            conclusion: diffPercent <= 1
+              ? '差异在容差范围内，核对通过'
+              : '差异超过容差，请检查数据'
+          }
+
+          return {
+            passed: diffPercent <= 1,
+            status: diffPercent <= 0.01 ? 'pass' : diffPercent <= 1 ? 'warning' : 'fail',
+            leftSide: totalEquity,
+            rightSide: expected,
+            difference: diff,
+            differencePercent: diffPercent,
+            tolerance: 1,
+            note: diffPercent <= 0.01
+              ? '所有者权益构成正确'
+              : `差异${diffPercent.toFixed(2)}%`,
+            suggestion: '数据核对通过',
+            calculationDetail // V1.10: 新增
+          }
+        },
+        priority: 1
       },
       {
         name: '毛利润计算',
@@ -53,6 +156,25 @@ class AccountingCheckService {
           const diff = grossProfit ? Math.abs(grossProfit - expected) : 0
           const diffPercent = grossProfit ? (diff / expected) * 100 : 0
 
+          // V1.10: 添加详细计算过程
+          const calculationDetail = {
+            items: [
+              { label: '营业收入', value: revenue },
+              { label: '营业成本', value: cost },
+              { label: '毛利润（提取值）', value: grossProfit }
+            ],
+            calculation: `营业收入 - 营业成本 = ${this.formatNumber(revenue)} - ${this.formatNumber(cost)} = ${this.formatNumber(expected)}`,
+            expected: expected,
+            actual: grossProfit,
+            difference: diff,
+            differencePercent: diffPercent,
+            conclusion: !grossProfit
+              ? '未提取到毛利润数据'
+              : diffPercent <= 1
+                ? '差异在容差范围内，核对通过'
+                : '差异超过容差，请检查数据'
+          }
+
           return {
             passed: !grossProfit || diffPercent <= 1,
             status: !grossProfit ? 'warning' : diffPercent <= 0.01 ? 'pass' : diffPercent <= 1 ? 'warning' : 'fail',
@@ -61,7 +183,15 @@ class AccountingCheckService {
             difference: diff,
             differencePercent: diffPercent,
             tolerance: 1,
-            suggestion: grossProfit ? '毛利润计算正确' : '未提取毛利润，建议补充'
+            note: !grossProfit
+              ? 'PDF中未找到"毛利润"数据，无法验证计算是否正确'
+              : diffPercent > 0.01
+                ? `计算值(${expected.toFixed(2)})与提取值(${grossProfit.toFixed(2)})存在${diffPercent.toFixed(2)}%差异`
+                : '毛利润计算正确',
+            suggestion: !grossProfit
+              ? `建议手动核对：毛利润应为 营业收入(${revenue.toFixed(2)}) - 营业成本(${cost.toFixed(2)}) = ${expected.toFixed(2)}`
+              : '数据核对通过',
+            calculationDetail // V1.10: 新增
           }
         },
         priority: 0
@@ -78,16 +208,35 @@ class AccountingCheckService {
           }
 
           const passed = currentAssets <= totalAssets
+          const diff = currentAssets - totalAssets
+          const diffPercent = (diff / totalAssets) * 100
+
+          // V1.10: 添加详细计算过程
+          const calculationDetail = {
+            items: [
+              { label: '流动资产', value: currentAssets },
+              { label: '总资产', value: totalAssets }
+            ],
+            calculation: `流动资产(${this.formatNumber(currentAssets)}) ${passed ? '≤' : '>'} 总资产(${this.formatNumber(totalAssets)})`,
+            expected: totalAssets,
+            actual: currentAssets,
+            difference: Math.abs(diff),
+            differencePercent: Math.abs(diffPercent),
+            conclusion: passed
+              ? '流动资产不超过总资产，逻辑正确'
+              : '流动资产超过总资产，数据异常'
+          }
 
           return {
             passed,
             status: passed ? 'pass' : 'fail',
             leftSide: currentAssets,
             rightSide: totalAssets,
-            difference: currentAssets - totalAssets,
-            differencePercent: ((currentAssets - totalAssets) / totalAssets) * 100,
+            difference: diff,
+            differencePercent: diffPercent,
             tolerance: 0,
-            suggestion: passed ? '逻辑正确' : '流动资产不应超过总资产'
+            suggestion: passed ? '逻辑正确' : '流动资产不应超过总资产',
+            calculationDetail // V1.10: 新增
           }
         },
         priority: 1
@@ -104,16 +253,35 @@ class AccountingCheckService {
           }
 
           const passed = currentLiabilities <= totalLiabilities
+          const diff = currentLiabilities - totalLiabilities
+          const diffPercent = (diff / totalLiabilities) * 100
+
+          // V1.10: 添加详细计算过程
+          const calculationDetail = {
+            items: [
+              { label: '流动负债', value: currentLiabilities },
+              { label: '总负债', value: totalLiabilities }
+            ],
+            calculation: `流动负债(${this.formatNumber(currentLiabilities)}) ${passed ? '≤' : '>'} 总负债(${this.formatNumber(totalLiabilities)})`,
+            expected: totalLiabilities,
+            actual: currentLiabilities,
+            difference: Math.abs(diff),
+            differencePercent: Math.abs(diffPercent),
+            conclusion: passed
+              ? '流动负债不超过总负债，逻辑正确'
+              : '流动负债超过总负债，数据异常'
+          }
 
           return {
             passed,
             status: passed ? 'pass' : 'fail',
             leftSide: currentLiabilities,
             rightSide: totalLiabilities,
-            difference: currentLiabilities - totalLiabilities,
-            differencePercent: ((currentLiabilities - totalLiabilities) / totalLiabilities) * 100,
+            difference: diff,
+            differencePercent: diffPercent,
             tolerance: 0,
-            suggestion: passed ? '逻辑正确' : '流动负债不应超过总负债'
+            suggestion: passed ? '逻辑正确' : '流动负债不应超过总负债',
+            calculationDetail // V1.10: 新增
           }
         },
         priority: 1
@@ -134,11 +302,27 @@ class AccountingCheckService {
           const expectedPercent = expected * 100
 
           if (!debtRatio) {
+            // V1.10: 添加详细计算过程（无提取值情况）
+            const calculationDetail = {
+              items: [
+                { label: '总负债', value: totalLiabilities },
+                { label: '总资产', value: totalAssets },
+                { label: '资产负债率（提取值）', value: null, note: '未提取' }
+              ],
+              calculation: `总负债 / 总资产 = ${this.formatNumber(totalLiabilities)} / ${this.formatNumber(totalAssets)} = ${(expectedPercent).toFixed(2)}%`,
+              expected: expected,
+              actual: null,
+              difference: 0,
+              differencePercent: 0,
+              conclusion: '未提取到资产负债率数据，建议手动核对'
+            }
+
             return {
               passed: true,
               status: 'warning',
-              note: '未提取资产负债率',
-              suggestion: `建议补充资产负债率: ${(expectedPercent).toFixed(2)}%`
+              note: 'PDF中未找到"资产负债率"数据，无法验证计算是否正确',
+              suggestion: `建议手动核对：资产负债率应为 总负债(${totalLiabilities.toFixed(2)}) / 总资产(${totalAssets.toFixed(2)}) = ${expectedPercent.toFixed(2)}%`,
+              calculationDetail // V1.10: 新增
             }
           }
 
@@ -146,6 +330,23 @@ class AccountingCheckService {
           const ratioValue = debtRatio > 1 ? debtRatio / 100 : debtRatio
           const diff = Math.abs(ratioValue - expected)
           const diffPercent = diff * 100
+
+          // V1.10: 添加详细计算过程
+          const calculationDetail = {
+            items: [
+              { label: '总负债', value: totalLiabilities },
+              { label: '总资产', value: totalAssets },
+              { label: '资产负债率（提取值）', value: ratioValue, note: debtRatio > 1 ? '(已转换为小数)' : '' }
+            ],
+            calculation: `总负债 / 总资产 = ${this.formatNumber(totalLiabilities)} / ${this.formatNumber(totalAssets)} = ${(expectedPercent).toFixed(2)}%`,
+            expected: expected,
+            actual: ratioValue,
+            difference: diff,
+            differencePercent: diffPercent,
+            conclusion: diffPercent <= 1
+              ? '差异在容差范围内，核对通过'
+              : '差异超过容差，请检查数据'
+          }
 
           return {
             passed: diffPercent <= 1,
@@ -155,12 +356,25 @@ class AccountingCheckService {
             difference: diff,
             differencePercent: diffPercent,
             tolerance: 1,
-            suggestion: `计算值: ${(expectedPercent).toFixed(2)}%`
+            note: diffPercent <= 0.1
+              ? '资产负债率计算正确'
+              : `提取值(${(ratioValue * 100).toFixed(2)}%)与计算值(${expectedPercent.toFixed(2)}%)存在${diffPercent.toFixed(2)}%差异`,
+            suggestion: `正确值应为: ${expectedPercent.toFixed(2)}%`,
+            calculationDetail // V1.10: 新增
           }
         },
         priority: 2
       }
     ]
+  }
+
+  /**
+   * V1.10: 格式化数字显示
+   */
+  formatNumber(num) {
+    if (num === null || num === undefined) return '-'
+    if (typeof num !== 'number') return String(num)
+    return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 
   /**
@@ -210,13 +424,25 @@ class AccountingCheckService {
 
   /**
    * 获取指标值
+   * V1.10: 修复模糊匹配问题，优先精确匹配
    */
   getMetricValue(data, name) {
     if (!data.financialMetrics) return null
 
-    const metric = data.financialMetrics.find(m =>
-      m.name === name || m.name.includes(name) || name.includes(m.name)
-    )
+    // 1. 首先尝试精确匹配
+    let metric = data.financialMetrics.find(m => m.name === name)
+    if (metric) return metric.value
+
+    // 2. 尝试以指定名称开头的匹配（避免"所有者权益合计"匹配到"归属于母公司所有者权益合计"）
+    metric = data.financialMetrics.find(m => m.name.startsWith(name + '（') || m.name.startsWith(name + '('))
+    if (metric) return metric.value
+
+    // 3. 最后尝试包含匹配（但要排除更长的名称）
+    metric = data.financialMetrics.find(m => {
+      // 如果指标名比查找名长很多，可能是不同的指标
+      if (m.name.length > name.length + 4) return false
+      return m.name.includes(name)
+    })
 
     return metric ? metric.value : null
   }

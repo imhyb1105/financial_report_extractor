@@ -19,6 +19,7 @@ export async function validateApiKey(provider, apiKey) {
 }
 
 // 提取数据
+// V1.7: 返回 { data, debugLog } 结构
 export async function extractData(file, models, displayUnit, onProgress) {
   const formData = new FormData()
   formData.append('pdf', file)
@@ -45,7 +46,14 @@ export async function extractData(file, models, displayUnit, onProgress) {
     clearInterval(progressInterval)
     onProgress?.(100)
 
-    return response.data
+    // V1.7: 后端返回 { success: true, data, debugLog }
+    const { success, data, debugLog } = response.data
+
+    if (!success) {
+      throw new Error(response.data.error?.message || '提取失败')
+    }
+
+    return { data, debugLog }
   } catch (error) {
     clearInterval(progressInterval)
     throw new Error(error.response?.data?.error || error.message)

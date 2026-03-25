@@ -34,6 +34,7 @@ export const useStore = create(
       extractionProgress: 0,
       extractionResult: null,
       extractionError: null,
+      debugLog: null, // V1.7: AI调试日志
 
       // 历史记录
       history: [],
@@ -59,16 +60,21 @@ export const useStore = create(
 
       setExtractionProgress: (progress) => set({ extractionProgress: progress }),
 
-      setExtractionResult: (result) => set({
+      setExtractionResult: (result, debugLog = null) => set({
         isExtracting: false,
         extractionProgress: 100,
-        extractionResult: result
+        extractionResult: result,
+        debugLog // V1.7: 存储调试日志
       }),
 
       setExtractionError: (error) => set({
         isExtracting: false,
-        extractionError: error
+        extractionError: error,
+        debugLog: null
       }),
+
+      // V1.7: 清除调试日志
+      clearDebugLog: () => set({ debugLog: null }),
 
       addToHistory: (record) => set(state => ({
         history: [record, ...state.history].slice(0, 50) // 保留最近50条

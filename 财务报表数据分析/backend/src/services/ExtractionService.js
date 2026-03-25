@@ -3,10 +3,12 @@ import AccountingCheckService from './AccountingCheckService.js'
 import UnitConvertService from './UnitConvertService.js'
 import AdapterFactory from '../adapters/AdapterFactory.js'
 import aiLogService from './AILogService.js'
+import StatsService from './StatsService.js'
 
 /**
  * 数据提取协调服务
  * V1.7: 集成AI日志服务，支持调试日志输出
+ * V2.0: 集成使用统计服务，记录耗时和Token用量
  */
 class ExtractionService {
   constructor() {
@@ -28,75 +30,137 @@ class ExtractionService {
     console.log(`[ExtractionService] Models: ${models.map(m => m.role).join(', ')}`)
     console.log(`[ExtractionService] Display unit: ${displayUnit}`)
 
+    // V2.0: 记录开始时间
+    const startTime = Date.now()
+    let success = true
+    let errorMessage = null
+
     // V1.7: 开始日志会话
     const sessionId = aiLogService.startSession()
 
-    // 1. PDF转换为图片（同时获取完整文本用于验证）
-    const pdfResult = await this.pdfService.convertToImages(pdfPath)
-    const images = pdfResult.pages
-    const pdfFullText = pdfResult.fullText
-    console.log(`[ExtractionService] Converted ${images.length} pages, text length: ${pdfFullText.length}`)
+    // V2.0: Token 统计
+    const tokenBreakdown = { modelA: 0, modelB: 0, modelC: 0 }
 
-    // 2. 根据模型数量选择提取策略
-    let result
-    const retryCount = 0
+    try {
+      // 1. PDF转换为图片（同时获取完整文本用于验证）
+      const pdfResult = await this.pdfService.convertToImages(pdfPath)
+      const images = pdfResult.pages
+      const pdfFullText = pdfResult.fullText
+      console.log(`[ExtractionService] Converted ${images.length} pages, text length: ${pdfFullText.length}`)
 
-    if (models.length === 1) {
-      // 单模型模式
-      result = await this.singleModelExtract(models[0], images, pdfPath)
-    } else if (models.length === 2) {
-      // 双模型模式
-      result = await this.dualModelExtract(models[0], models[1], images, pdfPath)
-    } else {
-      // 三模型验证模式
-      result = await this.triModelExtract(models[0], models[1], models[2], images, pdfPath)
-    }
+      // 2. 根据模型数量选择提取策略
+      let result
 
-    // 3. 模拟数据检测与验证
-    const mockDataCheck = this.detectMockData(result, pdfFullText)
-    if (mockDataCheck.isMockData) {
-      console.warn(`[ExtractionService] Mock data detected: ${mockDataCheck.reasons.join(', ')}`)
-      result.extractionWarning = `检测到可能的模拟数据: ${mockDataCheck.reasons.join('; ')}`
-      result.confidence = 'low'
-    }
+      if (models.length === 1) {
+        // 单模型模式
+        result = await this.singleModelExtract(models[0], images, pdfPath)
+        // V2.0: 记录Token
+        if (result.tokens) tokenBreakdown.modelA = result.tokens
+      } else if (models.length === 2) {
+        // 双模型模式
+        result = await this.dualModelExtract(models[0], models[1], images, pdfPath)
+        // V2.0: 记录Token
+        if (result.modelA?.tokens) tokenBreakdown.modelA = result.modelA.tokens
+        if (result.modelB?.tokens) tokenBreakdown.modelB = result.modelB.tokens
+      } else {
+        // 三模型验证模式
+        result = await this.triModelExtract(models[0], models[1], models[2], images, pdfPath)
+        // V2.0: 记录Token
+        if (result.modelA?.tokens) tokenBreakdown.modelA = result.modelA.tokens
+        if (result.modelB?.tokens) tokenBreakdown.modelB = result.modelB.tokens
+        if (result.modelC?.tokens) tokenBreakdown.modelC = result.modelC.tokens
+      }
 
-    // 4. 勾稽关系核对（带重试）
-    result = await this.extractWithAccountingCheck(
-      () => result,
-      images,
-      pdfPath,
-      models
-    )
+      // 3. 模拟数据检测与验证
+      const mockDataCheck = this.detectMockData(result, pdfFullText)
+      if (mockDataCheck.isMockData) {
+        console.warn(`[ExtractionService] Mock data detected: ${mockDataCheck.reasons.join(', ')}`)
+        result.extractionWarning = `检测到可能的模拟数据: ${mockDataCheck.reasons.join('; ')}`
+        result.confidence = 'low'
+      }
 
-    // V1.12: 根据勾稽核对结果修正置信度
-    result = this.adjustConfidenceBasedOnResults(result, models.length)
+      // 4. 勾稽关系核对（带重试）
+      result = await this.extractWithAccountingCheck(
+        () => result,
+        images,
+        pdfPath,
+        models
+      )
 
-    // 5. 单位转换
-    result = this.unitConvertService.convert(result, displayUnit)
+      // V1.12: 根据勾稽核对结果修正置信度
+      result = this.adjustConfidenceBasedOnResults(result, models.length)
 
-    // 6. 添加元数据
-    result.metadata = {
-      extractedAt: new Date().toISOString(),
-      modelCount: models.length,
-      extractionMode: models.length === 1 ? 'single' : models.length === 2 ? 'dual' : 'tri',
-      displayUnit,
-      pdfInfo: {
-        path: pdfPath,
-        pageCount: images.length,
-        textLength: pdfFullText.length
-      },
-      mockDataCheck
-    }
+      // 5. 单位转换
+      result = this.unitConvertService.convert(result, displayUnit)
 
-    // V1.9: 生成置信度原因
-    result.confidenceReason = this.generateConfidenceReason(result, models.length, mockDataCheck)
+      // 6. 添加元数据
+      result.metadata = {
+        extractedAt: new Date().toISOString(),
+        modelCount: models.length,
+        extractionMode: models.length === 1 ? 'single' : models.length === 2 ? 'dual' : 'tri',
+        displayUnit,
+        pdfInfo: {
+          path: pdfPath,
+          pageCount: images.length,
+          textLength: pdfFullText.length
+        },
+        mockDataCheck
+      }
 
-    // V1.7: 构建调试日志
-    const debugLog = aiLogService.buildDebugLog(result)
+      // V1.9: 生成置信度原因
+      result.confidenceReason = this.generateConfidenceReason(result, models.length, mockDataCheck)
 
-    return {
-      data: result,
-      debugLog
+      // V1.7: 构建调试日志
+      const debugLog = aiLogService.buildDebugLog(result)
+
+      // V2.0: 计算总耗时
+      const totalDuration = Date.now() - startTime
+      const totalTokens = tokenBreakdown.modelA + tokenBreakdown.modelB + tokenBreakdown.modelC
+
+      // V2.0: 添加使用统计到结果
+      result.usage = {
+        totalDuration,
+        formattedDuration: StatsService.formatDuration(totalDuration),
+        totalTokens,
+        breakdown: tokenBreakdown
+      }
+
+      // V2.0: 记录使用统计到数据库
+      const extractionMode = models.length === 1 ? 'single' : models.length === 2 ? 'dual' : 'tri'
+      const confidenceScore = typeof result.confidence === 'number' ? result.confidence : 3
+
+      await StatsService.recordUsage({
+        sessionId,
+        extractionMode,
+        totalDuration,
+        totalTokens,
+        tokenBreakdown,
+        confidenceScore,
+        success: true
+      })
+
+      return {
+        data: result,
+        debugLog
+      }
+    } catch (err) {
+      success = false
+      errorMessage = err.message
+      console.error('[ExtractionService] Extraction failed:', err)
+
+      // V2.0: 记录失败统计
+      const totalDuration = Date.now() - startTime
+      await StatsService.recordUsage({
+        sessionId,
+        extractionMode: models.length === 1 ? 'single' : models.length === 2 ? 'dual' : 'tri',
+        totalDuration,
+        totalTokens: 0,
+        confidenceScore: 1,
+        success: false,
+        errorMessage
+      })
+
+      throw err
     }
   }
 

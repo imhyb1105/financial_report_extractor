@@ -7,6 +7,9 @@ import rateLimiter from './middleware/rateLimiter.js'
 import extractRouter from './routes/extract.js'
 import validateRouter from './routes/validate.js'
 import modelsRouter from './routes/models.js'
+import feedbackRouter from './routes/feedback.js'
+import adminRouter from './routes/admin.js'
+import { initDatabase } from '../database/db.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -25,12 +28,14 @@ app.use('/uploads', express.static(join(__dirname, '../uploads')))
 app.use('/api/extract', extractRouter)
 app.use('/api/validate', validateRouter)
 app.use('/api/models', modelsRouter)
+app.use('/api/feedback', feedbackRouter)
+app.use('/api/admin', adminRouter)
 
 // 健康检查
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    version: '1.0.0',
+    version: '2.0.0',
     timestamp: new Date().toISOString()
   })
 })
@@ -51,9 +56,24 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT, () => {
-  console.log(`🚀 服务器运行在 http://localhost:${PORT}`)
-  console.log(`📚 API 文档: http://localhost:${PORT}/api/health`)
-})
+// 启动服务器并初始化数据库
+async function startServer() {
+  try {
+    // 初始化数据库
+    console.log('🔄 正在初始化数据库...')
+    await initDatabase()
+    console.log('✅ 数据库初始化完成')
+
+    app.listen(PORT, () => {
+      console.log(`🚀 服务器运行在 http://localhost:${PORT}`)
+      console.log(`📚 API 文档: http://localhost:${PORT}/api/health`)
+    })
+  } catch (err) {
+    console.error('❌ 启动失败:', err)
+    process.exit(1)
+  }
+}
+
+startServer()
 
 export default app

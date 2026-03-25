@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
-import { Card, Table, Tag, Tabs, Descriptions, Alert, Button, Space, Tooltip, Typography } from 'antd'
+import { Card, Table, Tag, Tabs, Descriptions, Alert, Button, Space, Tooltip, Typography, Divider } from 'antd'
 import {
   DownloadOutlined,
   CheckCircleOutlined,
   WarningOutlined,
   CloseCircleOutlined,
   InfoCircleOutlined,
-  BugOutlined
+  BugOutlined,
+  ClockCircleOutlined,
+  TokenOutlined
 } from '@ant-design/icons'
 import { useStore } from '../../store/useStore'
 import { exportToExcel } from '../../services/exportService'
@@ -45,7 +47,7 @@ function ExtractionResult() {
 
   if (!extractionResult) return null
 
-  const { companyInfo, financialMetrics, nonFinancialInfo, accountingCheck, confidence, confidenceReason, modelResults, extractionWarning } = extractionResult
+  const { companyInfo, financialMetrics, nonFinancialInfo, accountingCheck, confidence, confidenceReason, modelResults, extractionWarning, usage } = extractionResult
 
   const handleExport = () => {
     exportToExcel(extractionResult, displayUnit)
@@ -457,6 +459,22 @@ function ExtractionResult() {
           <Space>
             <Title level={4} style={{ margin: 0 }}>提取结果</Title>
             {renderConfidenceTag(confidence || 'medium', confidenceReason)}
+            {/* V2.0: 使用统计显示 */}
+            {usage && (
+              <>
+                <Divider type="vertical" />
+                <Space size="middle">
+                  <Text type="secondary">
+                    <ClockCircleOutlined style={{ marginRight: 4 }} />
+                    耗时: {usage.formattedDuration || `${usage.totalDuration}ms`}
+                  </Text>
+                  <Text type="secondary">
+                    <TokenOutlined style={{ marginRight: 4 }} />
+                    Token: {usage.totalTokens?.toLocaleString() || '-'}
+                  </Text>
+                </Space>
+              </>
+            )}
           </Space>
         }
         extra={

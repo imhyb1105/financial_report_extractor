@@ -1,31 +1,27 @@
 import React from 'react'
-import { Layout, Typography } from 'antd'
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { Layout, Typography, Button, Space } from 'antd'
+import { FileTextOutlined, MessageOutlined, SafetyOutlined } from '@ant-design/icons'
 import ModelConfig from './components/ModelConfig'
 import FileUploader from './components/FileUploader'
 import UnitSelector from './components/UnitSelector'
 import ExtractionResult from './components/ExtractionResult'
 import HistoryPanel from './components/HistoryPanel'
+import DisclaimerPage from './pages/DisclaimerPage'
+import FeedbackPage from './pages/FeedbackPage'
+import AdminLoginPage from './pages/admin/AdminLoginPage'
+import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import { useStore } from './store/useStore'
 
-const { Header, Content, Sider } = Layout
-const { Title } = Typography
+const { Header, Content, Sider, Footer } = Layout
+const { Title, Text } = Typography
 
-function App() {
+// 主页面组件
+function HomePage() {
   const { extractionResult, isExtracting } = useStore()
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{
-        background: '#001529',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 24px'
-      }}>
-        <Title level={3} style={{ color: '#fff', margin: 0 }}>
-          智能财务报表数据提取工具
-        </Title>
-      </Header>
-
       <Layout>
         <Sider width={320} theme="light" style={{ padding: '16px', overflow: 'auto' }}>
           <ModelConfig />
@@ -59,6 +55,95 @@ function App() {
         </Content>
       </Layout>
     </Layout>
+  )
+}
+
+// 导航栏组件
+function AppHeader() {
+  const location = useLocation()
+  const isAdminPage = location.pathname.startsWith('/admin')
+
+  if (isAdminPage) {
+    return null // 管理员页面有自己的头部
+  }
+
+  return (
+    <Header style={{
+      background: '#001529',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '0 24px'
+    }}>
+      <Link to="/" style={{ textDecoration: 'none' }}>
+        <Title level={3} style={{ color: '#fff', margin: 0 }}>
+          智能财务报表数据提取工具
+        </Title>
+      </Link>
+      <Space>
+        <Link to="/feedback">
+          <Button type="text" icon={<MessageOutlined />} style={{ color: '#fff' }}>
+            反馈
+          </Button>
+        </Link>
+        <Link to="/disclaimer">
+          <Button type="text" icon={<SafetyOutlined />} style={{ color: '#fff' }}>
+            免责声明
+          </Button>
+        </Link>
+      </Space>
+    </Header>
+  )
+}
+
+// 主应用布局
+function AppLayout() {
+  const location = useLocation()
+  const isAdminPage = location.pathname.startsWith('/admin')
+  const isDisclaimerPage = location.pathname === '/disclaimer'
+  const isFeedbackPage = location.pathname === '/feedback'
+
+  // 这些页面使用独立布局
+  if (isAdminPage || isDisclaimerPage || isFeedbackPage) {
+    return (
+      <Routes>
+        <Route path="/disclaimer" element={<DisclaimerPage />} />
+        <Route path="/feedback" element={<FeedbackPage />} />
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+      </Routes>
+    )
+  }
+
+  // 主页面布局
+  return (
+    <Layout style={{ minHeight: '100vh' }}>
+      <AppHeader />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/disclaimer" element={<DisclaimerPage />} />
+        <Route path="/feedback" element={<FeedbackPage />} />
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+      </Routes>
+      <Footer style={{ textAlign: 'center', background: '#f5f5f5' }}>
+        <Space split={<Text type="secondary">|</Text>}>
+          <Link to="/disclaimer">免责声明</Link>
+          <Link to="/feedback">用户反馈</Link>
+          <Link to="/admin/login">管理员入口</Link>
+        </Space>
+        <br />
+        <Text type="secondary">© 2026 智能财务报表数据提取工具 V2.0</Text>
+      </Footer>
+    </Layout>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppLayout />
+    </BrowserRouter>
   )
 }
 

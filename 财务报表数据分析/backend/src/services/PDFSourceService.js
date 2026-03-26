@@ -1,11 +1,10 @@
 /**
  * PDF数据源服务
- * V2.3 新增
+ * V2.5.1 重构 - 通过后端代理访问真实API
  * 支持从多个数据源自动抓取财务报表PDF
  */
 
 import axios from 'axios'
-import * as cheerio from 'cheerio'
 
 /**
  * 数据源配置
@@ -14,30 +13,12 @@ const DATA_SOURCES = {
   eastmoney: {
     name: '东方财富',
     priority: 1,
-    searchUrl: 'https://searchapi.eastmoney.com/bussiness/web/QuotationLabelSearch',
-    reportUrl: 'https://data.eastmoney.com/notices/stock',
     enabled: true
   },
   cninfo: {
     name: '巨潮资讯',
     priority: 2,
-    searchUrl: 'http://www.cninfo.com.cn/new/fulltextSearch',
-    reportUrl: 'http://www.cninfo.com.cn/new/disclosure',
     enabled: true
-  },
-  sse: {
-    name: '上交所',
-    priority: 3,
-    searchUrl: 'http://query.sse.com.cn/security/stock/queryCompanyBulletin',
-    reportUrl: 'http://www.sse.com.cn/assortment/stock/list/info/announcement',
-    enabled: false // 需要特殊处理
-  },
-  szse: {
-    name: '深交所',
-    priority: 3,
-    searchUrl: 'http://www.szse.cn/api/disc/announcement/annList',
-    reportUrl: 'http://www.szse.cn/disclosure/listed/notice',
-    enabled: false // 需要特殊处理
   }
 }
 
@@ -48,7 +29,7 @@ class PDFSourceService {
   constructor() {
     this.sources = DATA_SOURCES
     this.timeout = 30000
-    this.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    this.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   }
 
   /**
@@ -62,60 +43,99 @@ class PDFSourceService {
     // 优先使用东方财富搜索
     try {
       const eastmoneyResults = await this.searchEastMoney(keyword)
-      results.push(...eastmoneyResults)
+      if (eastmoneyResults.length > 0) {
+        return eastmoneyResults
+      }
     } catch (error) {
       console.error('东方财富搜索失败:', error.message)
     }
 
     // 如果东方财富没有结果，尝试巨潮资讯
-    if (results.length === 0) {
-      try {
-        const cninfoResults = await this.searchCNInfo(keyword)
-        results.push(...cninfoResults)
-      } catch (error) {
-        console.error('巨潮资讯搜索失败:', error.message)
-      }
+    try {
+      const cninfoResults = await this.searchCNInfo(keyword)
+      results.push(...cninfoResults)
+    } catch (error) {
+      console.error('巨潮资讯搜索失败:', error.message)
     }
 
-    // 去重
-    const uniqueResults = this.deduplicateResults(results)
-
-    return uniqueResults
+    return results
   }
 
   /**
-   * 东方财富搜索
+   * 东方财富搜索 - 使用正确的API
    * @param {string} keyword - 搜索关键词
    * @returns {Promise<Array>}
    */
   async searchEastMoney(keyword) {
-    try {
-      const response = await axios.get(this.sources.eastmoney.searchUrl, {
-        params: {
-          keyword: keyword,
-          type: 'stock'
-        },
-        timeout: this.timeout,
-        headers: {
-          'User-Agent': this.userAgent,
-          'Referer': 'https://data.eastmoney.com/'
-        }
-      })
+    // 东方财富股票搜索API
+    const url = 'https://searchapi.eastmoney.com/bussiness/web/QuotationLabelSearch'
 
-      const data = response.data
-      if (!data || !data.Data) return []
+    const response = await axios.get(url, {
+      params: {
+        keyword: keyword,
+        type: 'stock',
+        pi: 'qt'
+      },
+      timeout: this.timeout,
+      headers: {
+        'User-Agent': this.userAgent,
+        'Referer': 'https://data.eastmoney.com/',
+        'Accept': 'application/json, text/plain, */*'
+      }
+    })
 
-      return data.Data.map(item => ({
-        code: item.Code || item.SECUCODE,
-        name: item.Name || item.SECURITY_NAME_ABBR,
-        market: this.getMarketFromCode(item.Code || item.SECUCODE),
+    const data = response.data
+    if (!data || !data.Data || data.Data.length === 0) {
+      // 尝试备用API
+      return await this.searchEastMoneyBackup(keyword)
+    }
+
+    return data.Data.map(item => ({
+      code: item.Code || item.SECUCODE?.split('.')[0],
+      name: item.Name || item.SECURITY_NAME_ABBR,
+      market: this.getMarketFromCode(item.Code || item.SECUCODE?.split('.')[0]),
+      source: 'eastmoney',
+      sourceName: '东方财富'
+    }))
+  }
+
+  /**
+   * 东方财富备用搜索API
+   * @param {string} keyword - 搜索关键词
+   * @returns {Promise<Array>}
+   */
+  async searchEastMoneyBackup(keyword) {
+    const url = 'https://searchapi.eastmoney.com/api/suggest/get'
+
+    const response = await axios.get(url, {
+      params: {
+        input: keyword,
+        type: '14',
+        token: 'D43BF722C8E33BDC906FB84D85E326E8',
+        count: 10
+      },
+      timeout: this.timeout,
+      headers: {
+        'User-Agent': this.userAgent,
+        'Referer': 'https://quote.eastmoney.com/',
+        'Accept': '*/*'
+      }
+    })
+
+    const data = response.data
+    if (!data || !data.Data) {
+      return []
+    }
+
+    return data.Data
+      .filter(item => item.Type === 'stock') // 只返回股票
+      .map(item => ({
+        code: item.Code,
+        name: item.Name,
+        market: this.getMarketFromCode(item.Code),
         source: 'eastmoney',
         sourceName: '东方财富'
       }))
-    } catch (error) {
-      // 如果API失败，使用模拟数据
-      return this.getMockSearchResults(keyword)
-    }
   }
 
   /**
@@ -124,42 +144,38 @@ class PDFSourceService {
    * @returns {Promise<Array>}
    */
   async searchCNInfo(keyword) {
-    try {
-      const response = await axios.get(this.sources.cninfo.searchUrl, {
-        params: {
-          key: keyword,
-          type: 'sh'
-        },
+    const url = 'http://www.cninfo.com.cn/new/information/topSearch'
+
+    const response = await axios.post(
+      url,
+      new URLSearchParams({
+        key: keyword,
+        maxNum: 10
+      }),
+      {
         timeout: this.timeout,
         headers: {
           'User-Agent': this.userAgent,
+          'Content-Type': 'application/x-www-form-urlencoded',
           'Referer': 'http://www.cninfo.com.cn/'
         }
-      })
+      }
+    )
 
-      const html = response.data
-      const $ = cheerio.load(html)
-      const results = []
-
-      // 解析搜索结果页面
-      $('.search-result-item').each((i, el) => {
-        const code = $(el).find('.code').text().trim()
-        const name = $(el).find('.name').text().trim()
-        if (code && name) {
-          results.push({
-            code,
-            name,
-            market: this.getMarketFromCode(code),
-            source: 'cninfo',
-            sourceName: '巨潮资讯'
-          })
-        }
-      })
-
-      return results
-    } catch (error) {
-      return this.getMockSearchResults(keyword)
+    const data = response.data
+    if (!data || !Array.isArray(data)) {
+      return []
     }
+
+    return data
+      .filter(item => item.code) // 确保有股票代码
+      .map(item => ({
+        code: item.code,
+        name: item.name || item.title,
+        market: this.getMarketFromCode(item.code),
+        source: 'cninfo',
+        sourceName: '巨潮资讯'
+      }))
   }
 
   /**
@@ -169,30 +185,25 @@ class PDFSourceService {
    * @returns {Promise<Array>}
    */
   async getAnnualReports(code, market = 'sh') {
-    const results = []
-
-    // 尝试东方财富
+    // 优先尝试东方财富
     try {
-      const eastmoneyReports = await this.getEastMoneyReports(code, market)
-      results.push(...eastmoneyReports)
+      const reports = await this.getEastMoneyReports(code, market)
+      if (reports.length > 0) {
+        return reports
+      }
     } catch (error) {
       console.error('获取东方财富年报失败:', error.message)
     }
 
-    // 如果没有结果，尝试巨潮资讯
-    if (results.length === 0) {
-      try {
-        const cninfoReports = await this.getCNInfoReports(code, market)
-        results.push(...cninfoReports)
-      } catch (error) {
-        console.error('获取巨潮资讯年报失败:', error.message)
-      }
+    // 尝试巨潮资讯
+    try {
+      const reports = await this.getCNInfoReports(code, market)
+      return reports
+    } catch (error) {
+      console.error('获取巨潮资讯年报失败:', error.message)
     }
 
-    // 按日期排序
-    results.sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate))
-
-    return results
+    return []
   }
 
   /**
@@ -202,44 +213,46 @@ class PDFSourceService {
    * @returns {Promise<Array>}
    */
   async getEastMoneyReports(code, market) {
-    try {
-      const secucode = market === 'sh' ? `${code}.SH` : `${code}.SZ`
-      const response = await axios.get('https://data.eastmoney.com/api/data/v1/get', {
-        params: {
-          reportName: 'RPT_ANN_LIST',
-          columns: 'SECURITY_CODE,SECURITY_NAME_ABBR,NOTICE_DATE,TITLE,ADJUST_URL',
-          filter: `(SECUCODE="${secucode}")`,
-          pageNumber: 1,
-          pageSize: 20,
-          sortColumns: 'NOTICE_DATE',
-          sortTypes: '-1'
-        },
-        timeout: this.timeout,
-        headers: {
-          'User-Agent': this.userAgent,
-          'Referer': 'https://data.eastmoney.com/'
-        }
-      })
+    const secucode = market === 'sh' ? `${code}.SH` : `${code}.SZ`
 
-      const data = response.data
-      if (!data || !data.result || !data.result.data) return []
+    // 东方财富公告API
+    const url = 'https://data.eastmoney.com/api/data/v1/get'
 
-      // 过滤年报
-      return data.result.data
-        .filter(item => this.isAnnualReport(item.TITLE))
-        .map(item => ({
-          title: item.TITLE,
-          code: item.SECURITY_CODE,
-          name: item.SECURITY_NAME_ABBR,
-          publishDate: item.NOTICE_DATE,
-          url: item.ADJUST_URL,
-          source: 'eastmoney',
-          sourceName: '东方财富'
-        }))
-    } catch (error) {
-      // 返回模拟数据
-      return this.getMockReports(code, 'eastmoney')
+    const response = await axios.get(url, {
+      params: {
+        reportName: 'RPT_ANN_LIST',
+        columns: 'SECURITY_CODE,SECURITY_NAME_ABBR,NOTICE_DATE,TITLE,ADJUST_URL',
+        filter: `(SECUCODE="${secucode}")`,
+        pageNumber: 1,
+        pageSize: 30,
+        sortColumns: 'NOTICE_DATE',
+        sortTypes: '-1'
+      },
+      timeout: this.timeout,
+      headers: {
+        'User-Agent': this.userAgent,
+        'Referer': 'https://data.eastmoney.com/',
+        'Accept': 'application/json, text/plain, */*'
+      }
+    })
+
+    const data = response.data
+    if (!data || !data.result || !data.result.data) {
+      return []
     }
+
+    // 过滤年报
+    return data.result.data
+      .filter(item => this.isAnnualReport(item.TITLE))
+      .map(item => ({
+        title: item.TITLE,
+        code: item.SECURITY_CODE,
+        name: item.SECURITY_NAME_ABBR,
+        publishDate: item.NOTICE_DATE,
+        url: item.ADJUST_URL,
+        source: 'eastmoney',
+        sourceName: '东方财富'
+      }))
   }
 
   /**
@@ -249,43 +262,48 @@ class PDFSourceService {
    * @returns {Promise<Array>}
    */
   async getCNInfoReports(code, market) {
-    try {
-      const response = await axios.post(
-        'http://www.cninfo.com.cn/new/hisAnnouncement/query',
-        new URLSearchParams({
-          stock: code,
-          tabName: 'fulltext',
-          pageSize: 20,
-          pageNum: 1,
-          seDate: '',
-          searchkey: '年度报告',
-          category: 'category_ndbg_szsh'
-        }),
-        {
-          timeout: this.timeout,
-          headers: {
-            'User-Agent': this.userAgent,
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Referer': 'http://www.cninfo.com.cn/'
-          }
+    const url = 'http://www.cninfo.com.cn/new/hisAnnouncement/query'
+
+    const secCode = market === 'sh' ? `sh${code}` : `sz${code}`
+
+    const response = await axios.post(
+      url,
+      new URLSearchParams({
+        stock: secCode,
+        tabName: 'fulltext',
+        pageSize: 30,
+        pageNum: 1,
+        seDate: '',
+        searchkey: '年度报告',
+        category: 'category_ndbg_szsh',
+        isHLtitle: 'true'
+      }),
+      {
+        timeout: this.timeout,
+        headers: {
+          'User-Agent': this.userAgent,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Referer': 'http://www.cninfo.com.cn/'
         }
-      )
+      }
+    )
 
-      const data = response.data
-      if (!data || !data.announcements) return []
+    const data = response.data
+    if (!data || !data.announcements) {
+      return []
+    }
 
-      return data.announcements.map(item => ({
+    return data.announcements
+      .filter(item => this.isAnnualReport(item.announcementTitle))
+      .map(item => ({
         title: item.announcementTitle,
         code: item.secCode,
         name: item.secName,
-        publishDate: item.announcementTime,
-        url: `http://www.cninfo.com.cn/new/disclosure/detail?stockCode=${item.secCode}&announcementId=${item.announcementId}`,
+        publishDate: this.formatTimestamp(item.announcementTime),
+        url: `http://www.cninfo.com.cn/new/disclosure/detail?stockCode=${item.secCode}&announcementId=${item.announcementId}&orgId=${item.orgId}`,
         source: 'cninfo',
         sourceName: '巨潮资讯'
       }))
-    } catch (error) {
-      return this.getMockReports(code, 'cninfo')
-    }
   }
 
   /**
@@ -294,19 +312,17 @@ class PDFSourceService {
    * @returns {Promise<Buffer>}
    */
   async downloadPDF(url) {
-    try {
-      const response = await axios.get(url, {
-        responseType: 'arraybuffer',
-        timeout: 60000,
-        headers: {
-          'User-Agent': this.userAgent
-        }
-      })
+    const response = await axios.get(url, {
+      responseType: 'arraybuffer',
+      timeout: 60000,
+      maxRedirects: 5,
+      headers: {
+        'User-Agent': this.userAgent,
+        'Accept': 'application/pdf,*/*'
+      }
+    })
 
-      return Buffer.from(response.data)
-    } catch (error) {
-      throw new Error(`PDF下载失败: ${error.message}`)
-    }
+    return Buffer.from(response.data)
   }
 
   /**
@@ -316,8 +332,8 @@ class PDFSourceService {
    */
   isAnnualReport(title) {
     if (!title) return false
-    const keywords = ['年度报告', '年报', '年度报告摘要']
-    const excludeKeywords = ['摘要', '更正', '补充', '取消']
+    const keywords = ['年度报告', '年报']
+    const excludeKeywords = ['摘要', '更正', '补充', '取消', '英文版', '港股']
 
     const hasKeyword = keywords.some(k => title.includes(k))
     const hasExclude = excludeKeywords.some(k => title.includes(k))
@@ -332,81 +348,28 @@ class PDFSourceService {
    */
   getMarketFromCode(code) {
     if (!code) return 'unknown'
-    if (code.startsWith('6')) return 'sh'
-    if (code.startsWith('0') || code.startsWith('3')) return 'sz'
-    if (code.startsWith('4') || code.startsWith('8')) return 'bj'
+    const cleanCode = code.replace(/^[a-zA-Z]+/, '') // 移除前缀
+    if (cleanCode.startsWith('6')) return 'sh'
+    if (cleanCode.startsWith('0') || cleanCode.startsWith('3')) return 'sz'
+    if (cleanCode.startsWith('4') || cleanCode.startsWith('8')) return 'bj'
     return 'unknown'
   }
 
   /**
-   * 结果去重
-   * @param {Array} results - 搜索结果
-   * @returns {Array}
+   * 格式化时间戳
+   * @param {number|string} timestamp - 时间戳
+   * @returns {string}
    */
-  deduplicateResults(results) {
-    const seen = new Set()
-    return results.filter(item => {
-      const key = `${item.code}-${item.name}`
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-  }
-
-  /**
-   * 获取模拟搜索结果
-   * @param {string} keyword - 搜索关键词
-   * @returns {Array}
-   */
-  getMockSearchResults(keyword) {
-    // 常用股票数据
-    const mockData = [
-      { code: '600519', name: '贵州茅台', market: 'sh' },
-      { code: '000858', name: '五粮液', market: 'sz' },
-      { code: '000001', name: '平安银行', market: 'sz' },
-      { code: '600036', name: '招商银行', market: 'sh' },
-      { code: '601318', name: '中国平安', market: 'sh' },
-      { code: '000333', name: '美的集团', market: 'sz' },
-      { code: '600276', name: '恒瑞医药', market: 'sh' },
-      { code: '000002', name: '万科A', market: 'sz' }
-    ]
-
-    // 根据关键词过滤
-    const filtered = mockData.filter(item =>
-      item.code.includes(keyword) || item.name.includes(keyword)
-    )
-
-    return filtered.map(item => ({
-      ...item,
-      source: 'mock',
-      sourceName: '模拟数据'
-    }))
-  }
-
-  /**
-   * 获取模拟年报数据
-   * @param {string} code - 股票代码
-   * @param {string} source - 数据源
-   * @returns {Array}
-   */
-  getMockReports(code, source) {
-    const currentYear = new Date().getFullYear()
-    const reports = []
-
-    for (let i = 0; i < 3; i++) {
-      const year = currentYear - i - 1
-      reports.push({
-        title: `${year}年年度报告`,
-        code: code,
-        name: '公司名称',
-        publishDate: `${year + 1}-03-31`,
-        url: `#mock-pdf-${code}-${year}`,
-        source: source,
-        sourceName: source === 'eastmoney' ? '东方财富' : '巨潮资讯'
-      })
+  formatTimestamp(timestamp) {
+    if (!timestamp) return ''
+    try {
+      if (typeof timestamp === 'number') {
+        return new Date(timestamp).toISOString().split('T')[0]
+      }
+      return timestamp.split(' ')[0] // 如果是字符串格式
+    } catch {
+      return ''
     }
-
-    return reports
   }
 
   /**

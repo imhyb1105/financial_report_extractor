@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
-import { Layout, Typography, Button, Space } from 'antd'
+import { Layout, Typography, Button, Space, Result } from 'antd'
 import { FileTextOutlined, MessageOutlined, SafetyOutlined } from '@ant-design/icons'
 import ModelConfig from './components/ModelConfig'
 import FileUploader from './components/FileUploader'
@@ -8,6 +8,7 @@ import UnitSelector from './components/UnitSelector'
 import ExtractionResult from './components/ExtractionResult'
 import HistoryPanel from './components/HistoryPanel'
 import PDFAutoCapture from './components/PDFAutoCapture'
+import DisclaimerModal, { hasAgreedDisclaimer } from './components/DisclaimerModal'
 import DisclaimerPage from './pages/DisclaimerPage'
 import FeedbackPage from './pages/FeedbackPage'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
@@ -147,8 +148,51 @@ function AppLayout() {
 }
 
 function App() {
+  const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [disagreed, setDisagreed] = useState(false)
+
+  useEffect(() => {
+    // 检查是否已同意免责声明
+    if (!hasAgreedDisclaimer()) {
+      setShowDisclaimer(true)
+    }
+  }, [])
+
+  const handleAgree = () => {
+    setShowDisclaimer(false)
+  }
+
+  const handleDisagree = () => {
+    setDisagreed(true)
+  }
+
+  // 用户不同意免责声明
+  if (disagreed) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f5f5f5'
+      }}>
+        <Result
+          status="info"
+          title="感谢您的访问"
+          subTitle="您需要同意免责声明才能使用本工具。如有疑问，请联系我们。"
+        />
+      </div>
+    )
+  }
+
   return (
     <BrowserRouter>
+      {showDisclaimer && (
+        <DisclaimerModal
+          onAgree={handleAgree}
+          onDisagree={handleDisagree}
+        />
+      )}
       <AppLayout />
     </BrowserRouter>
   )

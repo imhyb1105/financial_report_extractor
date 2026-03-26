@@ -1,0 +1,15 @@
+{
+  "testEnvironment": "node",
+  "testMatch": ["**/tests/**/*.test.js"],
+  "transform": {},
+  "moduleFileExtensions": ["js", "mjs"],
+  "collectCoverageFrom": [
+    "src/**/*.js",
+    "!src/app.js"
+  ],
+  "coverageDirectory": "coverage",
+  "verbose": true,
+  "testTimeout": 30000,
+  "detectOpenHandles": true,
+  "forceExit": true
+}

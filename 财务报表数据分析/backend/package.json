@@ -1,6 +1,6 @@
 {
   "name": "financial-report-extractor-backend",
-  "version": "2.0.0",
+  "version": "2.5.0",
   "description": "智能财务报表数据提取工具 - 后端API",
   "type": "module",
   "main": "src/app.js",
@@ -13,6 +13,7 @@
   "dependencies": {
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
+    "cheerio": "^1.2.0",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
     "dotenv": "^16.3.1",

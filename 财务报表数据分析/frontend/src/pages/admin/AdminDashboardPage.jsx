@@ -7,7 +7,7 @@ import { Layout, Card, Row, Col, Statistic, Table, Tag, Button, message, Typogra
 import {
   DashboardOutlined, MessageOutlined, BarChartOutlined,
   BugOutlined, BulbOutlined, BookOutlined, CommentOutlined,
-  ClockCircleOutlined, TokenOutlined, CheckCircleOutlined,
+  ClockCircleOutlined, ApiOutlined, CheckCircleOutlined,
   CloseCircleOutlined, LogoutOutlined, EyeOutlined, SendOutlined
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -267,7 +267,7 @@ function AdminDashboardPage() {
                     <Statistic
                       title="今日Token"
                       value={overview?.today?.total_tokens || 0}
-                      prefix={<TokenOutlined />}
+                      prefix={<ApiOutlined />}
                     />
                   </Card>
                 </Col>

@@ -1,6 +1,6 @@
 {
   "name": "financial-report-extractor-frontend",
-  "version": "2.0.0",
+  "version": "2.5.0",
   "description": "智能财务报表数据提取工具 - 前端",
   "type": "module",
   "scripts": {
@@ -17,6 +17,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.30.3",
+    "recharts": "^2.15.4",
     "xlsx": "^0.18.5",
     "zustand": "^4.4.7"
   },

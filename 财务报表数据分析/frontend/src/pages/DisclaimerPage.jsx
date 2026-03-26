@@ -4,7 +4,7 @@
  */
 import React from 'react'
 import { Card, Typography, Divider, Button, Space } from 'antd'
-import { SafetyOutlined, LockOutlined, WarningOutlined, FileTextOutlined, BanOutlined, CopyrightOutlined, SwapOutlined, CustomerServiceOutlined } from '@ant-design/icons'
+import { SafetyOutlined, LockOutlined, WarningOutlined, FileTextOutlined, StopOutlined, CopyrightOutlined, SyncOutlined, CustomerServiceOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 
 const { Title, Paragraph, Text } = Typography
@@ -49,7 +49,7 @@ const disclaimerSections = [
     ]
   },
   {
-    icon: <BanOutlined style={{ fontSize: 20, color: '#722ed1' }} />,
+    icon: <StopOutlined style={{ fontSize: 20, color: '#722ed1' }} />,
     title: '五、使用限制',
     content: null,
     list: [
@@ -70,7 +70,7 @@ const disclaimerSections = [
     ]
   },
   {
-    icon: <SwapOutlined style={{ fontSize: 20, color: '#eb2f96' }} />,
+    icon: <SyncOutlined style={{ fontSize: 20, color: '#eb2f96' }} />,
     title: '七、服务变更与终止',
     content: null,
     list: [

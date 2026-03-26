@@ -7,6 +7,7 @@ import FileUploader from './components/FileUploader'
 import UnitSelector from './components/UnitSelector'
 import ExtractionResult from './components/ExtractionResult'
 import HistoryPanel from './components/HistoryPanel'
+import PDFAutoCapture from './components/PDFAutoCapture'
 import DisclaimerPage from './pages/DisclaimerPage'
 import FeedbackPage from './pages/FeedbackPage'
 import AdminLoginPage from './pages/admin/AdminLoginPage'
@@ -27,6 +28,12 @@ function HomePage() {
           <ModelConfig />
           <div style={{ marginTop: 16 }}>
             <UnitSelector />
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <PDFAutoCapture onPDFSelected={(file, report) => {
+              // 当从PDF自动抓取选择文件时的回调
+              console.log('Selected PDF:', file, report)
+            }} />
           </div>
           <div style={{ marginTop: 16 }}>
             <HistoryPanel />
@@ -133,7 +140,7 @@ function AppLayout() {
           <Link to="/admin/login">管理员入口</Link>
         </Space>
         <br />
-        <Text type="secondary">© 2026 智能财务报表数据提取工具 V2.0</Text>
+        <Text type="secondary">© 2026 智能财务报表数据提取工具 V2.5</Text>
       </Footer>
     </Layout>
   )

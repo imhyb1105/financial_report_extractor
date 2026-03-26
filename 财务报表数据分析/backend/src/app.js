@@ -9,6 +9,7 @@ import validateRouter from './routes/validate.js'
 import modelsRouter from './routes/models.js'
 import feedbackRouter from './routes/feedback.js'
 import adminRouter from './routes/admin.js'
+import pdfSourceRouter from './routes/pdfSource.js'
 import { initDatabase } from '../database/db.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -30,12 +31,13 @@ app.use('/api/validate', validateRouter)
 app.use('/api/models', modelsRouter)
 app.use('/api/feedback', feedbackRouter)
 app.use('/api/admin', adminRouter)
+app.use('/api/pdf-source', pdfSourceRouter)
 
 // 健康检查
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    version: '2.0.0',
+    version: '2.5.0',
     timestamp: new Date().toISOString()
   })
 })

@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Backend API service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: financial-report-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-change-in-production}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - backend-data:/app/data
+      - backend-uploads:/app/uploads
+      - backend-logs:/app/logs
+    networks:
+      - financial-report-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Frontend web service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
+    container_name: financial-report-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - financial-report-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  financial-report-network:
+    driver: bridge
+
+volumes:
+  backend-data:
+  backend-uploads:
+  backend-logs:

@@ -1,6 +1,7 @@
 /**
  * 管理员路由
  * V2.4 新增
+ * V2.5 新增审计日志
  */
 import express from 'express'
 import jwt from 'jsonwebtoken'
@@ -8,6 +9,7 @@ import bcrypt from 'bcryptjs'
 import db from '../../database/db.js'
 import FeedbackService from '../services/FeedbackService.js'
 import StatsService from '../services/StatsService.js'
+import auditLogService, { AUDIT_EVENTS } from '../services/AuditLogService.js'
 
 const router = express.Router()
 
@@ -57,6 +59,14 @@ router.post('/login', async (req, res) => {
     await db.run(
       'UPDATE admins SET last_login = CURRENT_TIMESTAMP WHERE id = ?',
       [admin.id]
+    )
+
+    // 记录审计日志
+    await auditLogService.logUserAction(
+      AUDIT_EVENTS.ADMIN_LOGIN,
+      admin.username,
+      req,
+      { message: '管理员登录成功' }
     )
 
     // 生成 JWT
@@ -131,6 +141,14 @@ router.get('/stats/overview', authMiddleware, async (req, res) => {
     const days = parseInt(req.query.days) || 7
     const overview = await StatsService.getOverview(days)
 
+    // 记录审计日志
+    await auditLogService.logUserAction(
+      AUDIT_EVENTS.ADMIN_VIEW_STATS,
+      req.admin.username,
+      req,
+      { days }
+    )
+
     res.json({
       success: true,
       data: overview
@@ -201,6 +219,14 @@ router.get('/feedbacks', authMiddleware, async (req, res) => {
       pageSize: parseInt(pageSize) || 20
     })
 
+    // 记录审计日志
+    await auditLogService.logUserAction(
+      AUDIT_EVENTS.ADMIN_VIEW_FEEDBACK,
+      req.admin.username,
+      req,
+      { type, status, count: result.total }
+    )
+
     res.json({
       success: true,
       data: result
@@ -245,6 +271,14 @@ router.put('/feedbacks/:id', authMiddleware, async (req, res) => {
       req.params.id,
       status,
       adminReply
+    )
+
+    // 记录审计日志
+    await auditLogService.logUserAction(
+      AUDIT_EVENTS.ADMIN_UPDATE_FEEDBACK,
+      req.admin.username,
+      req,
+      { feedbackId: req.params.id, status }
     )
 
     res.json({

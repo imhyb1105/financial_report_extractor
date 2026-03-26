@@ -8,7 +8,7 @@ import {
   InfoCircleOutlined,
   BugOutlined,
   ClockCircleOutlined,
-  TokenOutlined
+  ApiOutlined
 } from '@ant-design/icons'
 import { useStore } from '../../store/useStore'
 import { exportToExcel } from '../../services/exportService'
@@ -469,7 +469,7 @@ function ExtractionResult() {
                     耗时: {usage.formattedDuration || `${usage.totalDuration}ms`}
                   </Text>
                   <Text type="secondary">
-                    <TokenOutlined style={{ marginRight: 4 }} />
+                    <ApiOutlined style={{ marginRight: 4 }} />
                     Token: {usage.totalTokens?.toLocaleString() || '-'}
                   </Text>
                 </Space>

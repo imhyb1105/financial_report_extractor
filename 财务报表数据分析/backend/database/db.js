@@ -67,11 +67,22 @@ export async function initDatabase() {
     // 读取 schema.sql
     const schema = fs.readFileSync(SCHEMA_PATH, 'utf8')
 
-    // 分割并执行每条 SQL 语句
+    // 处理SQL语句：移除注释，正确分割
     const statements = schema
+      // 先按行分割，移除注释行
+      .split('\n')
+      .filter(line => {
+        const trimmed = line.trim()
+        return trimmed.length > 0 && !trimmed.startsWith('--')
+      })
+      // 重新组合成字符串
+      .join('\n')
+      // 按分号分割成独立语句
       .split(';')
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'))
+      .filter(s => s.length > 0)
+
+    console.log(`📝 准备执行 ${statements.length} 条SQL语句...`)
 
     for (const sql of statements) {
       try {

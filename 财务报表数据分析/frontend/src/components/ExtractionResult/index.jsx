@@ -300,11 +300,20 @@ function ExtractionResult() {
     // 如果有模型对比数据，添加模型对比列
     if (hasModelComparison) {
       if (modelResults.modelA) {
+        const isModelAError = modelResults.modelA.error || (modelResults.modelA.financialMetrics?.length === 0)
         baseColumns.push({
-          title: modelResults.modelA.provider?.toUpperCase() || '模型A',
+          title: (
+            <Space size={4}>
+              <Text>模型A：{modelResults.modelA.provider?.toUpperCase() || 'GLM'}</Text>
+              {isModelAError && <Tag color="error" style={{ fontSize: 10 }}>失败</Tag>}
+            </Space>
+          ),
           key: 'modelA',
           width: 150,
           render: (_, record) => {
+            if (isModelAError) {
+              return <Text type="secondary" style={{ fontSize: 12 }}>解析失败</Text>
+            }
             const modelAMetric = modelResults.modelA.financialMetrics?.find(m => m.name === record.name)
             return <Text>{formatSimpleValue(modelAMetric?.value, record.name)}</Text>
           }
@@ -312,11 +321,20 @@ function ExtractionResult() {
       }
 
       if (modelResults.modelB) {
+        const isModelBError = modelResults.modelB.error || (modelResults.modelB.financialMetrics?.length === 0)
         baseColumns.push({
-          title: modelResults.modelB.provider?.toUpperCase() || '模型B',
+          title: (
+            <Space size={4}>
+              <Text>模型B：{modelResults.modelB.provider?.toUpperCase() || 'GLM'}</Text>
+              {isModelBError && <Tag color="error" style={{ fontSize: 10 }}>失败</Tag>}
+            </Space>
+          ),
           key: 'modelB',
           width: 150,
           render: (_, record) => {
+            if (isModelBError) {
+              return <Text type="secondary" style={{ fontSize: 12 }}>解析失败</Text>
+            }
             const modelBMetric = modelResults.modelB.financialMetrics?.find(m => m.name === record.name)
             return <Text>{formatSimpleValue(modelBMetric?.value, record.name)}</Text>
           }
@@ -329,8 +347,13 @@ function ExtractionResult() {
       title: '置信度',
       dataIndex: 'confidence',
       key: 'confidence',
-      width: 100,
-      render: (level) => renderConfidenceTag(level)
+      width: 160,
+      render: (level, record) => {
+        // V2.7: 服务端计算的指标显示原因
+        const isCalculated = record.source?.location === '服务端计算'
+        const reason = isCalculated ? '服务端计算' : undefined
+        return renderConfidenceTag(level, reason)
+      }
     })
 
     return baseColumns
@@ -563,7 +586,9 @@ function ExtractionResult() {
                 <Space direction="vertical" style={{ width: '100%' }}>
                   {Object.entries(nonFinancialInfo).map(([key, value]) => (
                     <Card key={key} type="inner" title={getNonFinancialTitle(key)} size="small">
-                      {Array.isArray(value) ? (
+                      {!value || (typeof value === 'object' && !Array.isArray(value) && !value.content && !value.length) ? (
+                        <Text type="secondary">未提取到相关信息</Text>
+                      ) : Array.isArray(value) ? (
                         <ul style={{ margin: 0, paddingLeft: 20 }}>
                           {value.map((item, idx) => {
                             const content = typeof item === 'object' ? item.content : item
@@ -578,7 +603,7 @@ function ExtractionResult() {
                         </ul>
                       ) : (
                         <Space direction="vertical" size={0}>
-                          <Text>{typeof value === 'object' ? value.content : value}</Text>
+                          <Text>{typeof value === 'object' ? (value.content || '未提取到相关信息') : value}</Text>
                           {typeof value === 'object' && value.source?.page && (
                             <Text type="secondary" style={{ fontSize: 11 }}>
                               来源：第{value.source.page}页{value.source.location ? `，${value.source.location}` : ''}

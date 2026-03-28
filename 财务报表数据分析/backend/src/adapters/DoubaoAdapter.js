@@ -86,11 +86,19 @@ class DoubaoAdapter extends BaseAdapter {
       }
     }
 
+    // 从PDF首行提取公司名称，强制注入prompt以防止AI编造
+    const firstLine = fullText.trim().split('\n')[0]?.trim() || ''
+    const companyHint = firstLine.match(/(.{2,40}(?:股份有限公司|有限责任公司|集团有限公司))/)?.[1]
+    const companyNameInjection = companyHint
+      ? `\n\n# 🚨 强制确认：此PDF中的公司是"${companyHint}"，你必须使用这个公司名称，禁止使用其他公司的数据！\n`
+      : ''
+
     // 构建完整的提示
     const fullPrompt = `${prompt}
 
 ---
 
+${companyNameInjection}
 # 📄 PDF原文内容（共${pages.length}页）
 
 ${fullText}
@@ -193,6 +201,8 @@ ${fullText}
         })
       }
 
+      // V2.7: 返回token使用量
+      parsedResult.tokens = response.data?.usage || null
       return parsedResult
     } catch (error) {
       console.error('[DoubaoAdapter] Extract error:', error.message)
@@ -267,19 +277,16 @@ ${fullText}
 18. 投资活动现金流净额
 19. 筹资活动现金流净额
 
-### 计算指标（需要计算）
-20. 毛利率
-21. 净利率
-22. 资产负债率
-23. 流动比率
-24. ROE
+### 计算指标（由系统自动计算，你只需提取原始值即可）
+20. 毛利润（系统自动计算：营业收入-营业成本，你不需要填写，直接设为null）
+21. 毛利率（系统自动计算，设为null）
+22. 净利率（系统自动计算，设为null）
+23. 资产负债率（系统自动计算，设为null）
+24. 流动比率（系统自动计算，设为null）
+25. ROE（系统自动计算，设为null）
 
-⚠️ 计算指标名称说明（name字段只填指标名称，不要包含公式）：
-- 毛利率 = 毛利润 / 营业收入
-- 净利率 = 净利润 / 营业收入
-- 资产负债率 = 总负债 / 总资产
-- 流动比率 = 流动资产 / 流动负债
-- ROE = 归属于母公司股东的净利润 / 归属于母公司所有者权益合计
+⚠️ 重要：毛利润、毛利率、净利率、资产负债率、流动比率、ROE这6项由系统服务端自动计算，你必须将value设为null，不要自行计算！
+⚠️ 毛利润也不要填写！系统会根据你提取的营业收入和营业成本自动计算。
 
 ---
 
@@ -559,6 +566,104 @@ ${fullText}
 
   getFeatures() {
     return ['vision', 'multimodal', 'long-context']
+  }
+
+  /**
+   * V2.7: 提取非财务信息（使用专用prompt）
+   */
+  async extractNonFinancial(pages, context) {
+    const aiLogService = context?.aiLogService
+    let logId = null
+
+    const prompt = context.prompt || this.buildNonFinancialOnlyPrompt()
+
+    let fullText = ''
+    const images = []
+    for (const page of pages) {
+      if (page.type === 'text' && page.content) {
+        fullText += `\n\n--- 第 ${page.pageNumber} 页 ---\n${page.content}`
+      } else if (page.type === 'url') {
+        images.push({ type: 'image_url', image_url: { url: page.url } })
+      } else if (page.type === 'base64') {
+        images.push({ type: 'image_url', image_url: { url: `data:image/png;base64,${page.data}` } })
+      }
+    }
+
+    const fullPrompt = `${prompt}\n\n---\n# 📄 PDF原文内容（共${pages.length}页）\n\n${fullText}`
+
+    const content = []
+    for (const img of images.slice(0, 10)) content.push(img)
+    content.push({ type: 'text', text: fullPrompt })
+
+    if (aiLogService) {
+      logId = aiLogService.logRequest(this.model, context?.role || 'non-fin-extractor', {
+        prompt: fullPrompt, temperature: 0.1, model: this.model
+      })
+    }
+
+    try {
+      const response = await axios.post(
+        `${this.baseURL}/chat/completions`,
+        { model: this.model, messages: [{ role: 'user', content: fullPrompt }], temperature: 0.1 },
+        { headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 }
+      )
+
+      const text = response.data?.choices?.[0]?.message?.content || ''
+      const parsedResult = this.parseResponse(text)
+
+      if (aiLogService && logId) {
+        aiLogService.logResponse(logId, {
+          rawText: text, parsedData: parsedResult,
+          tokens: response.data?.usage || null,
+          finishReason: response.data?.choices?.[0]?.finish_reason || null
+        })
+      }
+
+      return parsedResult.nonFinancialInfo || parsedResult
+    } catch (error) {
+      console.error('[DoubaoAdapter] Non-financial extraction error:', error.message)
+      if (aiLogService && logId) aiLogService.logError(logId, error)
+      return null
+    }
+  }
+
+  /**
+   * V2.7: 总结合并非财务信息
+   */
+  async summarizeNonFinancial(prompt, context) {
+    const aiLogService = context?.aiLogService
+    let logId = null
+
+    if (aiLogService) {
+      logId = aiLogService.logRequest(this.model, context?.role || 'non-fin-summarizer', {
+        prompt: prompt, temperature: 0.1, model: this.model
+      })
+    }
+
+    try {
+      const response = await axios.post(
+        `${this.baseURL}/chat/completions`,
+        { model: this.model, messages: [{ role: 'user', content: prompt }], temperature: 0.1 },
+        { headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 }
+      )
+
+      const text = response.data?.choices?.[0]?.message?.content || ''
+      const parsedResult = this.parseResponse(text)
+
+      if (aiLogService && logId) {
+        aiLogService.logResponse(logId, {
+          rawText: text, parsedData: parsedResult,
+          tokens: response.data?.usage || null,
+          finishReason: response.data?.choices?.[0]?.finish_reason || null
+        })
+      }
+
+      return parsedResult
+    } catch (error) {
+      console.error('[DoubaoAdapter] Non-financial summarization error:', error.message)
+      if (aiLogService && logId) aiLogService.logError(logId, error)
+      return null
+    }
   }
 }
 

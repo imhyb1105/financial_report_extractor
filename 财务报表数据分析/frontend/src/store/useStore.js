@@ -21,9 +21,9 @@ export const useStore = create(
     (set, get) => ({
       // 模型配置
       modelConfigs: {
-        modelA: { provider: '', apiKey: '', valid: false },
-        modelB: { provider: '', apiKey: '', valid: false },
-        modelC: { provider: '', apiKey: '', valid: false }
+        modelA: { provider: '', apiKey: '', model: '', valid: false },
+        modelB: { provider: '', apiKey: '', model: '', valid: false },
+        modelC: { provider: '', apiKey: '', model: '', valid: false }
       },
 
       // 单位设置

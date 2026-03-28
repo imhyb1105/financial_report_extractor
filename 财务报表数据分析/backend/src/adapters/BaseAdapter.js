@@ -47,6 +47,27 @@ class BaseAdapter {
   }
 
   /**
+   * V2.7: 提取非财务信息（复用extract逻辑但使用专用prompt）
+   * @param {Array} pages - 页面数组
+   * @param {Object} context - 上下文（包含prompt字段）
+   * @returns {Promise<Object>} 非财务信息
+   */
+  async extractNonFinancial(pages, context) {
+    // 默认实现：复用extract方法但替换prompt
+    return this.extract(pages, context)
+  }
+
+  /**
+   * V2.7: 总结合并非财务信息
+   * @param {string} prompt - 总结prompt
+   * @param {Object} context - 上下文
+   * @returns {Promise<Object>} 总结合并后的非财务信息
+   */
+  async summarizeNonFinancial(prompt, context) {
+    throw new Error('summarizeNonFinancial() must be implemented by subclass')
+  }
+
+  /**
    * 构建提取Prompt
    * @param {Object} context - 提取上下文
    * @returns {string}
@@ -106,19 +127,16 @@ class BaseAdapter {
 18. 投资活动现金流净额
 19. 筹资活动现金流净额
 
-### 计算指标（需要计算）
-20. 毛利率
-21. 净利率
-22. 资产负债率
-23. 流动比率
-24. ROE
+### 计算指标（由系统自动计算，你只需提取原始值即可）
+20. 毛利润（系统自动计算：营业收入-营业成本，你不需要填写，直接设为null）
+21. 毛利率（系统自动计算，设为null）
+22. 净利率（系统自动计算，设为null）
+23. 资产负债率（系统自动计算，设为null）
+24. 流动比率（系统自动计算，设为null）
+25. ROE（系统自动计算，设为null）
 
-⚠️ 计算指标名称说明（name字段只填指标名称，不要包含公式）：
-- 毛利率 = 毛利润 / 营业收入
-- 净利率 = 净利润 / 营业收入
-- 资产负债率 = 总负债 / 总资产
-- 流动比率 = 流动资产 / 流动负债
-- ROE = 归属于母公司股东的净利润 / 归属于母公司所有者权益合计
+⚠️ 重要：毛利润、毛利率、净利率、资产负债率、流动比率、ROE这6项由系统服务端自动计算，你必须将value设为null，不要自行计算！
+⚠️ 毛利润也不要填写！系统会根据你提取的营业收入和营业成本自动计算。
 
 ---
 
@@ -286,22 +304,28 @@ ${extractSummary(resultB, '模型B')}
       let jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/)
       if (jsonMatch) {
         console.log('[BaseAdapter] Found JSON in ```json block')
-        return jsonMatch[1]
+        // V2.6: 在代码块内精确定位JSON对象（AI可能在JSON后追加文字）
+        const blockContent = jsonMatch[1]
+        const extracted = this.extractJsonObject(blockContent)
+        if (extracted) return extracted
+        return blockContent
       }
 
       // 方法2: 查找 ``` ... ``` 块
       jsonMatch = text.match(/```\s*([\s\S]*?)\s*```/)
       if (jsonMatch) {
         console.log('[BaseAdapter] Found JSON in ``` block')
-        return jsonMatch[1]
+        const blockContent = jsonMatch[1]
+        const extracted = this.extractJsonObject(blockContent)
+        if (extracted) return extracted
+        return blockContent
       }
 
-      // 方法3: 查找 { ... } 最外层对象
-      const startIndex = text.indexOf('{')
-      const lastIndex = text.lastIndexOf('}')
-      if (startIndex !== -1 && lastIndex !== -1 && lastIndex > startIndex) {
-        console.log('[BaseAdapter] Extracting JSON from index', startIndex, 'to', lastIndex)
-        return text.substring(startIndex, lastIndex + 1)
+      // 方法3: 查找 { ... } 最外层对象（使用括号匹配而非简单的first/last）
+      const extracted = this.extractJsonObject(text)
+      if (extracted) {
+        console.log('[BaseAdapter] Extracted JSON object from text')
+        return extracted
       }
 
       // 方法4: 直接返回原文
@@ -341,9 +365,72 @@ ${extractSummary(resultB, '模型B')}
           console.error('[BaseAdapter] All parsing attempts failed')
         }
 
+        // V2.6: 最后尝试 - 从原始响应中用括号深度匹配提取
+        try {
+          const braceExtracted = this.extractJsonObject(response)
+          if (braceExtracted) {
+            const sanitized = this.sanitizeJsonString(braceExtracted)
+            const parsed = JSON.parse(sanitized)
+            if (parsed.companyInfo || parsed.financialMetrics) {
+              console.log('[BaseAdapter] Brace-depth extraction succeeded ✓')
+              return parsed
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+
         return this.getDefaultResult()
       }
     }
+  }
+
+  /**
+   * V2.6: 使用括号深度匹配提取JSON对象
+   * 比简单的 first { to last } 更精确，能正确处理嵌套对象
+   * @param {string} text - 包含JSON的文本
+   * @returns {string|null} 提取的JSON字符串
+   */
+  extractJsonObject(text) {
+    if (!text || typeof text !== 'string') return null
+
+    let startIdx = -1
+    let depth = 0
+    let inString = false
+    let escapeNext = false
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i]
+
+      if (escapeNext) {
+        escapeNext = false
+        continue
+      }
+
+      if (ch === '\\' && inString) {
+        escapeNext = true
+        continue
+      }
+
+      if (ch === '"' && !escapeNext) {
+        inString = !inString
+        continue
+      }
+
+      if (inString) continue
+
+      if (ch === '{') {
+        if (depth === 0) startIdx = i
+        depth++
+      } else if (ch === '}') {
+        depth--
+        if (depth === 0 && startIdx !== -1) {
+          return text.substring(startIdx, i + 1)
+        }
+      }
+    }
+
+    return null
   }
 
   /**
@@ -399,7 +486,8 @@ ${extractSummary(resultB, '模型B')}
   }
 
   /**
-   * V1.8: 清理JSON字符串中的非法控制字符
+   * V1.8: 清理JSON字符串中的非法控制字符和未转义引号
+   * V2.7: 增强处理未转义的双引号（AI经常在JSON字符串值中包含原始PDF文本中的引号）
    * 使用状态机方式处理，只在字符串值内部转义控制字符
    * @param {string} jsonStr - 原始JSON字符串
    * @returns {string} 清理后的JSON字符串
@@ -413,6 +501,7 @@ ${extractSummary(resultB, '模型B')}
     let inString = false
     let escapeNext = false
     let controlCharCount = 0
+    let quoteFixCount = 0
 
     for (let i = 0; i < jsonStr.length; i++) {
       const char = jsonStr[i]
@@ -433,9 +522,28 @@ ${extractSummary(resultB, '模型B')}
       }
 
       if (char === '"') {
-        // 引号切换字符串状态
-        result.push(char)
-        inString = !inString
+        if (inString) {
+          // V2.7: 判断这个引号是字符串结束符还是字符串内的未转义引号
+          // 向后查看下一个有意义的字符（跳过空白）
+          let j = i + 1
+          while (j < jsonStr.length && (jsonStr[j] === ' ' || jsonStr[j] === '\t')) j++
+          const nextChar = jsonStr[j]
+
+          // 如果后面是这些字符，说明是合法的字符串结束符
+          if (nextChar === ':' || nextChar === ',' || nextChar === '}' || nextChar === ']' ||
+              nextChar === '\n' || nextChar === '\r' || j >= jsonStr.length) {
+            result.push(char)
+            inString = false
+          } else {
+            // V2.7: 字符串内的未转义引号，替换为中文引号以保持语义
+            result.push('\\"')
+            quoteFixCount++
+          }
+        } else {
+          // 字符串开始
+          result.push(char)
+          inString = true
+        }
         continue
       }
 
@@ -478,6 +586,9 @@ ${extractSummary(resultB, '模型B')}
 
     if (controlCharCount > 0) {
       console.log(`[BaseAdapter] Total control characters sanitized: ${controlCharCount}`)
+    }
+    if (quoteFixCount > 0) {
+      console.log(`[BaseAdapter] Total unescaped quotes fixed: ${quoteFixCount}`)
     }
 
     return result.join('')

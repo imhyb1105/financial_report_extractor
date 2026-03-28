@@ -40,7 +40,7 @@ export async function extractData(file, models, displayUnit, onProgress) {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
-      timeout: 300000 // 5分钟超时
+      timeout: 600000 // 10分钟超时（三模型流程需要~7分钟）
     })
 
     clearInterval(progressInterval)
@@ -56,7 +56,7 @@ export async function extractData(file, models, displayUnit, onProgress) {
     return { data, debugLog }
   } catch (error) {
     clearInterval(progressInterval)
-    throw new Error(error.response?.data?.error || error.message)
+    throw new Error(error.response?.data?.error?.message || error.message)
   }
 }
 

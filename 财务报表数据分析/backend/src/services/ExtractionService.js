@@ -79,6 +79,25 @@ class ExtractionService {
         result.confidence = 'low'
       }
 
+      // 3.1 从PDF原文中提取真实公司名称（用于校验AI提取结果）
+      const pdfCompanyName = this.extractCompanyNameFromPDF(pdfFullText)
+      if (pdfCompanyName && result.companyInfo?.name) {
+        const extractedName = result.companyInfo.name.trim()
+        if (extractedName !== pdfCompanyName && !extractedName.includes(pdfCompanyName) && !pdfCompanyName.includes(extractedName.replace(/股份有限公司|有限责任公司|集团/, ''))) {
+          console.warn(`[ExtractionService] Company name mismatch! AI extracted: "${extractedName}", PDF actual: "${pdfCompanyName}"`)
+          result.companyNameMismatch = true
+          result.extractionWarning = result.extractionWarning
+            ? `${result.extractionWarning}; AI提取的公司名称"${extractedName}"与PDF实际公司"${pdfCompanyName}"不一致，数据可能不准确`
+            : `AI提取的公司名称"${extractedName}"与PDF实际公司"${pdfCompanyName}"不一致，数据可能不准确`
+          result.confidence = 'low'
+          // 尝试修正公司名称
+          result.companyInfo.name = pdfCompanyName
+        }
+      }
+
+      // 3.2 服务端重算派生指标（不依赖AI做算术）
+      this.recalculateDerivedMetrics(result)
+
       // 4. 勾稽关系核对（带重试）
       result = await this.extractWithAccountingCheck(
         () => result,
@@ -89,6 +108,15 @@ class ExtractionService {
 
       // V1.12: 根据勾稽核对结果修正置信度
       result = this.adjustConfidenceBasedOnResults(result, models.length)
+
+      // V2.8: 非财务信息三模型提取（恢复阻塞，前端超时已增至10分钟，足够容纳）
+      if (models.length >= 3 && result.modelResults?.modelA && result.modelResults?.modelB) {
+        try {
+          result = await this.enhanceNonFinancialInfo(result, models, images, pdfPath)
+        } catch (e) {
+          console.warn(`[ExtractionService] Non-financial info enhancement failed: ${e.message}`)
+        }
+      }
 
       // 5. 单位转换
       result = this.unitConvertService.convert(result, displayUnit)
@@ -115,6 +143,19 @@ class ExtractionService {
 
       // V2.0: 计算总耗时
       const totalDuration = Date.now() - startTime
+
+      // V2.7: 从调试日志中收集token使用量
+      if (debugLog?.modelCalls) {
+        for (const call of debugLog.modelCalls) {
+          const usage = call.response?.tokens
+          if (!usage) continue
+          const total = (usage.total_tokens || 0) ||
+            ((usage.input_tokens || usage.prompt_tokens || 0) + (usage.output_tokens || usage.completion_tokens || 0))
+          if (call.role === 'A') tokenBreakdown.modelA = total
+          else if (call.role === 'B') tokenBreakdown.modelB = total
+          else if (call.role === 'C') tokenBreakdown.modelC = total
+        }
+      }
       const totalTokens = tokenBreakdown.modelA + tokenBreakdown.modelB + tokenBreakdown.modelC
 
       // V2.0: 添加使用统计到结果
@@ -263,6 +304,16 @@ class ExtractionService {
       return result
     }
 
+    // V2.7: tri-single模式（一个模型失败）时，置信度上限为3（中等）
+    if (result.extractionMode === 'tri-single' || result.extractionMode === 'dual-single') {
+      const currentScore = typeof result.confidence === 'number' ? result.confidence : 3
+      if (currentScore > 3) {
+        console.log(`[ExtractionService] ${result.extractionMode} mode: capping confidence from ${currentScore} to 3`)
+        result.confidence = 3
+      }
+      return result
+    }
+
     // V1.14: 如果模型C已经给出1-5分的置信度，直接使用并调整
     if (typeof result.confidence === 'number' && result.confidence >= 1 && result.confidence <= 5) {
       return this.adjustConfidenceFromScore(result)
@@ -356,7 +407,7 @@ class ExtractionService {
    * V1.7: 添加日志记录
    */
   async singleModelExtract(modelConfig, images, pdfPath) {
-    const adapter = AdapterFactory.createAdapter(modelConfig.provider, modelConfig.apiKey)
+    const adapter = AdapterFactory.createAdapter(modelConfig.provider, modelConfig.apiKey, { model: modelConfig.model })
 
     if (!adapter) {
       throw new Error(`不支持的模型提供商: ${modelConfig.provider}`)
@@ -449,7 +500,209 @@ class ExtractionService {
   }
 
   /**
-   * 检测模拟数据
+   * V2.6: 服务端重算派生指标
+   * AI模型做算术经常出错，服务端根据原始提取值重新计算
+   * 派生指标：毛利润、毛利率、净利率、资产负债率、流动比率、ROE
+   */
+  recalculateDerivedMetrics(result) {
+    if (!result.financialMetrics || result.financialMetrics.length === 0) return
+
+    const metrics = result.financialMetrics
+    const getVal = (name) => {
+      const m = metrics.find(m => m.name === name)
+      return m ? m.value : null
+    }
+    const setVal = (name, value, formula) => {
+      let m = metrics.find(m => m.name === name)
+      if (m) {
+        const oldVal = m.value
+        m.value = value
+        m.unit = m.unit || 'yuan'
+        m.confidence = 'high' // 服务端根据原始值精确计算，置信度为高
+        if (formula) {
+          m.source = m.source || {}
+          m.source.location = '服务端计算'
+          m.source.text = formula
+        }
+        if (oldVal !== null && oldVal !== undefined && Math.abs(oldVal - value) > 0.01) {
+          console.log(`[ExtractionService] Recalculated ${name}: ${oldVal} → ${value} (${formula})`)
+        }
+      }
+    }
+
+    const revenue = getVal('营业收入')
+    const cost = getVal('营业成本')
+    const netProfit = getVal('净利润')
+    const parentNetProfit = getVal('归属于母公司股东的净利润')
+    const totalAssets = getVal('总资产')
+    const totalLiabilities = getVal('总负债')
+    const currentAssets = getVal('流动资产')
+    const currentLiabilities = getVal('流动负债')
+    const parentEquity = getVal('归属于母公司所有者权益合计')
+
+    // 毛利润 = 营业收入 - 营业成本
+    if (revenue != null && cost != null) {
+      setVal('毛利润', revenue - cost, `营业收入(${revenue}) - 营业成本(${cost})`)
+    }
+
+    // 毛利率 = 毛利润 / 营业收入
+    if (revenue != null && cost != null && revenue !== 0) {
+      setVal('毛利率', parseFloat(((revenue - cost) / revenue).toFixed(4)), '毛利润 / 营业收入')
+    }
+
+    // 净利率 = 净利润 / 营业收入
+    if (netProfit != null && revenue != null && revenue !== 0) {
+      setVal('净利率', parseFloat((netProfit / revenue).toFixed(4)), '净利润 / 营业收入')
+    }
+
+    // 资产负债率 = 总负债 / 总资产
+    if (totalLiabilities != null && totalAssets != null && totalAssets !== 0) {
+      setVal('资产负债率', parseFloat((totalLiabilities / totalAssets).toFixed(4)), '总负债 / 总资产')
+    }
+
+    // 流动比率 = 流动资产 / 流动负债
+    if (currentAssets != null && currentLiabilities != null && currentLiabilities !== 0) {
+      setVal('流动比率', parseFloat((currentAssets / currentLiabilities).toFixed(2)), '流动资产 / 流动负债')
+    }
+
+    // ROE = 归属于母公司股东的净利润 / 归属于母公司所有者权益合计
+    if (parentNetProfit != null && parentEquity != null && parentEquity !== 0) {
+      setVal('ROE', parseFloat((parentNetProfit / parentEquity).toFixed(4)), '归母净利润 / 归母所有者权益')
+    }
+  }
+
+  /**
+   * V2.7: 三模型方式增强非财务信息提取
+   * A/B模型分别提取非财务信息，C模型总结合并
+   */
+  async enhanceNonFinancialInfo(result, models, images, pdfPath) {
+    const modelA = models[0]
+    const modelB = models[1]
+    const modelC = models[2]
+
+    const adapterA = AdapterFactory.createAdapter(modelA.provider, modelA.apiKey, { model: modelA.model })
+    const adapterB = AdapterFactory.createAdapter(modelB.provider, modelB.apiKey, { model: modelB.model })
+    const adapterC = AdapterFactory.createAdapter(modelC.provider, modelC.apiKey, { model: modelC.model })
+
+    console.log('[ExtractionService] Starting non-financial info extraction (A/B extract, C summarize)')
+
+    // 构建专门的非财务信息提取prompt
+    const nonFinPrompt = this.buildNonFinancialPrompt(pdfPath)
+
+    // A/B并行提取非财务信息
+    const [resultA, resultB] = await Promise.all([
+      adapterA.extractNonFinancial(images, { pdfPath, role: 'A', aiLogService, prompt: nonFinPrompt }).catch(e => {
+        console.warn('[ExtractionService] Model A non-financial extraction failed:', e.message)
+        return null
+      }),
+      adapterB.extractNonFinancial(images, { pdfPath, role: 'B', aiLogService, prompt: nonFinPrompt }).catch(e => {
+        console.warn('[ExtractionService] Model B non-financial extraction failed:', e.message)
+        return null
+      })
+    ])
+
+    if (!resultA && !resultB) {
+      console.warn('[ExtractionService] Both models failed non-financial extraction, keeping original')
+      return result
+    }
+
+    // C模型总结合并
+    const summarizePrompt = this.buildNonFinancialSummarizePrompt(resultA, resultB, result.companyInfo?.name)
+    const summarizedResult = await adapterC.summarizeNonFinancial(summarizePrompt, { role: 'C', aiLogService }).catch(e => {
+      console.warn('[ExtractionService] Model C non-financial summarization failed:', e.message)
+      return null
+    })
+
+    if (summarizedResult) {
+      result.nonFinancialInfo = summarizedResult
+      result.nonFinancialInfoEnhanced = true
+      console.log('[ExtractionService] Non-financial info enhanced by Model C')
+    } else if (resultA || resultB) {
+      // C失败时使用A或B的结果
+      const fallbackResult = resultA || resultB
+      if (fallbackResult) {
+        result.nonFinancialInfo = fallbackResult
+        result.nonFinancialInfoEnhanced = true
+        console.log('[ExtractionService] Non-financial info using fallback (A or B result)')
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * 构建非财务信息提取专用prompt
+   */
+  buildNonFinancialPrompt(pdfPath) {
+    return `你是一位专业的财务分析师。请从PDF中提取以下非财务信息。
+
+# ⛔ 严格禁止
+1. 禁止使用你记忆中的数据，只能从PDF原文中提取
+2. 禁止编造、猜测任何内容
+3. 如果PDF中找不到相关信息，必须将对应字段设为空
+
+# 提取要求
+请搜索PDF中的以下章节并提取内容：
+
+1. riskFactors（风险因素）：搜索"可能面对的风险"、"风险提示"、"风险因素"、"风险警示"，提取3-5条主要风险
+2. majorEvents（重大事项）：搜索"重要事项"、"重大事项"、"重大事件"，提取报告期重要事件
+3. futurePlans（未来规划）：搜索"未来发展展望"、"未来发展规划"、"经营计划"，提取公司计划
+4. dividendPlan（分红方案）：搜索"利润分配"、"股利分配"、"分红派息"，提取分红方案
+
+# 输出格式（严格JSON，不要其他文字）
+{
+  "riskFactors": [
+    {"content": "风险描述", "source": {"page": 页码, "location": "位置"}}
+  ],
+  "majorEvents": [
+    {"content": "事项描述", "source": {"page": 页码, "location": "位置"}}
+  ],
+  "futurePlans": [
+    {"content": "规划描述", "source": {"page": 页码, "location": "位置"}}
+  ],
+  "dividendPlan": {"content": "分红方案描述", "source": {"page": 页码, "location": "位置"}}
+}
+
+只输出JSON。`
+  }
+
+  /**
+   * 构建非财务信息总结合并prompt
+   */
+  buildNonFinancialSummarizePrompt(resultA, resultB, companyName) {
+    return `你是一位专业的财务分析师。以下是两个AI模型从"${companyName || '某公司'}"的财务报告中提取的非财务信息。
+
+【模型A提取结果】
+${JSON.stringify(resultA || { riskFactors: [], majorEvents: [], futurePlans: [], dividendPlan: null }, null, 2)}
+
+【模型B提取结果】
+${JSON.stringify(resultB || { riskFactors: [], majorEvents: [], futurePlans: [], dividendPlan: null }, null, 2)}
+
+# 任务
+请综合两个模型的结果，生成最终的非财务信息：
+1. 合并两个模型提取的内容，去重并补充
+2. 如果两个模型提取的内容有冲突，选择更详细/更准确的版本
+3. 如果某个模型提取为空但另一个有内容，保留有内容的
+4. 确保最终结果准确、完整
+
+# 输出格式（严格JSON，不要其他文字）
+{
+  "riskFactors": [
+    {"content": "风险描述（简洁明了）", "source": {"page": 页码, "location": "位置"}}
+  ],
+  "majorEvents": [
+    {"content": "事项描述（简洁明了）", "source": {"page": 页码, "location": "位置"}}
+  ],
+  "futurePlans": [
+    {"content": "规划描述（简洁明了）", "source": {"page": 页码, "location": "位置"}}
+  ],
+  "dividendPlan": {"content": "分红方案描述", "source": {"page": 页码, "location": "位置"}}
+}
+
+只输出JSON。`
+  }
+
+  /**
    * 验证提取的数据是否来自PDF原文
    * @param {Object} result - 提取结果
    * @param {string} pdfFullText - PDF完整文本
@@ -477,8 +730,26 @@ class ExtractionService {
       }
 
       // 检查公司名是否在PDF中存在（如果不是占位符）
+      // 注意：PDF文本提取可能不完整（扫描件、特殊字体等），因此仅作为辅助参考
       if (!isPlaceholder && !pdfFullText.includes(companyName)) {
-        reasons.push(`公司名称 "${companyName}" 不在PDF原文中`)
+        // 尝试匹配公司名称的简短形式（如去掉括号内容、去掉"股份有限公司"等）
+        const shortNames = [
+          companyName.replace(/\(.*?\)/g, '').replace(/（.*?）/g, '').trim(),
+          companyName.replace(/股份有限公司/, '').replace(/有限责任公司/, '').trim(),
+          companyName.replace(/集团/, '').trim()
+        ].filter(name => name.length >= 2 && name !== companyName)
+
+        let nameFound = false
+        for (const shortName of shortNames) {
+          if (pdfFullText.includes(shortName)) {
+            nameFound = true
+            break
+          }
+        }
+
+        if (!nameFound) {
+          reasons.push(`公司名称 "${companyName}" 不在PDF原文中`)
+        }
       }
     }
 
@@ -552,8 +823,12 @@ class ExtractionService {
     }
 
     // 3. 验证数值是否在PDF中有对应
+    // 注意：此检测仅作为辅助参考，不作为模拟数据的主要判断依据
+    // 因为PDF中的数字格式多样（千位分隔符、万元/亿元单位、表格分散等），
+    // 匹配失败不代表数据是模拟的，可能是格式差异导致
     if (result.financialMetrics && pdfFullText) {
       let unmatchedCount = 0
+      let matchedCount = 0
       const checkedValues = []
       const significantMetrics = result.financialMetrics.filter(m =>
         m.value !== null &&
@@ -561,7 +836,7 @@ class ExtractionService {
         Math.abs(m.value) > 1000000 // 只检查大数值
       )
 
-      for (const metric of significantMetrics.slice(0, 8)) { // 检查前8个大数值
+      for (const metric of significantMetrics.slice(0, 10)) { // 检查前10个大数值
         // 提取数值的主要部分（去掉小数点，用于在PDF中搜索）
         const valueStr = String(Math.abs(metric.value))
         const mainPart = valueStr.split('.')[0] // 取整数部分
@@ -570,11 +845,13 @@ class ExtractionService {
         if (mainPart.length < 4) continue
 
         // 在PDF中搜索这个数值
-        // 尝试多种格式：带逗号、不带逗号、带空格
+        // 尝试多种格式：原始、带逗号、带空格、除以10000（万元）、除以100000000（亿元）
         const searchPatterns = [
           mainPart,
           mainPart.replace(/\B(?=(\d{3})+(?!\d))/g, ','), // 添加千位分隔符
-          mainPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')  // 空格分隔
+          mainPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' '),  // 空格分隔
+          // PDF中以万元为单位时的数值（除以10000）
+          ...this._getUnitVariants(mainPart)
         ]
 
         let found = false
@@ -585,14 +862,18 @@ class ExtractionService {
           }
         }
 
-        if (!found) {
+        if (found) {
+          matchedCount++
+        } else {
           unmatchedCount++
           checkedValues.push(mainPart)
         }
       }
 
-      // 如果多个大数值都找不到，可能是模拟数据
-      if (unmatchedCount >= 3 && significantMetrics.length >= 3) {
+      // 仅当匹配率为0%（全部大数值都找不到）且数量>=5时才标记
+      // 匹配率>0说明数据是真实的，只是部分格式不匹配
+      const totalChecked = matchedCount + unmatchedCount
+      if (totalChecked >= 5 && matchedCount === 0) {
         reasons.push(`${unmatchedCount}个大数值(${checkedValues.slice(0, 3).join(', ')}...)在PDF原文中未找到对应`)
       }
     }
@@ -631,6 +912,81 @@ class ExtractionService {
   }
 
   /**
+   * 生成数值在不同单位下的变体，用于PDF原文匹配
+   * PDF中的数字可能是万元、亿元等单位，需要转换后搜索
+   * @param {string} mainPart - 数值的整数部分字符串
+   * @returns {string[]} 单位变体数组
+   */
+  _getUnitVariants(mainPart) {
+    const variants = []
+    const num = Number(mainPart)
+    if (isNaN(num) || num === 0) return variants
+
+    // 万元：除以10000，可能有小数
+    const wanValue = num / 10000
+    if (Number.isInteger(wanValue)) {
+      variants.push(
+        String(wanValue),
+        String(wanValue).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+      )
+    } else {
+      // 保留2位小数
+      const wanStr = wanValue.toFixed(2)
+      variants.push(wanStr)
+    }
+
+    // 亿元：除以100000000
+    const yiValue = num / 100000000
+    if (yiValue >= 0.01) {
+      if (Number.isInteger(yiValue)) {
+        variants.push(
+          String(yiValue),
+          String(yiValue).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+        )
+      } else {
+        const yiStr = yiValue.toFixed(2)
+        variants.push(yiStr)
+      }
+    }
+
+    return variants
+  }
+
+  /**
+   * 从PDF原文中提取真实公司名称
+   * 通过识别PDF中的"XX股份有限公司"等模式来提取
+   * @param {string} pdfFullText - PDF完整文本
+   * @returns {string|null} 公司名称
+   */
+  extractCompanyNameFromPDF(pdfFullText) {
+    if (!pdfFullText) return null
+
+    // 常见公司名称模式
+    const patterns = [
+      // "XXX股份有限公司" 或 "XXX有限责任公司" 出现在标题行
+      /([^\s\n]{2,30}(?:股份有限公司|有限责任公司|集团有限公司|（集团）股份有限公司))/,
+      // 证券代码前的公司名
+      /([^\s\n]{2,30}(?:股份有限公司|有限责任公司))\s*\n/,
+      // 第一行的公司名（通常格式为"公司名 XXXX年报告"）
+      /^(.{2,30}(?:股份有限公司|有限责任公司|集团有限公司))/m
+    ]
+
+    for (const pattern of patterns) {
+      const match = pdfFullText.match(pattern)
+      if (match && match[1]) {
+        const name = match[1].trim()
+        // 过滤掉太短或明显不是公司名的结果
+        if (name.length >= 4 && !/^证券|^股票|^报告|^本报告|^重要|^董事|^公司/.test(name)) {
+          console.log(`[ExtractionService] Extracted company name from PDF: "${name}"`)
+          return name
+        }
+      }
+    }
+
+    return null
+  }
+
+  /**
    * 双模型提取
    * V1.7: 添加日志记录
    */
@@ -639,8 +995,8 @@ class ExtractionService {
     console.log(`[ExtractionService] Model A: ${modelA.provider}`)
     console.log(`[ExtractionService] Model B: ${modelB.provider}`)
 
-    const adapterA = AdapterFactory.createAdapter(modelA.provider, modelA.apiKey)
-    const adapterB = AdapterFactory.createAdapter(modelB.provider, modelB.apiKey)
+    const adapterA = AdapterFactory.createAdapter(modelA.provider, modelA.apiKey, { model: modelA.model })
+    const adapterB = AdapterFactory.createAdapter(modelB.provider, modelB.apiKey, { model: modelB.model })
 
     // 并行提取 - V1.7: 传递日志服务
     const [resultA, resultB] = await Promise.all([
@@ -654,6 +1010,39 @@ class ExtractionService {
     // 清理模板数据
     this.cleanTemplateData(resultA)
     this.cleanTemplateData(resultB)
+
+    // V2.6: 检测单模型解析失败
+    const hasAMetrics = resultA.financialMetrics && resultA.financialMetrics.length > 0
+    const hasBMetrics = resultB.financialMetrics && resultB.financialMetrics.length > 0
+
+    if (!hasAMetrics && !hasBMetrics) {
+      console.error('[ExtractionService] Both models failed to extract data')
+      const finalResult = this.mergeResults(resultA, resultB)
+      finalResult.confidence = 'low'
+      finalResult.extractionMode = 'dual-fallback'
+      finalResult.extractionWarning = '两个模型均解析失败，数据不可用'
+      finalResult.modelResults = {
+        modelA: { provider: modelA.provider, companyInfo: resultA.companyInfo, financialMetrics: resultA.financialMetrics, error: resultA.error },
+        modelB: { provider: modelB.provider, companyInfo: resultB.companyInfo, financialMetrics: resultB.financialMetrics, error: resultB.error }
+      }
+      return finalResult
+    }
+
+    if (!hasAMetrics || !hasBMetrics) {
+      const failedModel = !hasAMetrics ? 'A' : 'B'
+      const successResult = hasAMetrics ? resultA : resultB
+      console.warn(`[ExtractionService] Model ${failedModel} parse failed, using successful model's data directly`)
+      const finalResult = JSON.parse(JSON.stringify(successResult))
+      this.cleanTemplateData(finalResult)
+      finalResult.confidence = 'medium-high'
+      finalResult.extractionMode = 'dual-single'
+      finalResult.extractionWarning = `模型${failedModel}解析失败，仅使用${failedModel === 'A' ? '模型B' : '模型A'}的数据`
+      finalResult.modelResults = {
+        modelA: { provider: modelA.provider, companyInfo: resultA.companyInfo, financialMetrics: resultA.financialMetrics, error: !hasAMetrics ? (resultA.error || 'AI响应解析失败') : undefined },
+        modelB: { provider: modelB.provider, companyInfo: resultB.companyInfo, financialMetrics: resultB.financialMetrics, error: !hasBMetrics ? (resultB.error || 'AI响应解析失败') : undefined }
+      }
+      return finalResult
+    }
 
     // 模型B验证（带错误处理）- V1.13: 传递日志服务
     try {
@@ -715,9 +1104,9 @@ class ExtractionService {
    * V1.7: 添加日志记录
    */
   async triModelExtract(modelA, modelB, modelC, images, pdfPath) {
-    const adapterA = AdapterFactory.createAdapter(modelA.provider, modelA.apiKey)
-    const adapterB = AdapterFactory.createAdapter(modelB.provider, modelB.apiKey)
-    const adapterC = AdapterFactory.createAdapter(modelC.provider, modelC.apiKey)
+    const adapterA = AdapterFactory.createAdapter(modelA.provider, modelA.apiKey, { model: modelA.model })
+    const adapterB = AdapterFactory.createAdapter(modelB.provider, modelB.apiKey, { model: modelB.model })
+    const adapterC = AdapterFactory.createAdapter(modelC.provider, modelC.apiKey, { model: modelC.model })
 
     // 并行提取 - V1.7: 传递日志服务
     const [resultA, resultB] = await Promise.all([
@@ -728,6 +1117,46 @@ class ExtractionService {
     // 清理模板数据
     this.cleanTemplateData(resultA)
     this.cleanTemplateData(resultB)
+
+    // V2.6: 检测单模型解析失败，跳过Model C裁决直接使用成功模型的数据
+    const hasAMetrics = resultA.financialMetrics && resultA.financialMetrics.length > 0
+    const hasBMetrics = resultB.financialMetrics && resultB.financialMetrics.length > 0
+
+    if (!hasAMetrics && !hasBMetrics) {
+      // 两个模型都失败了
+      console.error('[ExtractionService] Both models failed to extract data')
+      const finalResult = this.mergeResults(resultA, resultB)
+      finalResult.confidence = 'low'
+      finalResult.extractionMode = 'tri-fallback'
+      finalResult.extractionWarning = '两个模型均解析失败，数据不可用'
+      finalResult.modelResults = {
+        modelA: { provider: modelA.provider, companyInfo: resultA.companyInfo, financialMetrics: resultA.financialMetrics, error: resultA.error },
+        modelB: { provider: modelB.provider, companyInfo: resultB.companyInfo, financialMetrics: resultB.financialMetrics, error: resultB.error },
+        modelC: { provider: modelC.provider, role: 'validator', skipped: true }
+      }
+      return finalResult
+    }
+
+    if (!hasAMetrics || !hasBMetrics) {
+      // 只有一个模型成功，跳过Model C裁决，直接使用成功模型的数据
+      const failedModel = !hasAMetrics ? 'A' : 'B'
+      const successResult = hasAMetrics ? resultA : resultB
+      console.warn(`[ExtractionService] Model ${failedModel} parse failed (0 metrics), using successful model's data directly`)
+
+      const finalResult = JSON.parse(JSON.stringify(successResult))
+      this.cleanTemplateData(finalResult)
+      finalResult.confidence = 'medium-high'
+      finalResult.extractionMode = 'tri-single'
+      finalResult.extractionWarning = `模型${failedModel}解析失败（AI响应格式异常），仅使用${failedModel === 'A' ? '模型B' : '模型A'}的数据`
+
+      finalResult.modelResults = {
+        modelA: { provider: modelA.provider, companyInfo: resultA.companyInfo, financialMetrics: resultA.financialMetrics, error: !hasAMetrics ? (resultA.error || 'AI响应解析失败') : undefined },
+        modelB: { provider: modelB.provider, companyInfo: resultB.companyInfo, financialMetrics: resultB.financialMetrics, error: !hasBMetrics ? (resultB.error || 'AI响应解析失败') : undefined },
+        modelC: { provider: modelC.provider, role: 'validator', skipped: true }
+      }
+
+      return finalResult
+    }
 
     // 模型C裁决（带错误处理）- V1.13: 传递日志服务
     try {

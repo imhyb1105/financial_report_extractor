@@ -61,7 +61,10 @@ function FileUploader() {
 
     const validModels = Object.entries(modelConfigs)
       .filter(([_, config]) => config.valid && config.apiKey)
-      .map(([role, config]) => ({ role, ...config }))
+      .map(([role, config]) => {
+        const { valid, ...rest } = config
+        return { role, ...rest }
+      })
 
     if (validModels.length === 0) {
       message.warning('请至少配置并验证一个模型')

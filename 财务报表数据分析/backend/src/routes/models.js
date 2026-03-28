@@ -53,6 +53,7 @@ const SUPPORTED_MODELS = [
     provider: 'glm',
     name: '智谱AI GLM',
     models: [
+      { id: 'glm-5', name: 'GLM-5 (最新)' },
       { id: 'glm-4', name: 'GLM-4' },
       { id: 'glm-4-flash', name: 'GLM-4 Flash' }
     ],

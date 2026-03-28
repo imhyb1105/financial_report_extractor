@@ -7,14 +7,14 @@ import { validateApiKey } from '../../services/apiService'
 const { Password } = Input
 
 const MODEL_PROVIDERS = [
-  { value: 'claude', label: 'Anthropic（Claude系列）', models: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'], helpText: '支持 Claude-3.5-Sonnet、 Claude-3-Opus 等' },
-  { value: 'openai', label: 'OpenAI（GPT系列）', models: ['gpt-4o', 'gpt-4-turbo'], helpText: '支持 GPT-4o, GPT-4-Turbo 等' },
-  { value: 'gemini', label: 'Google（Gemini系列）', models: ['gemini-1.5-pro', 'gemini-1.5-flash'], helpText: '支持 Gemini-1.5-Pro, Gemini-1.5-Flash 等' },
-  { value: 'deepseek', label: 'DeepSeek（深度求索）', models: ['deepseek-chat', 'deepseek-coder'], helpText: '支持 DeepSeek-Chat, DeepSeek-Coder 等' },
-  { value: 'kimi', label: 'Moonshot（Kimi系列）', models: ['moonshot-v1-8k', 'moonshot-v1-32k'], helpText: '支持 moonshot-v1-8k, moonshot-v1-32k 等' },
-  { value: 'glm', label: '智谱AI（GLM系列）', models: ['glm-4', 'glm-4-flash', 'glm-5'], helpText: '支持 GLM-4, GLM-4-Flash, GLM-5 等' },
-  { value: 'minimax', label: 'MiniMax', models: ['abab6.5-chat', 'abab5.5-chat'], helpText: '支持 abab6.5-chat, abab5.5-chat 等' },
-  { value: 'doubao', label: '豆包（火山方舟）', models: ['doubao-seed-2-0-pro-260215'], helpText: '支持 Doubao-Seed-2.0-pro/lite/mini 等' }
+  { value: 'claude', label: 'Anthropic（Claude系列）', defaultModel: 'claude-3-5-sonnet-20241022', models: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'], helpText: '支持 Claude-3.5-Sonnet、Claude-3-Opus 等' },
+  { value: 'openai', label: 'OpenAI（GPT系列）', defaultModel: 'gpt-4o', models: ['gpt-4o', 'gpt-4-turbo'], helpText: '支持 GPT-4o, GPT-4-Turbo 等' },
+  { value: 'gemini', label: 'Google（Gemini系列）', defaultModel: 'gemini-1.5-pro', models: ['gemini-1.5-pro', 'gemini-1.5-flash'], helpText: '支持 Gemini-1.5-Pro, Gemini-1.5-Flash 等' },
+  { value: 'deepseek', label: 'DeepSeek（深度求索）', defaultModel: 'deepseek-chat', models: ['deepseek-chat', 'deepseek-coder'], helpText: '支持 DeepSeek-Chat, DeepSeek-Coder 等' },
+  { value: 'kimi', label: 'Moonshot（Kimi系列）', defaultModel: 'moonshot-v1-8k', models: ['moonshot-v1-8k', 'moonshot-v1-32k'], helpText: '支持 moonshot-v1-8k, moonshot-v1-32k 等' },
+  { value: 'glm', label: '智谱AI（GLM系列）', defaultModel: 'glm-5', models: ['glm-5', 'glm-4', 'glm-4-flash'], helpText: '支持 GLM-5(最新), GLM-4, GLM-4-Flash 等' },
+  { value: 'minimax', label: 'MiniMax', defaultModel: 'abab6.5-chat', models: ['abab6.5-chat', 'abab5.5-chat'], helpText: '支持 abab6.5-chat, abab5.5-chat 等' },
+  { value: 'doubao', label: '豆包（火山方舟）', defaultModel: 'doubao-seed-2-0-pro-260215', models: ['doubao-seed-2-0-pro-260215'], helpText: '支持 Doubao-Seed-2.0-pro/lite/mini 等' }
 ]
 
 function ModelConfig() {
@@ -73,6 +73,17 @@ function ModelConfig() {
           <div style={{ fontSize: 11, color: '#888', marginBottom: 8, paddingLeft: 4 }}>
             💡 {selectedProvider.helpText}
           </div>
+        )}
+
+        {/* V2.7: 模型版本选择 */}
+        {selectedProvider && selectedProvider.models?.length > 1 && (
+          <Select
+            placeholder="选择模型版本（默认最新）"
+            value={config.model || selectedProvider.defaultModel || undefined}
+            onChange={(value) => setModelConfig(role, { model: value, valid: false })}
+            style={{ width: '100%', marginBottom: 8 }}
+            options={selectedProvider.models.map(m => ({ value: m, label: m }))}
+          />
         )}
 
         <Space.Compact style={{ width: '100%' }}>

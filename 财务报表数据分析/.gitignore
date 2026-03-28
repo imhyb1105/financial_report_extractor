@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+backend/database/*.db
+
+# Uploads
+backend/uploads/
+
+# Logs
+logs/
+*.log
+AI调试日志/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Screenshots
+截图/
+
+# Claude session files (keep directory structure)
+.claude/session/*.md
+!.claude/session/.gitkeep

@@ -1,6 +1,6 @@
 {
   "name": "financial-report-extractor-backend",
-  "version": "2.5.0",
+  "version": "2.7.0",
   "description": "智能财务报表数据提取工具 - 后端API",
   "type": "module",
   "main": "src/app.js",
@@ -11,6 +11,7 @@
     "init-db": "node database/init.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "cheerio": "^1.2.0",

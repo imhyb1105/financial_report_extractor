@@ -40,3 +40,17 @@ Thumbs.db
 # Claude session files (keep directory structure)
 .claude/session/*.md
 !.claude/session/.gitkeep
+
+# API Keys (敏感信息)
+API KEY/
+*.pem
+*.key
+
+# Test files
+test.pdf
+test_*.pdf
+财务报表/
+
+# Temporary files
+*.tmp
+*.temp

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Card, Table, Tag, Tabs, Descriptions, Alert, Button, Space, Tooltip, Typography, Divider } from 'antd'
+import { Card, Table, Tag, Tabs, Descriptions, Alert, Button, Space, Tooltip, Typography, Divider, Empty } from 'antd'
 import {
   DownloadOutlined,
   CheckCircleOutlined,
@@ -8,13 +8,23 @@ import {
   InfoCircleOutlined,
   BugOutlined,
   ClockCircleOutlined,
-  ApiOutlined
+  ApiOutlined,
+  FileTextOutlined,
+  BulbOutlined
 } from '@ant-design/icons'
 import { useStore } from '../../store/useStore'
 import { exportToExcel } from '../../services/exportService'
 import AIDebugPanel from '../AIDebugPanel' // V1.7: AI调试面板
 
 const { Title, Text } = Typography
+
+// V2.8: 非财务信息状态配置
+const NON_FIN_STATUS_CONFIG = {
+  found: { color: 'success', icon: <CheckCircleOutlined />, text: '已找到' },
+  partial: { color: 'warning', icon: <InfoCircleOutlined />, text: '部分提取' },
+  not_in_report: { color: 'processing', icon: <FileTextOutlined />, text: '报告未包含' },
+  not_found: { color: 'default', icon: <CloseCircleOutlined />, text: '未找到' }
+}
 
 // V1.14: 五档置信度配置
 const CONFIDENCE_CONFIG = {
@@ -583,36 +593,131 @@ function ExtractionResult() {
               key: 'nonFinancial',
               label: '非财务信息',
               children: nonFinancialInfo && (
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  {Object.entries(nonFinancialInfo).map(([key, value]) => (
-                    <Card key={key} type="inner" title={getNonFinancialTitle(key)} size="small">
-                      {!value || (typeof value === 'object' && !Array.isArray(value) && !value.content && !value.length) ? (
-                        <Text type="secondary">未提取到相关信息</Text>
-                      ) : Array.isArray(value) ? (
-                        <ul style={{ margin: 0, paddingLeft: 20 }}>
-                          {value.map((item, idx) => {
-                            const content = typeof item === 'object' ? item.content : item
-                            const source = typeof item === 'object' ? item.source : null
-                            return (
-                              <li key={idx}>
-                                {content}
-                                {source?.page && <Text type="secondary" style={{ fontSize: 11, marginLeft: 8 }}>(第{source.page}页{source.location ? `，${source.location}` : ''})</Text>}
-                              </li>
-                            )
-                          })}
-                        </ul>
-                      ) : (
-                        <Space direction="vertical" size={0}>
-                          <Text>{typeof value === 'object' ? (value.content || '未提取到相关信息') : value}</Text>
-                          {typeof value === 'object' && value.source?.page && (
-                            <Text type="secondary" style={{ fontSize: 11 }}>
-                              来源：第{value.source.page}页{value.source.location ? `，${value.source.location}` : ''}
-                            </Text>
-                          )}
-                        </Space>
-                      )}
-                    </Card>
-                  ))}
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                  {/* V2.8: 报告类型提示 */}
+                  {nonFinancialInfo.reportType && (
+                    <Alert
+                      message={nonFinancialInfo.reportType === 'quarterly'
+                        ? '检测到季度报告'
+                        : nonFinancialInfo.reportType === 'annual'
+                          ? '检测到年度报告'
+                          : '报告类型未知'}
+                      description={nonFinancialInfo.reportType === 'quarterly'
+                        ? '季度报告通常比年度报告简短，可能不包含完整的风险因素、重大事项等章节。以下信息是根据报告内容尽可能提取的相关信息。'
+                        : '年度报告通常包含完整的非财务信息章节。'}
+                      type={nonFinancialInfo.reportType === 'quarterly' ? 'info' : 'success'}
+                      showIcon
+                      icon={<InfoCircleOutlined />}
+                    />
+                  )}
+                  {/* V2.8: 非财务信息卡片 */}
+                  {['riskFactors', 'majorEvents', 'futurePlans', 'dividendPlan'].map(key => {
+                    const item = nonFinancialInfo[key]
+                    // 兼容新旧格式
+                    const isNewFormat = item && typeof item === 'object' && 'status' in item
+                    const status = isNewFormat ? item.status : (item && (Array.isArray(item) ? item.length > 0 : item.content) ? 'found' : 'not_found')
+                    const statusConfig = NON_FIN_STATUS_CONFIG[status] || NON_FIN_STATUS_CONFIG.not_found
+                    const items = isNewFormat ? item.items : (Array.isArray(item) ? item : [])
+                    const content = isNewFormat ? item.content : (typeof item === 'object' && !Array.isArray(item) ? item.content : null)
+                    const hint = isNewFormat ? item.hint : null
+                    const source = isNewFormat ? item.source : (typeof item === 'object' && !Array.isArray(item) ? item.source : null)
+
+                    return (
+                      <Card
+                        key={key}
+                        type="inner"
+                        title={
+                          <Space>
+                            <span>{getNonFinancialTitle(key)}</span>
+                            <Tag color={statusConfig.color} icon={statusConfig.icon}>
+                              {statusConfig.text}
+                            </Tag>
+                          </Space>
+                        }
+                        size="small"
+                      >
+                        {/* 显示提取的内容 */}
+                        {status === 'found' && items && items.length > 0 && (
+                          <ul style={{ margin: 0, paddingLeft: 20 }}>
+                            {items.map((it, idx) => {
+                              const itemContent = typeof it === 'object' ? it.content : it
+                              const itemSource = typeof it === 'object' ? it.source : null
+                              return (
+                                <li key={idx}>
+                                  {itemContent}
+                                  {itemSource?.page && (
+                                    <Text type="secondary" style={{ fontSize: 11, marginLeft: 8 }}>
+                                      (第{itemSource.page}页{itemSource.location ? `，${itemSource.location}` : ''})
+                                    </Text>
+                                  )}
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        )}
+                        {status === 'found' && content && (
+                          <Space direction="vertical" size={0}>
+                            <Text>{content}</Text>
+                            {source?.page && (
+                              <Text type="secondary" style={{ fontSize: 11 }}>
+                                来源：第{source.page}页{source.location ? `，${source.location}` : ''}
+                              </Text>
+                            )}
+                          </Space>
+                        )}
+
+                        {/* 显示提示信息 */}
+                        {(status === 'partial' || status === 'not_in_report' || status === 'not_found') && (
+                          <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                            {status === 'partial' && items && items.length > 0 && (
+                              <>
+                                <Text type="secondary">从报告中找到的相关内容：</Text>
+                                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                  {items.map((it, idx) => {
+                                    const itemContent = typeof it === 'object' ? it.content : it
+                                    const itemSource = typeof it === 'object' ? it.source : null
+                                    return (
+                                      <li key={idx}>
+                                        {itemContent}
+                                        {itemSource?.page && (
+                                          <Text type="secondary" style={{ fontSize: 11, marginLeft: 8 }}>
+                                            (第{itemSource.page}页)
+                                          </Text>
+                                        )}
+                                      </li>
+                                    )
+                                  })}
+                                </ul>
+                              </>
+                            )}
+                            {hint && (
+                              <Alert
+                                message={<span><BulbOutlined /> {hint}</span>}
+                                type="info"
+                                showIcon
+                                style={{ marginTop: 8 }}
+                              />
+                            )}
+                            {!hint && status === 'not_found' && (
+                              <Text type="secondary">在报告中未找到相关信息</Text>
+                            )}
+                            {!hint && status === 'not_in_report' && (
+                              <Alert
+                                message={<span><BulbOutlined /> 季度报告通常不包含此信息，建议查看年度报告</span>}
+                                type="info"
+                                showIcon
+                              />
+                            )}
+                          </Space>
+                        )}
+
+                        {/* 兼容旧格式：空内容 */}
+                        {!isNewFormat && !items?.length && !content && (
+                          <Text type="secondary">未提取到相关信息</Text>
+                        )}
+                      </Card>
+                    )
+                  })}
                 </Space>
               )
             }

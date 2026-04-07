@@ -8,7 +8,7 @@ class GeminiAdapter extends BaseAdapter {
   constructor(apiKey, options = {}) {
     super('gemini', apiKey, options)
     this.genAI = new GoogleGenerativeAI(apiKey)
-    this.model = options.model || 'gemini-1.5-pro'
+    this.model = options.model || 'gemini-3.1-pro'
   }
 
   async validateKey() {

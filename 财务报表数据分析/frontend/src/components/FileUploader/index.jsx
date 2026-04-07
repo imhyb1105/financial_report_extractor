@@ -19,11 +19,12 @@ function FileUploader() {
     extractionProgress,
     modelConfigs,
     displayUnit,
-    addToHistory
+    addToHistory,
+    selectedFile,
+    fileInfo,
+    setSelectedFile,
+    clearSelectedFile
   } = useStore()
-
-  const [file, setFile] = useState(null)
-  const [fileInfo, setFileInfo] = useState(null)
 
   const beforeUpload = (file) => {
     if (file.type !== 'application/pdf') {
@@ -39,22 +40,20 @@ function FileUploader() {
 
   const handleFileChange = (info) => {
     if (info.fileList.length > 0) {
-      const selectedFile = info.fileList[0].originFileObj
-      setFile(selectedFile)
-      setFileInfo({
-        name: selectedFile.name,
-        size: (selectedFile.size / 1024 / 1024).toFixed(2),
-        type: selectedFile.type,
-        lastModified: new Date(selectedFile.lastModified).toLocaleString()
+      const file = info.fileList[0].originFileObj
+      setSelectedFile(file, {
+        name: file.name,
+        size: (file.size / 1024 / 1024).toFixed(2),
+        type: file.type,
+        lastModified: new Date(file.lastModified).toLocaleString()
       })
     } else {
-      setFile(null)
-      setFileInfo(null)
+      clearSelectedFile()
     }
   }
 
   const handleExtract = async () => {
-    if (!file) {
+    if (!selectedFile) {
       message.warning('请先上传PDF文件')
       return
     }
@@ -75,7 +74,7 @@ function FileUploader() {
 
     try {
       // V1.7: extractData 返回 { data, debugLog }
-      const { data: result, debugLog } = await extractData(file, validModels, displayUnit, (progress) => {
+      const { data: result, debugLog } = await extractData(selectedFile, validModels, displayUnit, (progress) => {
         setExtractionProgress(progress)
       })
 
@@ -85,7 +84,7 @@ function FileUploader() {
       // 添加到历史记录
       addToHistory({
         id: Date.now(),
-        fileName: file.name,
+        fileName: selectedFile.name,
         timestamp: new Date().toISOString(),
         companyName: result.companyInfo?.name || '未知公司',
         reportPeriod: result.companyInfo?.reportPeriod || '',
@@ -100,8 +99,7 @@ function FileUploader() {
   }
 
   const handleRemove = () => {
-    setFile(null)
-    setFileInfo(null)
+    clearSelectedFile()
   }
 
   return (
@@ -109,11 +107,11 @@ function FileUploader() {
       <Dragger
         beforeUpload={beforeUpload}
         onChange={handleFileChange}
-        fileList={file ? [{
+        fileList={selectedFile ? [{
           uid: '-1',
-          name: file.name,
+          name: selectedFile.name,
           status: 'done',
-          originFileObj: file
+          originFileObj: selectedFile
         }] : []}
         onRemove={handleRemove}
         accept=".pdf"
@@ -168,7 +166,7 @@ function FileUploader() {
         block
         style={{ marginTop: 16 }}
         onClick={handleExtract}
-        disabled={!file || isExtracting}
+        disabled={!selectedFile || isExtracting}
         loading={isExtracting}
       >
         {isExtracting ? '正在提取数据...' : '开始提取数据'}

@@ -5,7 +5,7 @@
 import axios from 'axios'
 
 // API 基础地址
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 // 创建 axios 实例
 const api = axios.create({

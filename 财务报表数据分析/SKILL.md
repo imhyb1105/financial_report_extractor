@@ -387,6 +387,81 @@ When PRD doesn't specify, use these defaults **SILENTLY** (DO NOT ask user):
 
 ---
 
+## ⚠️ Terminal Management Protocol (终端管理协议)
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                  🚨 CRITICAL: PREVENT SESSION TERMINATION 🚨                  ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                              ║
+║  ⛔ NEVER USE: taskkill /F /IM node.exe                                      ║
+║     → This kills ALL node processes including Claude itself!                 ║
+║     → Will cause UNEXPECTED SESSION TERMINATION                              ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Mandatory Terminal Separation Strategy
+
+| Terminal | Purpose | Command |
+|----------|---------|---------|
+| **Terminal A** | Claude CLI only | `claude --dangerously-skip-permissions` |
+| **Terminal B** | Backend server | `cd backend && npm run dev` |
+| **Terminal C** | Frontend/Build | `cd frontend && npm run dev` |
+| **Terminal D** | General commands | git, testing, etc. |
+
+### Safe Process Kill Commands
+
+```
+❌ FORBIDDEN (全局杀进程):
+   taskkill /F /IM node.exe          # Kills Claude too!
+   taskkill /F /IM python.exe
+   pkill -9 node
+
+✅ SAFE (按端口杀进程):
+   # Windows (PowerShell)
+   netstat -ano | findstr :3000      # Find PID using port 3000
+   taskkill /PID <查到的PID> /F      # Kill specific PID only
+
+   # Linux/macOS
+   lsof -i :3000 | grep LISTEN
+   kill -9 <PID>
+
+✅ SAFE (按PID杀进程):
+   # First find the specific PID
+   netstat -ano | findstr :3000
+   # Then kill only that PID
+   taskkill /PID 12345 /F
+```
+
+### Port Conflict Resolution Flow
+
+```
+Port Conflict Detected (e.g., EADDRINUSE: address already in use :::3000)
+    │
+    ├─► STEP 1: Find the process using the port
+    │     Windows: netstat -ano | findstr :3000
+    │     Linux:   lsof -i :3000
+    │
+    ├─► STEP 2: Identify the PID from output
+    │     Example: TCP 0.0.0.0:3000 ... PID=12345
+    │
+    ├─► STEP 3: Kill ONLY that specific PID
+    │     taskkill /PID 12345 /F
+    │
+    └─► STEP 4: Verify port is free
+          netstat -ano | findstr :3000  (should return empty)
+```
+
+### Summary Rules
+
+1. **NEVER** execute `taskkill /F /IM node.exe` - it will kill Claude
+2. **ALWAYS** use separate terminals for different processes
+3. **ALWAYS** find PID first before killing (按端口查PID再杀)
+4. **AVOID** running commands in Claude's terminal except Claude itself
+
+---
+
 ## System Dependencies Check
 
 ### PHASE 0.5: Environment Validation

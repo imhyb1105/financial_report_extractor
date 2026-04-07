@@ -333,4 +333,77 @@ router.get('/feedbacks/stats', authMiddleware, async (req, res) => {
   }
 })
 
+/**
+ * 修改管理员密码
+ * PUT /api/admin/password
+ */
+router.put('/password', authMiddleware, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: '请输入原密码和新密码'
+      })
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: '新密码至少需要6位'
+      })
+    }
+
+    // 查询当前管理员
+    const admin = await db.queryOne(
+      'SELECT * FROM admins WHERE id = ?',
+      [req.admin.id]
+    )
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: '管理员不存在'
+      })
+    }
+
+    // 验证原密码
+    const isValid = await bcrypt.compare(oldPassword, admin.password_hash)
+
+    if (!isValid) {
+      return res.status(401).json({
+        success: false,
+        message: '原密码错误'
+      })
+    }
+
+    // 更新密码
+    const newPasswordHash = await bcrypt.hash(newPassword, 10)
+    await db.run(
+      'UPDATE admins SET password_hash = ? WHERE id = ?',
+      [newPasswordHash, req.admin.id]
+    )
+
+    // 记录审计日志
+    await auditLogService.logUserAction(
+      AUDIT_EVENTS.ADMIN_PASSWORD_CHANGE,
+      req.admin.username,
+      req,
+      { message: '管理员修改密码成功' }
+    )
+
+    res.json({
+      success: true,
+      message: '密码修改成功'
+    })
+  } catch (err) {
+    console.error('❌ 修改密码失败:', err)
+    res.status(500).json({
+      success: false,
+      message: '密码修改失败'
+    })
+  }
+})
+
 export default router

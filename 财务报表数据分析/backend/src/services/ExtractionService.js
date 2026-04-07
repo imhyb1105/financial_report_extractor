@@ -374,6 +374,7 @@ class ExtractionService {
 
   /**
    * V1.14: 根据模型C的评分调整置信度
+   * V2.8: 修复置信度计算逻辑 - 勾稽核对完美通过时应提升置信度
    * @param {Object} result - 提取结果
    * @returns {Object} 修正后的结果
    */
@@ -385,7 +386,7 @@ class ExtractionService {
     let adjustment = 0
     if (accountingCheck) {
       if (accountingCheck.passed && accountingCheck.summary?.warnings === 0) {
-        adjustment = 0 // 完美通过，不调整
+        adjustment = 1 // 完美通过，提升一级
       } else if (accountingCheck.passed) {
         adjustment = 0 // 通过但有警告，不调整
       } else {
@@ -631,52 +632,121 @@ class ExtractionService {
   }
 
   /**
-   * 构建非财务信息提取专用prompt
+   * V2.8: 构建非财务信息提取专用prompt（优化版）
+   * - 识别报告类型（季度/年度）
+   * - 扩大搜索范围，不仅搜索专门章节
+   * - 返回结构化状态信息
    */
   buildNonFinancialPrompt(pdfPath) {
-    return `你是一位专业的财务分析师。请从PDF中提取以下非财务信息。
+    return `你是一位专业的财务分析师。请从PDF中提取非财务信息。
 
-# ⛔ 严格禁止
-1. 禁止使用你记忆中的数据，只能从PDF原文中提取
-2. 禁止编造、猜测任何内容
-3. 如果PDF中找不到相关信息，必须将对应字段设为空
+# 第一步：识别报告类型
+首先判断这是什么类型的报告：
+- 如果标题包含"第一季度"、"第二季度"、"第三季度"、"第四季度"或"半年度"，则为季度/半年度报告
+- 如果标题包含"年度报告"或"年报"，则为年度报告
 
-# 提取要求
-请搜索PDF中的以下章节并提取内容：
+# 第二步：提取信息（灵活策略）
+⚠️ 重要：季度报告通常比年度报告简短，可能不包含完整的专门章节。请采用灵活策略：
 
-1. riskFactors（风险因素）：搜索"可能面对的风险"、"风险提示"、"风险因素"、"风险警示"，提取3-5条主要风险
-2. majorEvents（重大事项）：搜索"重要事项"、"重大事项"、"重大事件"，提取报告期重要事件
-3. futurePlans（未来规划）：搜索"未来发展展望"、"未来发展规划"、"经营计划"，提取公司计划
-4. dividendPlan（分红方案）：搜索"利润分配"、"股利分配"、"分红派息"，提取分红方案
+## 1. 风险因素 (riskFactors)
+**优先搜索专门章节**：
+- "可能面对的风险"、"风险提示"、"风险因素"、"风险警示"
+
+**如果找不到专门章节，搜索相关描述**：
+- "审计意见"、"重大不确定性"、"持续经营"
+- "诉讼"、"仲裁"、"担保"、"抵押"
+- 报告开头/结尾的"重要内容提示"、"注意事项"
+
+## 2. 重大事项 (majorEvents)
+**优先搜索专门章节**：
+- "重要事项"、"重大事项"、"重大事件"、"临时公告"
+
+**如果找不到专门章节，搜索相关描述**：
+- "收购"、"出售"、"合并"、"重组"
+- "投资"、"融资"、"股权变动"
+- "关联交易"、"对外担保"
+
+## 3. 未来规划 (futurePlans)
+**优先搜索专门章节**：
+- "未来发展展望"、"未来发展规划"、"经营计划"、"发展目标"
+
+**如果找不到专门章节，搜索相关描述**：
+- "下一步"、"计划"、"预计"、"展望"
+- 董事会报告、管理层讨论中的前瞻性陈述
+
+## 4. 分红方案 (dividendPlan)
+**优先搜索专门章节**：
+- "利润分配"、"股利分配"、"分红派息"、"股息"
+
+**如果找不到专门章节，搜索相关描述**：
+- "未分配利润"、"盈余公积"
+- "利润分配预案"、"分红预案"
+
+# 第三步：确定状态
+对每个字段，确定以下状态之一：
+- "found": 找到专门章节，内容完整
+- "partial": 没有专门章节，但找到相关描述
+- "not_in_report": 报告类型不包含此信息（如季度报告通常不含风险因素章节）
+- "not_found": 确实找不到任何相关信息
 
 # 输出格式（严格JSON，不要其他文字）
 {
-  "riskFactors": [
-    {"content": "风险描述", "source": {"page": 页码, "location": "位置"}}
-  ],
-  "majorEvents": [
-    {"content": "事项描述", "source": {"page": 页码, "location": "位置"}}
-  ],
-  "futurePlans": [
-    {"content": "规划描述", "source": {"page": 页码, "location": "位置"}}
-  ],
-  "dividendPlan": {"content": "分红方案描述", "source": {"page": 页码, "location": "位置"}}
+  "reportType": "quarterly" 或 "annual",
+  "riskFactors": {
+    "status": "found/partial/not_in_report/not_found",
+    "items": [
+      {"content": "风险描述", "source": {"page": 页码, "location": "位置"}}
+    ],
+    "hint": "状态说明或建议（如：季度报告通常不包含完整的风险因素章节，建议查看年度报告）"
+  },
+  "majorEvents": {
+    "status": "found/partial/not_in_report/not_found",
+    "items": [
+      {"content": "事项描述", "source": {"page": 页码, "location": "位置"}}
+    ],
+    "hint": "状态说明或建议"
+  },
+  "futurePlans": {
+    "status": "found/partial/not_in_report/not_found",
+    "items": [
+      {"content": "规划描述", "source": {"page": 页码, "location": "位置"}}
+    ],
+    "hint": "状态说明或建议"
+  },
+  "dividendPlan": {
+    "status": "found/partial/not_in_report/not_found",
+    "content": "分红方案描述（如有）",
+    "source": {"page": 页码, "location": "位置"},
+    "hint": "状态说明或建议"
+  }
 }
+
+⚠️ 重要提示：
+1. 即使找不到专门章节，也要尽量提取相关的零散信息
+2. hint字段必须填写，告诉用户为什么是空的建议查看什么
+3. 不要返回空数组后什么都不解释
+
+⚠️ 页码准确性要求（极其重要）：
+1. source.page 必须是内容实际所在的页码，查看PDF原文中"--- 第 X 页 ---"标记
+2. 不同内容可能在不同的页，不要所有内容都写同一个页码
+3. 如果内容出现在第5页，source.page必须是5，不是3或其他数字
+4. 禁止为所有内容使用相同的页码（如全部写3）
+5. 如果不确定页码，可以根据内容上下文中的"--- 第 X 页 ---"标记推断
 
 只输出JSON。`
   }
 
   /**
-   * 构建非财务信息总结合并prompt
+   * V2.8: 构建非财务信息总结合并prompt（支持新的结构化格式）
    */
   buildNonFinancialSummarizePrompt(resultA, resultB, companyName) {
     return `你是一位专业的财务分析师。以下是两个AI模型从"${companyName || '某公司'}"的财务报告中提取的非财务信息。
 
 【模型A提取结果】
-${JSON.stringify(resultA || { riskFactors: [], majorEvents: [], futurePlans: [], dividendPlan: null }, null, 2)}
+${JSON.stringify(resultA || { reportType: 'unknown', riskFactors: { status: 'not_found', items: [], hint: '' }, majorEvents: { status: 'not_found', items: [], hint: '' }, futurePlans: { status: 'not_found', items: [], hint: '' }, dividendPlan: { status: 'not_found', content: '', hint: '' } }, null, 2)}
 
 【模型B提取结果】
-${JSON.stringify(resultB || { riskFactors: [], majorEvents: [], futurePlans: [], dividendPlan: null }, null, 2)}
+${JSON.stringify(resultB || { reportType: 'unknown', riskFactors: { status: 'not_found', items: [], hint: '' }, majorEvents: { status: 'not_found', items: [], hint: '' }, futurePlans: { status: 'not_found', items: [], hint: '' }, dividendPlan: { status: 'not_found', content: '', hint: '' } }, null, 2)}
 
 # 任务
 请综合两个模型的结果，生成最终的非财务信息：
@@ -684,19 +754,38 @@ ${JSON.stringify(resultB || { riskFactors: [], majorEvents: [], futurePlans: [],
 2. 如果两个模型提取的内容有冲突，选择更详细/更准确的版本
 3. 如果某个模型提取为空但另一个有内容，保留有内容的
 4. 确保最终结果准确、完整
+5. 保留或合并hint字段中的建议
 
 # 输出格式（严格JSON，不要其他文字）
 {
-  "riskFactors": [
-    {"content": "风险描述（简洁明了）", "source": {"page": 页码, "location": "位置"}}
-  ],
-  "majorEvents": [
-    {"content": "事项描述（简洁明了）", "source": {"page": 页码, "location": "位置"}}
-  ],
-  "futurePlans": [
-    {"content": "规划描述（简洁明了）", "source": {"page": 页码, "location": "位置"}}
-  ],
-  "dividendPlan": {"content": "分红方案描述", "source": {"page": 页码, "location": "位置"}}
+  "reportType": "quarterly" 或 "annual",
+  "riskFactors": {
+    "status": "found/partial/not_in_report/not_found",
+    "items": [
+      {"content": "风险描述（简洁明了）", "source": {"page": 页码, "location": "位置"}}
+    ],
+    "hint": "状态说明或建议"
+  },
+  "majorEvents": {
+    "status": "found/partial/not_in_report/not_found",
+    "items": [
+      {"content": "事项描述（简洁明了）", "source": {"page": 页码, "location": "位置"}}
+    ],
+    "hint": "状态说明或建议"
+  },
+  "futurePlans": {
+    "status": "found/partial/not_in_report/not_found",
+    "items": [
+      {"content": "规划描述（简洁明了）", "source": {"page": 页码, "location": "位置"}}
+    ],
+    "hint": "状态说明或建议"
+  },
+  "dividendPlan": {
+    "status": "found/partial/not_in_report/not_found",
+    "content": "分红方案描述（如有）",
+    "source": {"page": 页码, "location": "位置"},
+    "hint": "状态说明或建议"
+  }
 }
 
 只输出JSON。`

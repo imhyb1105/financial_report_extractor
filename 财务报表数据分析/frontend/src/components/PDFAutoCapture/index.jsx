@@ -1,6 +1,6 @@
 /**
  * PDF自动抓取组件
- * V2.3 新增
+ * V2.5.2 优化布局
  * 支持通过股票代码/公司名自动获取年报PDF
  */
 
@@ -18,21 +18,22 @@ import {
   Empty,
   Select,
   Divider,
-  Tooltip,
-  Alert
+  Tooltip
 } from 'antd'
 import {
   SearchOutlined,
-  DownloadOutlined,
   FilePdfOutlined,
   DatabaseOutlined,
   SettingOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  CloudDownloadOutlined,
+  SelectOutlined,
+  StockOutlined
 } from '@ant-design/icons'
 import api from '../../services/api'
 
-const { Title, Text, Link } = Typography
+const { Text } = Typography
 const { Search } = Input
 const { Option } = Select
 
@@ -41,6 +42,7 @@ const PDFAutoCapture = ({ onPDFSelected }) => {
   const [searching, setSearching] = useState(false)
   const [loadingReports, setLoadingReports] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [downloadingOriginal, setDownloadingOriginal] = useState({})
   const [companies, setCompanies] = useState([])
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [reports, setReports] = useState([])
@@ -62,7 +64,7 @@ const PDFAutoCapture = ({ onPDFSelected }) => {
     setReports([])
 
     try {
-      const response = await api.get('/api/pdf-source/search', {
+      const response = await api.get('/pdf-source/search', {
         params: { keyword: keyword.trim() }
       })
 
@@ -89,7 +91,7 @@ const PDFAutoCapture = ({ onPDFSelected }) => {
     setReports([])
 
     try {
-      const response = await api.get('/api/pdf-source/reports', {
+      const response = await api.get('/pdf-source/reports', {
         params: {
           code: company.code,
           market: company.market
@@ -111,30 +113,64 @@ const PDFAutoCapture = ({ onPDFSelected }) => {
   }, [])
 
   /**
+   * 直接下载PDF原文件
+   */
+  const handleDownloadOriginal = useCallback(async (report) => {
+    const artCode = report.artCode || report.url?.split('/').pop()?.replace('.pdf', '').replace('H2_', '')
+    const downloadKey = artCode || report.url
+
+    setDownloadingOriginal(prev => ({ ...prev, [downloadKey]: true }))
+
+    try {
+      const response = await api.get('/pdf-source/download', {
+        params: { url: report.url },
+        responseType: 'blob'
+      })
+
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      const fileName = `${report.code}_${report.title}.pdf`.replace(/[\/\\:*?"<>|]/g, '_')
+      link.download = fileName
+
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      message.success(`已下载: ${fileName}`)
+    } catch (error) {
+      console.error('下载PDF失败:', error)
+      message.error('下载PDF失败，请稍后重试')
+    } finally {
+      setDownloadingOriginal(prev => ({ ...prev, [downloadKey]: false }))
+    }
+  }, [])
+
+  /**
    * 下载并使用PDF
    */
   const handleDownloadPDF = useCallback(async (report) => {
     setDownloading(true)
 
     try {
-      // 如果有回调函数，传递报告信息
-      if (onPDFSelected) {
-        // 模拟PDF文件对象
-        const mockFile = {
-          name: `${report.code}_${report.title}.pdf`,
-          type: 'application/pdf',
-          size: 1024 * 1024, // 模拟大小
-          url: report.url,
-          source: report.source,
-          isRemote: true
-        }
+      const response = await api.get('/pdf-source/download', {
+        params: { url: report.url },
+        responseType: 'blob'
+      })
 
-        onPDFSelected(mockFile, report)
-        message.success('已选择年报，请点击"开始提取"按钮')
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const fileName = `${report.code}_${report.title}.pdf`.replace(/[\/\\:*?"<>|]/g, '_')
+      const file = new File([blob], fileName, { type: 'application/pdf' })
+
+      if (onPDFSelected) {
+        onPDFSelected(file, report)
+        message.success(`已选择年报: ${report.title}`)
       }
     } catch (error) {
-      console.error('选择PDF失败:', error)
-      message.error('选择PDF失败')
+      console.error('下载PDF失败:', error)
+      message.error('下载PDF失败，请稍后重试')
     } finally {
       setDownloading(false)
     }
@@ -145,14 +181,13 @@ const PDFAutoCapture = ({ onPDFSelected }) => {
    */
   const renderSourceTag = (source) => {
     const sourceConfig = {
-      eastmoney: { color: 'blue', text: '东方财富' },
-      cninfo: { color: 'green', text: '巨潮资讯' },
-      sse: { color: 'red', text: '上交所' },
-      szse: { color: 'orange', text: '深交所' },
-      mock: { color: 'default', text: '模拟数据' }
+      eastmoney: { color: 'processing', text: '东方财富' },
+      cninfo: { color: 'success', text: '巨潮资讯' },
+      sse: { color: 'error', text: '上交所' },
+      szse: { color: 'warning', text: '深交所' }
     }
-    const config = sourceConfig[source] || sourceConfig.mock
-    return <Tag color={config.color}>{config.text}</Tag>
+    const config = sourceConfig[source] || { color: 'default', text: source }
+    return <Tag color={config.color} style={{ margin: 0, fontSize: 11 }}>{config.text}</Tag>
   }
 
   /**
@@ -170,39 +205,50 @@ const PDFAutoCapture = ({ onPDFSelected }) => {
 
   return (
     <Card
+      size="small"
       title={
-        <Space>
-          <DatabaseOutlined />
-          <span>PDF自动抓取</span>
-          <Tag color="blue">V2.3</Tag>
+        <Space size={6}>
+          <DatabaseOutlined style={{ color: '#1890ff' }} />
+          <span style={{ fontSize: 14 }}>PDF自动抓取</span>
+          <Tag color="blue" style={{ marginLeft: 4, fontSize: 10 }}>V2.5.2</Tag>
         </Space>
       }
       extra={
-        <Button
-          type="text"
-          icon={<SettingOutlined />}
-          onClick={() => setShowConfig(!showConfig)}
-        />
+        <Tooltip title="设置">
+          <Button
+            type="text"
+            size="small"
+            icon={<SettingOutlined />}
+            onClick={() => setShowConfig(!showConfig)}
+          />
+        </Tooltip>
       }
-      size="small"
+      styles={{
+        body: { padding: '12px' }
+      }}
     >
-      {/* 使用说明 */}
-      <Alert
-        type="info"
-        message="输入股票代码（如600519）或公司名称（如贵州茅台），自动搜索并获取年报PDF"
-        showIcon
-        style={{ marginBottom: 16 }}
+      {/* 搜索框 */}
+      <Search
+        placeholder="股票代码/公司名称"
+        allowClear
+        enterButton={<SearchOutlined />}
+        size="middle"
+        loading={searching}
+        value={searchKeyword}
+        onChange={(e) => setSearchKeyword(e.target.value)}
+        onSearch={handleSearch}
+        style={{ marginBottom: 12 }}
       />
 
       {/* 数据源配置 */}
       {showConfig && (
-        <div style={{ marginBottom: 16 }}>
-          <Text type="secondary">数据源优先级：</Text>
+        <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>数据源:</Text>
           <Select
             value={dataSource}
             onChange={setDataSource}
-            style={{ width: 150, marginLeft: 8 }}
             size="small"
+            style={{ flex: 1 }}
           >
             <Option value="auto">自动选择</Option>
             <Option value="eastmoney">东方财富优先</Option>
@@ -211,49 +257,42 @@ const PDFAutoCapture = ({ onPDFSelected }) => {
         </div>
       )}
 
-      {/* 搜索框 */}
-      <Search
-        placeholder="输入股票代码或公司名称"
-        allowClear
-        enterButton={<><SearchOutlined /> 搜索</>}
-        size="large"
-        loading={searching}
-        value={searchKeyword}
-        onChange={(e) => setSearchKeyword(e.target.value)}
-        onSearch={handleSearch}
-      />
-
       {/* 搜索结果 - 公司列表 */}
       {companies.length > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <Divider orientation="left" plain>
-            <Text type="secondary">搜索结果</Text>
+        <div style={{ marginTop: 8 }}>
+          <Divider style={{ margin: '8px 0', fontSize: 12 }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>公司列表 ({companies.length})</Text>
           </Divider>
           <List
             size="small"
             dataSource={companies}
+            style={{ maxHeight: 150, overflow: 'auto' }}
             renderItem={(company) => (
               <List.Item
                 onClick={() => handleSelectCompany(company)}
                 style={{
+                  padding: '6px 8px',
                   cursor: 'pointer',
-                  background: selectedCompany?.code === company.code ? '#e6f7ff' : 'transparent'
+                  background: selectedCompany?.code === company.code ? '#e6f7ff' : 'transparent',
+                  borderRadius: 4,
+                  marginBottom: 4
                 }}
               >
-                <List.Item.Meta
-                  avatar={<FilePdfOutlined style={{ fontSize: 20, color: '#1890ff' }} />}
-                  title={
-                    <Space>
-                      <Text strong>{company.name}</Text>
-                      <Tag>{company.code}</Tag>
-                      {renderSourceTag(company.source)}
-                    </Space>
-                  }
-                  description={`${company.market === 'sh' ? '上海证券交易所' : company.market === 'sz' ? '深圳证券交易所' : '北京证券交易所'}`}
-                />
-                {selectedCompany?.code === company.code && (
-                  <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 18 }} />
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+                  <StockOutlined style={{ color: '#1890ff', fontSize: 14 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Text strong style={{ fontSize: 13 }}>{company.name}</Text>
+                      <Tag style={{ margin: 0, fontSize: 11 }}>{company.code}</Tag>
+                    </div>
+                    <Text type="secondary" style={{ fontSize: 11 }}>
+                      {company.market === 'sh' ? '上交所' : company.market === 'sz' ? '深交所' : '北交所'}
+                    </Text>
+                  </div>
+                  {selectedCompany?.code === company.code && (
+                    <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 14 }} />
+                  )}
+                </div>
               </List.Item>
             )}
           />
@@ -262,71 +301,102 @@ const PDFAutoCapture = ({ onPDFSelected }) => {
 
       {/* 年报列表 */}
       {selectedCompany && (
-        <div style={{ marginTop: 16 }}>
-          <Divider orientation="left" plain>
-            <Space>
-              <Text type="secondary">{selectedCompany.name} 年报列表</Text>
+        <div style={{ marginTop: 8 }}>
+          <Divider style={{ margin: '8px 0', fontSize: 12 }}>
+            <Space size={4}>
+              <Text type="secondary" style={{ fontSize: 12 }}>{selectedCompany.name} 年报</Text>
               {loadingReports && <Spin size="small" />}
             </Space>
           </Divider>
 
-          {reports.length > 0 ? (
+          {loadingReports ? (
+            <div style={{ textAlign: 'center', padding: 16 }}>
+              <Spin size="small" />
+            </div>
+          ) : reports.length > 0 ? (
             <List
               size="small"
               dataSource={reports}
-              renderItem={(report) => (
-                <List.Item
-                  actions={[
-                    <Tooltip title="选择此年报进行数据提取" key="select">
-                      <Button
-                        type="primary"
-                        size="small"
-                        icon={<DownloadOutlined />}
-                        loading={downloading}
-                        onClick={() => handleDownloadPDF(report)}
-                      >
-                        选择
-                      </Button>
-                    </Tooltip>
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={<FilePdfOutlined style={{ fontSize: 18, color: '#ff4d4f' }} />}
-                    title={
-                      <Space>
-                        <Text>{report.title}</Text>
+              style={{ maxHeight: 200, overflow: 'auto' }}
+              renderItem={(report) => {
+                const artCode = report.artCode || report.url?.split('/').pop()?.replace('.pdf', '').replace('H2_', '')
+                const downloadKey = artCode || report.url
+                const isDownloading = downloadingOriginal[downloadKey]
+
+                return (
+                  <List.Item
+                    style={{
+                      padding: '8px',
+                      borderBottom: '1px solid #f0f0f0',
+                      marginBottom: 4,
+                      background: '#fafafa',
+                      borderRadius: 4
+                    }}
+                  >
+                    <div style={{ width: '100%' }}>
+                      {/* 标题行 */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                        <FilePdfOutlined style={{ color: '#ff4d4f', fontSize: 14 }} />
+                        <Text ellipsis style={{ flex: 1, fontSize: 12 }} title={report.title}>
+                          {report.title}
+                        </Text>
                         {renderSourceTag(report.source)}
-                      </Space>
-                    }
-                    description={
-                      <Space split={<Text type="secondary">|</Text>}>
-                        <Text type="secondary">
-                          <ClockCircleOutlined /> 发布日期: {formatDate(report.publishDate)}
+                      </div>
+
+                      {/* 信息行 */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text type="secondary" style={{ fontSize: 11 }}>
+                          <ClockCircleOutlined style={{ marginRight: 4 }} />
+                          {formatDate(report.publishDate)}
                         </Text>
-                        <Text type="secondary">
-                          代码: {report.code}
-                        </Text>
-                      </Space>
-                    }
-                  />
-                </List.Item>
-              )}
+
+                        {/* 按钮组 */}
+                        <Space size={4}>
+                          <Tooltip title="下载PDF原文件">
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<CloudDownloadOutlined />}
+                              loading={isDownloading}
+                              onClick={() => handleDownloadOriginal(report)}
+                              style={{ color: '#666', fontSize: 12 }}
+                            >
+                              下载
+                            </Button>
+                          </Tooltip>
+                          <Tooltip title="选择进行数据提取">
+                            <Button
+                              type="primary"
+                              size="small"
+                              icon={<SelectOutlined />}
+                              loading={downloading}
+                              onClick={() => handleDownloadPDF(report)}
+                              style={{ fontSize: 12 }}
+                            >
+                              选择
+                            </Button>
+                          </Tooltip>
+                        </Space>
+                      </div>
+                    </div>
+                  </List.Item>
+                )
+              }}
             />
           ) : (
-            !loadingReports && (
-              <Empty
-                description="暂无年报数据"
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-              />
-            )
+            <Empty
+              description="暂无年报"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              style={{ padding: 16 }}
+            />
           )}
         </div>
       )}
 
       {/* 加载中 */}
       {searching && (
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <Spin tip="正在搜索..." />
+        <div style={{ textAlign: 'center', padding: 16 }}>
+          <Spin tip="搜索中..." />
         </div>
       )}
     </Card>

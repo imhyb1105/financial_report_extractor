@@ -8,7 +8,7 @@ class ClaudeAdapter extends BaseAdapter {
   constructor(apiKey, options = {}) {
     super('claude', apiKey, options)
     this.client = new Anthropic({ apiKey })
-    this.model = options.model || 'claude-3-5-sonnet-20241022'
+    this.model = options.model || 'claude-sonnet-4-6-20250414'
   }
 
   async validateKey() {

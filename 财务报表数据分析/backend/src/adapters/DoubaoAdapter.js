@@ -12,7 +12,7 @@ class DoubaoAdapter extends BaseAdapter {
   constructor(apiKey, options = {}) {
     super('doubao', apiKey, options)
     this.baseURL = 'https://ark.cn-beijing.volces.com/api/v3'
-    this.model = options.model || 'doubao-seed-2-0-pro-260215'
+    this.model = options.model || 'doubao-seed-2.0'
   }
 
   /**

@@ -8,7 +8,7 @@ class OpenAIAdapter extends BaseAdapter {
   constructor(apiKey, options = {}) {
     super('openai', apiKey, options)
     this.client = new OpenAI({ apiKey })
-    this.model = options.model || 'gpt-4o'
+    this.model = options.model || 'gpt-5.4-codex'
   }
 
   async validateKey() {

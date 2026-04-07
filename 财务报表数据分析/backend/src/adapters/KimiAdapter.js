@@ -12,7 +12,7 @@ class KimiAdapter extends BaseAdapter {
       apiKey,
       baseURL: 'https://api.moonshot.cn/v1'
     })
-    this.model = options.model || 'moonshot-v1-8k'
+    this.model = options.model || 'kimi-k2.5'
   }
 
   async validateKey() {

@@ -3,12 +3,13 @@
  * V2.4 新增
  */
 import React, { useState, useEffect } from 'react'
-import { Layout, Card, Row, Col, Statistic, Table, Tag, Button, message, Typography, Tabs, Modal, Input, Select, Empty, Spin } from 'antd'
+import { Layout, Card, Row, Col, Statistic, Table, Tag, Button, message, Typography, Tabs, Modal, Input, Select, Empty, Spin, Form } from 'antd'
 import {
   DashboardOutlined, MessageOutlined, BarChartOutlined,
   BugOutlined, BulbOutlined, BookOutlined, CommentOutlined,
   ClockCircleOutlined, ApiOutlined, CheckCircleOutlined,
-  CloseCircleOutlined, LogoutOutlined, EyeOutlined, SendOutlined
+  CloseCircleOutlined, LogoutOutlined, EyeOutlined, SendOutlined,
+  KeyOutlined
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
@@ -46,6 +47,9 @@ function AdminDashboardPage() {
   const [replyModalVisible, setReplyModalVisible] = useState(false)
   const [currentFeedback, setCurrentFeedback] = useState(null)
   const [replyContent, setReplyContent] = useState('')
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' })
 
   // 检查登录状态
   useEffect(() => {
@@ -94,6 +98,45 @@ function AdminDashboardPage() {
     localStorage.removeItem('adminUsername')
     message.success('已退出登录')
     navigate('/admin/login')
+  }
+
+  const handlePasswordChange = async () => {
+    const { oldPassword, newPassword, confirmPassword } = passwordForm
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      message.error('请填写所有密码字段')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      message.error('两次输入的新密码不一致')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      message.error('新密码长度至少6位')
+      return
+    }
+
+    setPasswordLoading(true)
+    try {
+      const token = localStorage.getItem('adminToken')
+      const response = await api.put('/admin/password', {
+        oldPassword,
+        newPassword
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (response.data.success) {
+        message.success('密码修改成功，请重新登录')
+        handleLogout()
+      }
+    } catch (err) {
+      message.error(err.response?.data?.message || '密码修改失败')
+    } finally {
+      setPasswordLoading(false)
+    }
   }
 
   const handleViewFeedback = (record) => {
@@ -219,6 +262,14 @@ function AdminDashboardPage() {
           </Button>
         </div>
         <div style={{ position: 'absolute', bottom: 16, width: '100%', padding: '0 8px' }}>
+          <Button
+            block
+            icon={<KeyOutlined />}
+            onClick={() => setPasswordModalVisible(true)}
+            style={{ marginBottom: 8 }}
+          >
+            修改密码
+          </Button>
           <Button
             block
             icon={<LogoutOutlined />}
@@ -360,6 +411,50 @@ function AdminDashboardPage() {
             />
           </div>
         )}
+      </Modal>
+
+      {/* 修改密码弹窗 */}
+      <Modal
+        title="修改密码"
+        open={passwordModalVisible}
+        onCancel={() => {
+          setPasswordModalVisible(false)
+          setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' })
+        }}
+        footer={[
+          <Button key="cancel" onClick={() => {
+            setPasswordModalVisible(false)
+            setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' })
+          }}>取消</Button>,
+          <Button key="submit" type="primary" loading={passwordLoading} onClick={handlePasswordChange}>
+            确认修改
+          </Button>
+        ]}
+        width={400}
+      >
+        <Form layout="vertical">
+          <Form.Item label="原密码" required>
+            <Input.Password
+              value={passwordForm.oldPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
+              placeholder="请输入原密码"
+            />
+          </Form.Item>
+          <Form.Item label="新密码" required>
+            <Input.Password
+              value={passwordForm.newPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+              placeholder="请输入新密码（至少6位）"
+            />
+          </Form.Item>
+          <Form.Item label="确认新密码" required>
+            <Input.Password
+              value={passwordForm.confirmPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+              placeholder="请再次输入新密码"
+            />
+          </Form.Item>
+        </Form>
       </Modal>
     </Layout>
   )

@@ -39,6 +39,10 @@ export const useStore = create(
       // 历史记录
       history: [],
 
+      // 选中的文件（用于PDF自动抓取和上传）
+      selectedFile: null,
+      fileInfo: null,
+
       // 密码（会话级）
       encryptionPassword: null,
 
@@ -81,6 +85,18 @@ export const useStore = create(
       })),
 
       clearHistory: () => set({ history: [] }),
+
+      // 设置选中的文件
+      setSelectedFile: (file, info = null) => set({
+        selectedFile: file,
+        fileInfo: info
+      }),
+
+      // 清除选中的文件
+      clearSelectedFile: () => set({
+        selectedFile: null,
+        fileInfo: null
+      }),
 
       // 获取有效的模型配置
       getValidModels: () => {

@@ -9,7 +9,7 @@ class GLMAdapter extends BaseAdapter {
   constructor(apiKey, options = {}) {
     super('glm', apiKey, options)
     this.baseURL = 'https://open.bigmodel.cn/api/paas/v4'
-    this.model = options.model || 'glm-5'
+    this.model = options.model || 'glm-5-turbo'
   }
 
   /**
@@ -150,7 +150,7 @@ ${fullText}
           model: this.model,
           messages: [{ role: 'user', content }],
           temperature: 0.1,
-          max_tokens: 8192
+          max_tokens: 32768 // V2.8: GLM-5 deep thinking需要足够空间输出
         },
         {
           headers: {

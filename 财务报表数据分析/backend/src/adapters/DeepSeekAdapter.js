@@ -12,7 +12,7 @@ class DeepSeekAdapter extends BaseAdapter {
       apiKey,
       baseURL: 'https://api.deepseek.com/v1'
     })
-    this.model = options.model || 'deepseek-chat'
+    this.model = options.model || 'deepseek-v3.2'
   }
 
   async validateKey() {

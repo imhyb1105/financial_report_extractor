@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { Layout, Typography, Button, Space, Result } from 'antd'
 import { FileTextOutlined, MessageOutlined, SafetyOutlined } from '@ant-design/icons'
@@ -20,7 +20,19 @@ const { Title, Text } = Typography
 
 // 主页面组件
 function HomePage() {
-  const { extractionResult, isExtracting } = useStore()
+  const { extractionResult, isExtracting, setSelectedFile, clearSelectedFile } = useStore()
+
+  const handlePDFSelected = useCallback((file, report) => {
+    // 当从PDF自动抓取选择文件时，设置文件到store
+    setSelectedFile(file, {
+      name: file.name,
+      size: (file.size / 1024 / 1024).toFixed(2),
+      type: file.type,
+      lastModified: new Date().toLocaleString(),
+      source: report.sourceName,
+      reportTitle: report.title
+    })
+  }, [setSelectedFile])
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -31,10 +43,7 @@ function HomePage() {
             <UnitSelector />
           </div>
           <div style={{ marginTop: 16 }}>
-            <PDFAutoCapture onPDFSelected={(file, report) => {
-              // 当从PDF自动抓取选择文件时的回调
-              console.log('Selected PDF:', file, report)
-            }} />
+            <PDFAutoCapture onPDFSelected={handlePDFSelected} />
           </div>
           <div style={{ marginTop: 16 }}>
             <HistoryPanel />

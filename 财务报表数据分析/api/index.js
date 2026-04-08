@@ -1,34 +1,30 @@
 /**
- * Vercel Serverless Function 入口
- * 将 Express 应用适配为 Vercel Function
+ * Vercel Serverless Function - 最小测试版
+ * 用于验证函数基础设施是否正常
  */
 
-// 数据库初始化标志（在函数实例生命周期内保持）
-let dbInitialized = false
-let appHandler = null
-
 export default async function handler(req, res) {
-  // 延迟初始化（只执行一次）
-  if (!dbInitialized) {
-    const { initDatabase } = await import('../backend/database/db.js')
-    await initDatabase()
-    dbInitialized = true
+  // 设置 CORS
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end()
+    return
   }
 
-  // 延迟加载 Express 应用（避免启动时监听端口）
-  if (!appHandler) {
-    const { default: app } = await import('../backend/src/app-handler.js')
-    appHandler = app
-  }
-
-  // 将请求传递给 Express 应用
-  return new Promise((resolve, reject) => {
-    appHandler(req, res, (err) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve()
-      }
-    })
+  res.status(200).json({
+    status: 'ok',
+    message: 'API function is working',
+    timestamp: new Date().toISOString(),
+    env: {
+      DATABASE_PROVIDER: process.env.DATABASE_PROVIDER || 'not set',
+      SUPABASE_URL: process.env.SUPABASE_URL ? 'configured' : 'not set',
+      NODE_VERSION: process.version,
+      VERCEL: process.env.VERCEL || 'not set'
+    },
+    method: req.method,
+    url: req.url
   })
 }

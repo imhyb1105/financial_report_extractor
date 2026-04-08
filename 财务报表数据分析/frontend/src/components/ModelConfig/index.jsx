@@ -37,7 +37,8 @@ function ModelConfig() {
         message.success(`${role === 'modelA' ? '模型A' : role === 'modelB' ? '模型B' : '模型C'} 连接成功！`)
       } else {
         setModelConfig(role, { valid: false })
-        message.error(`连接失败: ${result.error}`)
+        const errMsg = result.data?.error || result.error?.message || result.error || '未知错误'
+        message.error(`连接失败: ${errMsg}`)
       }
     } catch (error) {
       setModelConfig(role, { valid: false })

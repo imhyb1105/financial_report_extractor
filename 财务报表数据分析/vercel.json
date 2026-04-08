@@ -1,26 +1,12 @@
 {
-  "version": 2,
-  "name": "financial_report_extractor",
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index"
-    }
+    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "functions": {
     "api/index.js": {
-      "runtime": "@vercel/node@3"
+      "runtime": "@vercel/node@3",
+      "maxDuration": 60
     }
-  },
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
-  "framework": "vite",
-  "env": {
-    "DATABASE_PROVIDER": "@database_provider",
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_ANON_KEY": "@supabase_anon_key",
-    "SUPABASE_SERVICE_KEY": "@supabase_service_key",
-    "JWT_SECRET": "@jwt_secret",
-    "ADMIN_PASSWORD": "@admin_password"
   }
 }

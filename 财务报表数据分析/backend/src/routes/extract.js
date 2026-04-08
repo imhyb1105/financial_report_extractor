@@ -2,6 +2,7 @@ import express from 'express'
 import multer from 'multer'
 import { v4 as uuidv4 } from 'uuid'
 import path from 'path'
+import fs from 'fs'
 import { fileURLToPath } from 'url'
 import ExtractionService from '../services/ExtractionService.js'
 
@@ -10,10 +11,19 @@ const __dirname = path.dirname(__filename)
 
 const router = express.Router()
 
+// 检测运行环境
+const isVercel = !!process.env.VERCEL
+const uploadDir = isVercel ? '/tmp/uploads' : path.join(__dirname, '../../uploads')
+
+// 确保上传目录存在
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true })
+}
+
 // 配置文件上传
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../../uploads'))
+    cb(null, uploadDir)
   },
   filename: (req, file, cb) => {
     const uniqueName = `${uuidv4()}_${file.originalname}`

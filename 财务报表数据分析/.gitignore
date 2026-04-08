@@ -54,3 +54,4 @@ test_*.pdf
 # Temporary files
 *.tmp
 *.temp
+.vercel/

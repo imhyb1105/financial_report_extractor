@@ -1,6 +1,6 @@
 {
   "name": "financial-report-extractor",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "private": true,
   "description": "智能财务报表数据提取工具",
   "type": "module",

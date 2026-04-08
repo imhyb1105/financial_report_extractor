@@ -2,11 +2,5 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "functions": {
-    "api/index.js": {
-      "runtime": "@vercel/node@3",
-      "maxDuration": 60
-    }
-  }
+  ]
 }

@@ -10,7 +10,8 @@ import {
   Tag,
   Divider,
   Input,
-  message
+  message,
+  Grid
 } from 'antd'
 import {
   CheckCircleOutlined,
@@ -34,6 +35,8 @@ function AIDebugPanel({ visible, debugLog, onClose }) {
   const [expandedModel, setExpandedModel] = useState(null)
   const [showFullPrompt, setShowFullPrompt] = useState({})
   const [showFullResponse, setShowFullResponse] = useState({})
+  const screens = Grid.useBreakpoint()
+  const isMobile = !screens.md
 
   if (!debugLog) return null
 
@@ -109,7 +112,7 @@ function AIDebugPanel({ visible, debugLog, onClose }) {
       }
       open={visible}
       onCancel={onClose}
-      width={1000}
+      width={isMobile ? '95%' : 1000}
       footer={[
         <Button key="export" icon={<DownloadOutlined />} onClick={exportLog}>
           导出日志
@@ -121,7 +124,7 @@ function AIDebugPanel({ visible, debugLog, onClose }) {
     >
       {/* 提取概览 */}
       <Card size="small" style={{ marginBottom: 16 }}>
-        <Descriptions column={3} size="small">
+        <Descriptions column={{ xs: 1, sm: 2, md: 3 }} size="small">
           <Descriptions.Item label="会话ID">
             <Text copyable style={{ fontSize: 12 }}>{sessionId}</Text>
           </Descriptions.Item>
@@ -158,7 +161,7 @@ function AIDebugPanel({ visible, debugLog, onClose }) {
           >
             {/* 请求信息 */}
             <Card size="small" title="📥 请求信息" style={{ marginBottom: 12 }}>
-              <Descriptions column={2} size="small">
+              <Descriptions column={{ xs: 1, sm: 2 }} size="small">
                 <Descriptions.Item label="模型">{call.request?.model || call.modelId}</Descriptions.Item>
                 <Descriptions.Item label="Temperature">{call.request?.temperature}</Descriptions.Item>
                 <Descriptions.Item label="Prompt长度">{call.request?.promptLength?.toLocaleString()} 字符</Descriptions.Item>
@@ -236,7 +239,7 @@ function AIDebugPanel({ visible, debugLog, onClose }) {
             {/* 响应信息 */}
             {call.response && (
               <Card size="small" title="📤 响应信息" style={{ marginBottom: 12 }}>
-                <Descriptions column={2} size="small">
+                <Descriptions column={{ xs: 1, sm: 2 }} size="small">
                   <Descriptions.Item label="响应长度">{call.response.responseLength?.toLocaleString()} 字符</Descriptions.Item>
                   <Descriptions.Item label="结束原因">{call.response.finishReason || '-'}</Descriptions.Item>
                   {call.response.tokens && (
@@ -296,7 +299,7 @@ function AIDebugPanel({ visible, debugLog, onClose }) {
                     <Divider orientation="left" plain style={{ margin: '12px 0' }}>
                       解析结果摘要
                     </Divider>
-                    <Descriptions column={2} size="small">
+                    <Descriptions column={{ xs: 1, sm: 2 }} size="small">
                       {call.response.parsedData.companyInfo && (
                         <>
                           <Descriptions.Item label="公司名称">{call.response.parsedData.companyInfo.name || '-'}</Descriptions.Item>

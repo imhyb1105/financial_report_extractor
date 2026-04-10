@@ -98,3 +98,26 @@ body {
   align-items: center;
   z-index: 1000;
 }
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .upload-area {
+    padding: 12px;
+  }
+
+  .result-card {
+    padding: 12px;
+  }
+
+  .ant-layout-footer {
+    padding: 16px 12px !important;
+  }
+
+  .ant-table {
+    font-size: 13px;
+  }
+
+  .ant-tabs-nav {
+    margin-bottom: 8px !important;
+  }
+}

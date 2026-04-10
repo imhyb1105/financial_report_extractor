@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Card, Table, Tag, Tabs, Descriptions, Alert, Button, Space, Tooltip, Typography, Divider, Empty } from 'antd'
+import { Card, Table, Tag, Tabs, Descriptions, Alert, Button, Space, Tooltip, Typography, Divider, Empty, Grid } from 'antd'
 import {
   DownloadOutlined,
   CheckCircleOutlined,
@@ -54,6 +54,8 @@ const getConfidenceKey = (confidence) => {
 function ExtractionResult() {
   const { extractionResult, displayUnit, debugLog } = useStore()
   const [showDebugPanel, setShowDebugPanel] = useState(false) // V1.7: 调试面板状态
+  const screens = Grid.useBreakpoint()
+  const isMobile = !screens.md
 
   if (!extractionResult) return null
 
@@ -518,17 +520,17 @@ function ExtractionResult() {
               onClick={() => setShowDebugPanel(true)}
               disabled={!debugLog}
             >
-              查看AI调试日志
+              {!isMobile && '查看AI调试日志'}
             </Button>
             <Button type="primary" icon={<DownloadOutlined />} onClick={handleExport}>
-              导出Excel
+              {!isMobile && '导出Excel'}
             </Button>
           </Space>
         }
       >
         {/* 公司信息 */}
         <Card type="inner" title="公司概况" style={{ marginBottom: 16 }}>
-          <Descriptions column={2}>
+          <Descriptions column={{ xs: 1, sm: 2 }}>
             <Descriptions.Item label="公司名称">{companyInfo?.name || '-'}</Descriptions.Item>
             <Descriptions.Item label="股票代码">{companyInfo?.stockCode || '-'}</Descriptions.Item>
             <Descriptions.Item label="报告期间">{companyInfo?.reportPeriod || '-'}</Descriptions.Item>
@@ -560,6 +562,7 @@ function ExtractionResult() {
                 pagination={false}
                 size="small"
                 rowKey="name"
+                scroll={{ x: 600 }}
                 expandable={{
                   expandedRowRender: renderCalculationDetail,
                   rowExpandable: (record) => !!record.calculationDetail
@@ -582,6 +585,7 @@ function ExtractionResult() {
                   pagination={false}
                   size="small"
                   rowKey="name"
+                  scroll={{ x: 800 }}
                   expandable={{
                     expandedRowRender: renderFinancialExpandedRow,
                     rowExpandable: (record) => !!CALCULATED_METRICS[record.name] || !!record.source

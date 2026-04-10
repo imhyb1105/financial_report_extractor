@@ -3,7 +3,7 @@
  * V2.5.1 新增 - 首次访问必须同意免责声明
  */
 import React, { useState, useEffect } from 'react'
-import { Modal, Typography, Divider, Checkbox, Space, message } from 'antd'
+import { Modal, Typography, Divider, Checkbox, Space, message, Grid } from 'antd'
 import { SafetyOutlined, LockOutlined, WarningOutlined, FileTextOutlined, StopOutlined, CopyrightOutlined, SyncOutlined, CustomerServiceOutlined } from '@ant-design/icons'
 
 const { Title, Paragraph, Text } = Typography
@@ -62,6 +62,8 @@ const disclaimerSections = [
 
 function DisclaimerModal({ onAgree, onDisagree }) {
   const [checked, setChecked] = useState(false)
+  const screens = Grid.useBreakpoint()
+  const isMobile = !screens.md
 
   const handleAgree = () => {
     if (!checked) {
@@ -89,9 +91,9 @@ function DisclaimerModal({ onAgree, onDisagree }) {
       open={true}
       closable={false}
       maskClosable={false}
-      width={700}
+      width={isMobile ? '95%' : 700}
       footer={null}
-      style={{ top: 20 }}
+      style={{ top: isMobile ? 10 : 20 }}
     >
       <Title level={3} style={{ textAlign: 'center', marginBottom: 8 }}>
         <SafetyOutlined style={{ marginRight: 8, color: '#1890ff' }} />

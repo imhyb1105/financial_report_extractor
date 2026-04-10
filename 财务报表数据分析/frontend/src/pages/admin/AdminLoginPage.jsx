@@ -3,7 +3,7 @@
  * V2.4 新增
  */
 import React, { useState } from 'react'
-import { Card, Form, Input, Button, message, Typography } from 'antd'
+import { Card, Form, Input, Button, message, Typography, Grid } from 'antd'
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
@@ -14,6 +14,8 @@ function AdminLoginPage() {
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
+  const screens = Grid.useBreakpoint()
+  const isMobile = !screens.md
 
   const handleSubmit = async (values) => {
     setLoading(true)
@@ -41,7 +43,7 @@ function AdminLoginPage() {
       justifyContent: 'center',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
     }}>
-      <Card style={{ width: 400, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+      <Card style={{ width: isMobile ? '90%' : 400, maxWidth: 400, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
         <Title level={3} style={{ textAlign: 'center', marginBottom: 24 }}>
           <LockOutlined style={{ marginRight: 8 }} />
           管理员登录

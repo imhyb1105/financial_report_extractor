@@ -3,13 +3,13 @@
  * V2.4 新增
  */
 import React, { useState, useEffect } from 'react'
-import { Layout, Card, Row, Col, Statistic, Table, Tag, Button, message, Typography, Tabs, Modal, Input, Select, Empty, Spin, Form } from 'antd'
+import { Layout, Card, Row, Col, Statistic, Table, Tag, Button, message, Typography, Tabs, Modal, Input, Select, Empty, Spin, Form, Grid, Drawer } from 'antd'
 import {
   DashboardOutlined, MessageOutlined, BarChartOutlined,
   BugOutlined, BulbOutlined, BookOutlined, CommentOutlined,
   ClockCircleOutlined, ApiOutlined, CheckCircleOutlined,
   CloseCircleOutlined, LogoutOutlined, EyeOutlined, SendOutlined,
-  KeyOutlined
+  KeyOutlined, MenuOutlined
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
@@ -38,6 +38,9 @@ const feedbackStatusMap = {
 
 function AdminDashboardPage() {
   const navigate = useNavigate()
+  const screens = Grid.useBreakpoint()
+  const isMobile = !screens.md
+  const [drawerVisible, setDrawerVisible] = useState(false)
   const [loading, setLoading] = useState(true)
   const [overview, setOverview] = useState(null)
   const [dailyTrend, setDailyTrend] = useState([])
@@ -233,69 +236,135 @@ function AdminDashboardPage() {
     )
   }
 
+  // 侧边栏内容
+  const sidebarContent = (
+    <>
+      <div style={{ padding: '16px', textAlign: 'center', borderBottom: '1px solid #f0f0f0' }}>
+        <Title level={4} style={{ margin: 0 }}>
+          <DashboardOutlined /> 管理后台
+        </Title>
+      </div>
+      <div style={{ padding: '8px' }}>
+        <Button
+          type={activeTab === 'overview' ? 'primary' : 'text'}
+          block
+          icon={<BarChartOutlined />}
+          onClick={() => { setActiveTab('overview'); setDrawerVisible(false) }}
+          style={{ marginBottom: 4, textAlign: 'left' }}
+        >
+          数据概览
+        </Button>
+        <Button
+          type={activeTab === 'feedbacks' ? 'primary' : 'text'}
+          block
+          icon={<MessageOutlined />}
+          onClick={() => { setActiveTab('feedbacks'); setDrawerVisible(false) }}
+          style={{ marginBottom: 4, textAlign: 'left' }}
+        >
+          用户反馈
+        </Button>
+      </div>
+      <div style={isMobile ? { marginTop: 16 } : { position: 'absolute', bottom: 16, width: '100%', padding: '0 8px' }}>
+        <Button
+          block
+          icon={<KeyOutlined />}
+          onClick={() => { setPasswordModalVisible(true); setDrawerVisible(false) }}
+          style={{ marginBottom: 8 }}
+        >
+          修改密码
+        </Button>
+        <Button
+          block
+          icon={<LogoutOutlined />}
+          onClick={handleLogout}
+        >
+          退出登录
+        </Button>
+      </div>
+    </>
+  )
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider width={200} theme="light">
-        <div style={{ padding: '16px', textAlign: 'center', borderBottom: '1px solid #f0f0f0' }}>
-          <Title level={4} style={{ margin: 0 }}>
-            <DashboardOutlined /> 管理后台
-          </Title>
-        </div>
-        <div style={{ padding: '8px' }}>
-          <Button
-            type={activeTab === 'overview' ? 'primary' : 'text'}
-            block
-            icon={<BarChartOutlined />}
-            onClick={() => setActiveTab('overview')}
-            style={{ marginBottom: 4, textAlign: 'left' }}
-          >
-            数据概览
-          </Button>
-          <Button
-            type={activeTab === 'feedbacks' ? 'primary' : 'text'}
-            block
-            icon={<MessageOutlined />}
-            onClick={() => setActiveTab('feedbacks')}
-            style={{ marginBottom: 4, textAlign: 'left' }}
-          >
-            用户反馈
-          </Button>
-        </div>
-        <div style={{ position: 'absolute', bottom: 16, width: '100%', padding: '0 8px' }}>
-          <Button
-            block
-            icon={<KeyOutlined />}
-            onClick={() => setPasswordModalVisible(true)}
-            style={{ marginBottom: 8 }}
-          >
-            修改密码
-          </Button>
-          <Button
-            block
-            icon={<LogoutOutlined />}
-            onClick={handleLogout}
-          >
-            退出登录
-          </Button>
-        </div>
-      </Sider>
+      {isMobile ? (
+        <Drawer
+          title={<><DashboardOutlined /> 管理后台</>}
+          placement="left"
+          onClose={() => setDrawerVisible(false)}
+          open={drawerVisible}
+          width="80%"
+          styles={{ body: { padding: 16 } }}
+        >
+          <div style={{ padding: '8px' }}>
+            <Button
+              type={activeTab === 'overview' ? 'primary' : 'text'}
+              block
+              icon={<BarChartOutlined />}
+              onClick={() => { setActiveTab('overview'); setDrawerVisible(false) }}
+              style={{ marginBottom: 8, textAlign: 'left' }}
+            >
+              数据概览
+            </Button>
+            <Button
+              type={activeTab === 'feedbacks' ? 'primary' : 'text'}
+              block
+              icon={<MessageOutlined />}
+              onClick={() => { setActiveTab('feedbacks'); setDrawerVisible(false) }}
+              style={{ marginBottom: 8, textAlign: 'left' }}
+            >
+              用户反馈
+            </Button>
+            <div style={{ marginTop: 24, borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
+              <Button
+                block
+                icon={<KeyOutlined />}
+                onClick={() => { setPasswordModalVisible(true); setDrawerVisible(false) }}
+                style={{ marginBottom: 8 }}
+              >
+                修改密码
+              </Button>
+              <Button
+                block
+                danger
+                icon={<LogoutOutlined />}
+                onClick={handleLogout}
+              >
+                退出登录
+              </Button>
+            </div>
+          </div>
+        </Drawer>
+      ) : (
+        <Sider width={200} theme="light">
+          {sidebarContent}
+        </Sider>
+      )}
 
       <Layout>
-        <Header style={{ background: '#fff', padding: '0 24px', borderBottom: '1px solid #f0f0f0' }}>
+        <Header style={{ background: '#fff', padding: isMobile ? '0 12px' : '0 24px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center' }}>
+          {isMobile && (
+            <Button
+              icon={<MenuOutlined />}
+              onClick={() => setDrawerVisible(true)}
+              style={{ marginRight: 12 }}
+            />
+          )}
           <Title level={4} style={{ margin: 0, lineHeight: '64px' }}>
             {activeTab === 'overview' ? '数据概览' : '用户反馈'}
           </Title>
-          <Text type="secondary" style={{ marginLeft: 16 }}>
-            欢迎回来，{localStorage.getItem('adminUsername') || '管理员'}
-          </Text>
+          {!isMobile && (
+            <Text type="secondary" style={{ marginLeft: 16 }}>
+              欢迎回来，{localStorage.getItem('adminUsername') || '管理员'}
+            </Text>
+          )}
         </Header>
 
-        <Content style={{ padding: 24, background: '#f5f5f5' }}>
+        <Content style={{ padding: isMobile ? 12 : 24, background: '#f5f5f5' }}>
           {activeTab === 'overview' && (
             <>
               {/* 统计卡片 */}
-              <Row gutter={16} style={{ marginBottom: 24 }}>
-                <Col span={6}>
+              <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                <Col xs={12} sm={12} md={6}>
                   <Card>
                     <Statistic
                       title="今日反馈"
@@ -304,7 +373,7 @@ function AdminDashboardPage() {
                     />
                   </Card>
                 </Col>
-                <Col span={6}>
+                <Col xs={12} sm={12} md={6}>
                   <Card>
                     <Statistic
                       title="今日提取"
@@ -313,7 +382,7 @@ function AdminDashboardPage() {
                     />
                   </Card>
                 </Col>
-                <Col span={6}>
+                <Col xs={12} sm={12} md={6}>
                   <Card>
                     <Statistic
                       title="今日Token"
@@ -322,7 +391,7 @@ function AdminDashboardPage() {
                     />
                   </Card>
                 </Col>
-                <Col span={6}>
+                <Col xs={12} sm={12} md={6}>
                   <Card>
                     <Statistic
                       title="平均耗时"
@@ -342,6 +411,7 @@ function AdminDashboardPage() {
                     rowKey="stat_date"
                     size="small"
                     pagination={false}
+                    scroll={{ x: 600 }}
                     columns={[
                       { title: '日期', dataIndex: 'stat_date', key: 'stat_date' },
                       { title: '提取次数', dataIndex: 'total_extractions', key: 'total_extractions' },
@@ -365,6 +435,7 @@ function AdminDashboardPage() {
                 dataSource={feedbacks}
                 columns={feedbackColumns}
                 rowKey="id"
+                scroll={{ x: 600 }}
                 pagination={{
                   ...feedbackPagination,
                   onChange: (page) => {
@@ -388,7 +459,7 @@ function AdminDashboardPage() {
             回复
           </Button>
         ]}
-        width={600}
+        width={isMobile ? '95%' : 600}
       >
         {currentFeedback && (
           <div>
@@ -430,7 +501,7 @@ function AdminDashboardPage() {
             确认修改
           </Button>
         ]}
-        width={400}
+        width={isMobile ? '95%' : 400}
       >
         <Form layout="vertical">
           <Form.Item label="原密码" required>

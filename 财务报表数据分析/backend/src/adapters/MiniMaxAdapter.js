@@ -86,7 +86,7 @@ class MiniMaxAdapter extends BaseAdapter {
     const aiLogService = context?.aiLogService
     let logId = null
 
-    const prompt = this.buildExtractPrompt(context)
+    const prompt = context?.prompt || this.buildExtractPrompt(context)
 
     // 收集文本和图片
     let fullText = ''
@@ -309,6 +309,45 @@ class MiniMaxAdapter extends BaseAdapter {
       confidence: confidence,
       comparisons: comparisons,
       notes: notes
+    }
+  }
+
+  /**
+   * V2.9: 非财务信息总结合并
+   */
+  async summarizeNonFinancial(prompt, context) {
+    const aiLogService = context?.aiLogService
+    let logId = null
+
+    if (aiLogService) {
+      logId = aiLogService.logRequest(this.model, context?.role || 'non-fin-summarizer', {
+        prompt: prompt, temperature: 0.1, model: this.model
+      })
+    }
+
+    try {
+      const response = await axios.post(
+        `${this.baseURL}/chat/completions?GroupId=${this.groupId}`,
+        { model: this.model, messages: [{ role: 'user', content: prompt }], temperature: 0.1, max_tokens: 8192 },
+        { headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' }, timeout: 180000 }
+      )
+
+      const text = response.data?.choices?.[0]?.message?.content || ''
+      const parsedResult = this.parseResponse(text)
+
+      if (aiLogService && logId) {
+        aiLogService.logResponse(logId, {
+          rawText: text, parsedData: parsedResult,
+          tokens: response.data?.usage || null,
+          finishReason: response.data?.choices?.[0]?.finish_reason || null
+        })
+      }
+
+      return parsedResult
+    } catch (error) {
+      console.error('[MiniMaxAdapter] Non-financial summarization error:', error.message)
+      if (aiLogService && logId) aiLogService.logError(logId, error)
+      return null
     }
   }
 

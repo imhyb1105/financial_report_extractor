@@ -619,10 +619,11 @@ class ExtractionService {
       result.nonFinancialInfoEnhanced = true
       console.log('[ExtractionService] Non-financial info enhanced by Model C')
     } else if (resultA || resultB) {
-      // C失败时使用A或B的结果
-      const fallbackResult = resultA || resultB
-      if (fallbackResult) {
-        result.nonFinancialInfo = fallbackResult
+      // C失败时使用A或B的结果（只取nonFinancialInfo字段，不要整个extract结果）
+      const fallbackSource = resultA || resultB
+      const fallbackData = fallbackSource?.nonFinancialInfo || fallbackSource
+      if (fallbackData) {
+        result.nonFinancialInfo = fallbackData
         result.nonFinancialInfoEnhanced = true
         console.log('[ExtractionService] Non-financial info using fallback (A or B result)')
       }

@@ -40,7 +40,7 @@ function HistoryPanel() {
             <List.Item.Meta
               avatar={<FileTextOutlined style={{ fontSize: 20, color: '#1890ff' }} />}
               title={
-                <Text ellipsis style={{ maxWidth: 200 }}>
+                <Text ellipsis style={{ maxWidth: 'calc(100% - 40px)' }}>
                   {item.companyName || item.fileName}
                 </Text>
               }

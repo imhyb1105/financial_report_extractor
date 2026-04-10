@@ -3,7 +3,7 @@
  * V2.4 新增
  */
 import React, { useState } from 'react'
-import { Card, Form, Input, Select, Button, message, Typography, Space, Result } from 'antd'
+import { Card, Form, Input, Select, Button, message, Typography, Space, Result, Grid } from 'antd'
 import { BugOutlined, BulbOutlined, BookOutlined, MessageOutlined, SendOutlined, ArrowLeftOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
@@ -25,6 +25,8 @@ function FeedbackPage() {
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [feedbackNo, setFeedbackNo] = useState('')
+  const screens = Grid.useBreakpoint()
+  const isMobile = !screens.md
 
   const handleSubmit = async (values) => {
     setLoading(true)
@@ -47,7 +49,7 @@ function FeedbackPage() {
       <div style={{
         maxWidth: 600,
         margin: '0 auto',
-        padding: '24px',
+        padding: isMobile ? '12px' : '24px',
         background: '#f5f5f5',
         minHeight: '100vh',
         display: 'flex',
@@ -87,7 +89,7 @@ function FeedbackPage() {
     <div style={{
       maxWidth: 700,
       margin: '0 auto',
-      padding: '24px',
+      padding: isMobile ? '12px' : '24px',
       background: '#f5f5f5',
       minHeight: '100vh'
     }}>

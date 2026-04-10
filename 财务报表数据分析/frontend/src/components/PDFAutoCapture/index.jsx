@@ -344,7 +344,7 @@ const PDFAutoCapture = ({ onPDFSelected }) => {
                       </div>
 
                       {/* 信息行 */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
                         <Text type="secondary" style={{ fontSize: 11 }}>
                           <ClockCircleOutlined style={{ marginRight: 4 }} />
                           {formatDate(report.publishDate)}

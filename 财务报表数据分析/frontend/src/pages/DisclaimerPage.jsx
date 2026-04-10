@@ -3,7 +3,7 @@
  * V2.5 新增
  */
 import React from 'react'
-import { Card, Typography, Divider, Button, Space } from 'antd'
+import { Card, Typography, Divider, Button, Space, Grid } from 'antd'
 import { SafetyOutlined, LockOutlined, WarningOutlined, FileTextOutlined, StopOutlined, CopyrightOutlined, SyncOutlined, CustomerServiceOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 
@@ -87,17 +87,19 @@ const disclaimerSections = [
 
 function DisclaimerPage() {
   const navigate = useNavigate()
+  const screens = Grid.useBreakpoint()
+  const isMobile = !screens.md
 
   return (
     <div style={{
       maxWidth: 900,
       margin: '0 auto',
-      padding: '24px',
+      padding: isMobile ? '12px' : '24px',
       background: '#f5f5f5',
       minHeight: '100vh'
     }}>
       <Card>
-        <Title level={2} style={{ textAlign: 'center', marginBottom: 8 }}>
+        <Title level={isMobile ? 4 : 2} style={{ textAlign: 'center', marginBottom: 8 }}>
           <SafetyOutlined style={{ marginRight: 8 }} />
           免责声明
         </Title>
@@ -109,20 +111,20 @@ function DisclaimerPage() {
 
         {disclaimerSections.map((section, index) => (
           <div key={index} style={{ marginBottom: 24 }}>
-            <Title level={4} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {section.icon}
+            <Title level={isMobile ? 5 : 4} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {React.cloneElement(section.icon, { style: { fontSize: isMobile ? 16 : 20, color: section.icon.props.style.color } })}
               {section.title}
             </Title>
             {section.content && (
-              <Paragraph style={{ marginLeft: 28 }}>
+              <Paragraph style={{ marginLeft: isMobile ? 8 : 28, fontSize: isMobile ? 13 : undefined }}>
                 {section.content}
               </Paragraph>
             )}
             {section.list && (
-              <ul style={{ marginLeft: 28, color: '#333' }}>
+              <ul style={{ marginLeft: isMobile ? 8 : 28, color: '#333' }}>
                 {section.list.map((item, i) => (
                   <li key={i} style={{ marginBottom: 8 }}>
-                    <Text>{item}</Text>
+                    <Text style={{ fontSize: isMobile ? 13 : undefined }}>{item}</Text>
                   </li>
                 ))}
               </ul>

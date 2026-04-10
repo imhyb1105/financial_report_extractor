@@ -101,6 +101,11 @@ body {
 
 /* 移动端适配 */
 @media (max-width: 768px) {
+  /* 隐藏桌面端侧边栏（由JS控制Drawer，这里作为安全网） */
+  .ant-layout-sider {
+    display: none !important;
+  }
+
   .upload-area {
     padding: 12px;
   }
@@ -113,11 +118,80 @@ body {
     padding: 16px 12px !important;
   }
 
+  /* 表格紧凑模式 */
   .ant-table {
     font-size: 13px;
   }
 
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    padding: 8px 6px !important;
+  }
+
+  /* Tabs 紧凑 */
   .ant-tabs-nav {
     margin-bottom: 8px !important;
+  }
+
+  /* Modal 全屏适配 */
+  .ant-modal {
+    max-width: calc(100vw - 16px) !important;
+    margin: 8px auto !important;
+    top: 8px !important;
+  }
+
+  .ant-modal-content {
+    padding: 16px !important;
+  }
+
+  /* Descriptions 单列 */
+  .ant-descriptions-item {
+    display: block !important;
+  }
+
+  /* Card 内边距 */
+  .ant-card-body {
+    padding: 12px !important;
+  }
+
+  .ant-card-head {
+    padding: 0 12px !important;
+    min-height: 40px !important;
+  }
+
+  .ant-card-head-title {
+    padding: 8px 0 !important;
+  }
+
+  /* Alert 内边距 */
+  .ant-alert {
+    padding: 8px 12px !important;
+  }
+
+  /* Form 紧凑 */
+  .ant-form-item {
+    margin-bottom: 12px !important;
+  }
+
+  /* Select 下拉全宽 */
+  .ant-select {
+    width: 100% !important;
+  }
+
+  /* 历史记录列表项 */
+  .ant-list-item-meta-title {
+    max-width: 100% !important;
+  }
+
+  /* PDF自动抓取报告项按钮换行 */
+  .report-info-row {
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+
+  /* 计算详情flex换行 */
+  .calc-detail-values {
+    flex-wrap: wrap;
+    gap: 8px !important;
   }
 }

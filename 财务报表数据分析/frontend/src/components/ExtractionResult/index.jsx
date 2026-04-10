@@ -452,7 +452,7 @@ function ExtractionResult() {
         )}
 
         {/* 对比结果 */}
-        <div style={{ display: 'flex', gap: 24, marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 24, marginBottom: 12, flexWrap: 'wrap' }}>
           <div>
             <Text type="secondary" style={{ fontSize: 12 }}>预期值: </Text>
             <Text strong style={{ fontSize: 12 }}>

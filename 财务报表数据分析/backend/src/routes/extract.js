@@ -45,7 +45,26 @@ const upload = multer({
 
 // 数据提取接口
 // V1.7: 返回debugLog字段用于调试
-router.post('/', upload.single('pdf'), async (req, res, next) => {
+// V2.6: 支持JSON格式的文本提取（大文件客户端预处理）
+router.post('/', async (req, res, next) => {
+  try {
+    // 检查是否为JSON请求（客户端已提取文本的大文件）
+    if (req.is('application/json') && req.body.textContent) {
+      return handleTextExtraction(req, res)
+    }
+
+    // 否则走multer文件上传流程
+    upload.single('pdf')(req, res, (err) => {
+      if (err) return next(err)
+      handleFileUploadExtraction(req, res, next)
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// 处理文件上传提取
+async function handleFileUploadExtraction(req, res, next) {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -86,12 +105,57 @@ router.post('/', upload.single('pdf'), async (req, res, next) => {
     res.json({
       success: true,
       data,
-      debugLog // V1.7: 新增调试日志字段
+      debugLog
     })
   } catch (error) {
     next(error)
   }
-})
+}
+
+// 处理文本提取（大文件客户端预处理后）
+async function handleTextExtraction(req, res) {
+  const { textContent, pages, pageCount, fileName, models, displayUnit } = req.body
+
+  if (!textContent) {
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'NO_TEXT',
+        message: '请提供文本内容'
+      }
+    })
+  }
+
+  if (!models || models.length === 0) {
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'NO_MODELS',
+        message: '请提供模型配置'
+      }
+    })
+  }
+
+  console.log(`[ExtractRoute] Text-based extraction: file=${fileName}, pages=${pageCount}, textLen=${textContent.length}`)
+
+  const extractionService = new ExtractionService()
+  const { data, debugLog } = await extractionService.extractFromText(
+    textContent,
+    pages,
+    pageCount,
+    fileName,
+    models,
+    displayUnit || 'wan'
+  )
+
+  console.log(`[ExtractRoute] Text extraction result keys: ${Object.keys(data).join(', ')}`)
+
+  res.json({
+    success: true,
+    data,
+    debugLog
+  })
+}
 
 // 获取提取状态（用于长任务轮询）
 router.get('/status/:taskId', async (req, res, next) => {

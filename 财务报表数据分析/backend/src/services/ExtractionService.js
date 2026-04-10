@@ -44,6 +44,87 @@ class ExtractionService {
     try {
       // 1. PDF转换为图片（同时获取完整文本用于验证）
       const pdfResult = await this.pdfService.convertToImages(pdfPath)
+      return await this._processExtraction(pdfResult, pdfPath, models, displayUnit, startTime, sessionId, tokenBreakdown)
+    } catch (err) {
+      success = false
+      errorMessage = err.message
+      console.error('[ExtractionService] Extraction failed:', err)
+
+      // V2.0: 记录失败统计
+      const totalDuration = Date.now() - startTime
+      await StatsService.recordUsage({
+        sessionId,
+        extractionMode: models.length === 1 ? 'single' : models.length === 2 ? 'dual' : 'tri',
+        totalDuration,
+        totalTokens: 0,
+        confidenceScore: 1,
+        success: false,
+        errorMessage
+      })
+
+      throw err
+    }
+  }
+
+  /**
+   * V2.6: 从预提取文本执行数据提取（大文件客户端预处理）
+   * @param {string} fullText - 客户端提取的完整文本
+   * @param {Array} pages - 页面数组 [{type, pageNumber, content, isKeyPage}]
+   * @param {number} pageCount - 总页数
+   * @param {string} fileName - 原始文件名
+   * @param {Array} models - 模型配置
+   * @param {string} displayUnit - 显示单位
+   */
+  async extractFromText(fullText, pages, pageCount, fileName, models, displayUnit = 'wan') {
+    console.log(`[ExtractionService] Starting text-based extraction: ${fileName}, ${pageCount} pages`)
+    console.log(`[ExtractionService] Models: ${models.map(m => m.role).join(', ')}`)
+
+    const startTime = Date.now()
+    const sessionId = aiLogService.startSession()
+    const tokenBreakdown = { modelA: 0, modelB: 0, modelC: 0 }
+
+    // 构建与pdfService.convertToImages相同的数据结构
+    const keyPages = []
+    for (let i = 1; i <= Math.min(30, pageCount); i++) {
+      keyPages.push(i)
+    }
+
+    const pdfResult = {
+      pages: pages,
+      fullText: fullText,
+      plainText: fullText,
+      pageCount: pageCount,
+      keyPages: keyPages
+    }
+
+    const pdfPath = `client-extracted:${fileName || 'unknown'}`
+
+    try {
+      return await this._processExtraction(pdfResult, pdfPath, models, displayUnit, startTime, sessionId, tokenBreakdown)
+    } catch (err) {
+      console.error('[ExtractionService] Text-based extraction failed:', err)
+      const totalDuration = Date.now() - startTime
+      await StatsService.recordUsage({
+        sessionId,
+        extractionMode: models.length === 1 ? 'single' : models.length === 2 ? 'dual' : 'tri',
+        totalDuration,
+        totalTokens: 0,
+        confidenceScore: 1,
+        success: false,
+        errorMessage: err.message
+      })
+      throw err
+    }
+  }
+
+  /**
+   * 内部提取处理（extract和extractFromText共用）
+   */
+  async _processExtraction(pdfResult, pdfPath, models, displayUnit, startTime, sessionId, tokenBreakdown) {
+    let success = true
+    let errorMessage = null
+
+    try {
       const images = pdfResult.pages
       const pdfFullText = pdfResult.fullText
       console.log(`[ExtractionService] Converted ${images.length} pages, text length: ${pdfFullText.length}`)

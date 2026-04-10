@@ -74,6 +74,7 @@ function FileUploader() {
 
     try {
       // V1.7: extractData 返回 { data, debugLog }
+      // V2.6: 大文件自动切换客户端文本提取模式
       const { data: result, debugLog } = await extractData(selectedFile, validModels, displayUnit, (progress) => {
         setExtractionProgress(progress)
       })

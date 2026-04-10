@@ -76,10 +76,10 @@ function HomePage() {
     </>
   )
 
-  // 移动端：侧边栏放入 Drawer
+  // 移动端：侧边栏放入 Drawer，用普通div避免Layout嵌套flex问题
   if (isMobile) {
     return (
-      <Layout>
+      <>
         <Drawer
           title="配置面板"
           placement="left"
@@ -90,7 +90,7 @@ function HomePage() {
         >
           {sidebarContent}
         </Drawer>
-        <Content style={{ padding: 12, background: '#f5f5f5' }}>
+        <div style={{ padding: 12, background: '#f5f5f5', width: '100%' }}>
           <Button
             icon={<MenuOutlined />}
             onClick={() => setDrawerVisible(true)}
@@ -99,8 +99,8 @@ function HomePage() {
             配置面板
           </Button>
           {mainContent}
-        </Content>
-      </Layout>
+        </div>
+      </>
     )
   }
 

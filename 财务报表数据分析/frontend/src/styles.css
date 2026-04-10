@@ -106,6 +106,19 @@ body {
     display: none !important;
   }
 
+  /* 强制 Content 全宽，防止嵌套Layout导致宽度不足 */
+  .ant-layout-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+  }
+
+  /* 嵌套Layout强制全宽 */
+  .ant-layout-has-sider > .ant-layout {
+    width: 100% !important;
+    flex: none !important;
+  }
+
   .upload-area {
     padding: 12px;
   }

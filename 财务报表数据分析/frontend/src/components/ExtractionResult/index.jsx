@@ -59,7 +59,7 @@ function ExtractionResult() {
 
   if (!extractionResult) return null
 
-  const { companyInfo, financialMetrics, nonFinancialInfo, accountingCheck, confidence, confidenceReason, modelResults, extractionWarning, usage } = extractionResult
+  const { companyInfo, financialMetrics, nonFinancialInfo, accountingCheck, confidence, confidenceReason, modelResults, extractionWarning, usage, metricStats } = extractionResult
 
   const handleExport = () => {
     exportToExcel(extractionResult, displayUnit)
@@ -77,7 +77,7 @@ function ExtractionResult() {
   }
 
   const formatValue = (value, unit = displayUnit, metricName = null) => {
-    if (value === null || value === undefined) return '-'
+    if (value === null || value === undefined) return <Text type="secondary" style={{ color: '#faad14' }}>未找到</Text>
     if (typeof value !== 'number') return value || '-'
 
     // 比率类型显示为百分比
@@ -494,6 +494,12 @@ function ExtractionResult() {
           <Space>
             <Title level={4} style={{ margin: 0 }}>提取结果</Title>
             {renderConfidenceTag(confidence || 'medium', confidenceReason)}
+            {/* V2.12: 指标完整度 */}
+            {metricStats && (
+              <Tag color={parseInt(metricStats.completeness) >= 80 ? 'success' : parseInt(metricStats.completeness) >= 50 ? 'warning' : 'error'}>
+                指标完整度: {metricStats.completeness} ({metricStats.nonNullValues}/{metricStats.expected})
+              </Tag>
+            )}
             {/* V2.0: 使用统计显示 */}
             {usage && (
               <>
@@ -537,6 +543,17 @@ function ExtractionResult() {
             <Descriptions.Item label="报告日期">{companyInfo?.reportDate || '-'}</Descriptions.Item>
           </Descriptions>
         </Card>
+
+        {/* V2.12: 未找到指标警告 */}
+        {metricStats && metricStats.nullValues > 0 && (
+          <Alert
+            type="warning"
+            showIcon
+            icon={<WarningOutlined />}
+            message={`以下${metricStats.nullValues}项指标在PDF中未找到: ${financialMetrics?.filter(m => m.value === null || m.value === undefined).map(m => m.name).join('、') || '无'}`}
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
         {/* V1.7: 数据异常警告 */}
         {extractionWarning && (

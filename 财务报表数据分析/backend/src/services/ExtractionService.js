@@ -16,6 +16,25 @@ class ExtractionService {
     this.pdfService = new PDFService()
     this.accountingCheckService = new AccountingCheckService()
     this.unitConvertService = new UnitConvertService()
+
+    // V2.12: 预期指标列表（prompt中要求的19项原始指标 + 5项计算指标）
+    this.EXPECTED_METRICS = [
+      '营业收入', '营业成本', '毛利润', '净利润', '归属于母公司股东的净利润',
+      '少数股东损益', '扣非净利润', '总资产', '总负债',
+      '归属于母公司所有者权益合计', '少数股东权益', '所有者权益合计',
+      '流动资产', '流动负债', '应收账款', '存货',
+      '经营活动现金流净额', '投资活动现金流净额', '筹资活动现金流净额',
+      '毛利率', '净利率', '资产负债率', '流动比率', 'ROE'
+    ]
+    // 模糊匹配的别名映射
+    this.METRIC_ALIASES = {
+      '归属于母公司所有者的净利润': '归属于母公司股东的净利润',
+      '归母净利润': '归属于母公司股东的净利润',
+      '归母所有者权益': '归属于母公司所有者权益合计',
+      '经营现金流': '经营活动现金流净额',
+      '投资现金流': '投资活动现金流净额',
+      '筹资现金流': '筹资活动现金流净额'
+    }
   }
 
   /**
@@ -178,6 +197,9 @@ class ExtractionService {
 
       // 3.2 服务端重算派生指标（不依赖AI做算术）
       this.recalculateDerivedMetrics(result)
+
+      // V2.12: 过滤非预期指标 + 生成指标完整度统计
+      this.filterExpectedMetrics(result)
 
       // 4. 勾稽关系核对（带重试）
       result = await this.extractWithAccountingCheck(
@@ -475,10 +497,46 @@ class ExtractionService {
       }
     }
 
+    // V2.12: 指标完整性惩罚
+    const metrics = result.financialMetrics || []
+    const metricStats = result.metricStats
+    if (metricStats) {
+      const nullRatio = metricStats.expected > 0
+        ? metricStats.nullValues / metricStats.expected
+        : 0
+
+      // null值占比惩罚
+      if (nullRatio >= 0.3) {
+        adjustment -= 2
+        console.log(`[ExtractionService] High null ratio: ${(nullRatio * 100).toFixed(0)}%, penalty: -2`)
+      } else if (nullRatio >= 0.15) {
+        adjustment -= 1
+        console.log(`[ExtractionService] Medium null ratio: ${(nullRatio * 100).toFixed(0)}%, penalty: -1`)
+      }
+
+      // 有效指标数不足惩罚
+      if (metricStats.nonNullValues < 8) {
+        adjustment -= 1
+        console.log(`[ExtractionService] Too few non-null metrics: ${metricStats.nonNullValues}, penalty: -1`)
+      }
+    } else {
+      // 没有metricStats时（旧路径），手动计算
+      const nonNullMetrics = metrics.filter(m => m.value !== null && m.value !== undefined).length
+      const nullMetrics = metrics.filter(m => m.value === null || m.value === undefined).length
+      const total = metrics.length
+
+      if (total > 0) {
+        const nullRatio = nullMetrics / total
+        if (nullRatio >= 0.3) adjustment -= 2
+        else if (nullRatio >= 0.15) adjustment -= 1
+      }
+      if (nonNullMetrics < 8) adjustment -= 1
+    }
+
     // 计算最终分数 (1-5范围)
     const finalScore = Math.max(1, Math.min(5, modelCScore + adjustment))
 
-    console.log(`[ExtractionService] Model C score: ${modelCScore}, accounting adjustment: ${adjustment}, final: ${finalScore}`)
+    console.log(`[ExtractionService] Model C score: ${modelCScore}, adjustments: ${adjustment}, final: ${finalScore}`)
 
     result.confidence = finalScore
     return result
@@ -579,6 +637,62 @@ class ExtractionService {
         result.extractionWarning = 'AI可能返回了模板数据而非实际提取结果，请检查PDF内容是否正确'
       }
     }
+  }
+
+  /**
+   * V2.12: 过滤非预期指标，只保留prompt要求列表内的指标
+   * 同时生成指标完整度统计
+   * @param {Object} result - 提取结果
+   * @returns {Object} 过滤后的结果
+   */
+  filterExpectedMetrics(result) {
+    if (!result || !result.financialMetrics) return result
+
+    const originalCount = result.financialMetrics.length
+    const filteredMetrics = []
+
+    for (const metric of result.financialMetrics) {
+      const name = metric.name
+      // 直接匹配
+      if (this.EXPECTED_METRICS.includes(name)) {
+        filteredMetrics.push(metric)
+        continue
+      }
+      // 别名匹配
+      if (this.METRIC_ALIASES[name] && this.EXPECTED_METRICS.includes(this.METRIC_ALIASES[name])) {
+        // 替换为标准名称
+        metric.name = this.METRIC_ALIASES[name]
+        filteredMetrics.push(metric)
+        continue
+      }
+      // 未匹配：非预期指标，过滤掉
+      console.log(`[ExtractionService] Filtered out unexpected metric: "${name}"`)
+    }
+
+    const removedCount = originalCount - filteredMetrics.length
+    if (removedCount > 0) {
+      console.log(`[ExtractionService] Filtered ${removedCount} unexpected metrics (${originalCount} → ${filteredMetrics.length})`)
+    }
+
+    result.financialMetrics = filteredMetrics
+
+    // V2.12: 生成指标完整度统计
+    const expectedOriginal = this.EXPECTED_METRICS.slice(0, 19) // 前19项是原始指标
+    const extractedNames = new Set(filteredMetrics.map(m => m.name))
+    const nullCount = filteredMetrics.filter(m => m.value === null || m.value === undefined).length
+    const nonNullCount = filteredMetrics.filter(m => m.value !== null && m.value !== undefined).length
+    const missingNames = expectedOriginal.filter(n => !extractedNames.has(n))
+
+    result.metricStats = {
+      expected: expectedOriginal.length,
+      extracted: filteredMetrics.filter(m => expectedOriginal.includes(m.name)).length,
+      nullValues: nullCount,
+      nonNullValues: nonNullCount,
+      missingMetrics: missingNames,
+      completeness: Math.round((nonNullCount / expectedOriginal.length) * 100) + '%'
+    }
+
+    return result
   }
 
   /**

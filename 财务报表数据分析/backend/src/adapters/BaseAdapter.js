@@ -321,6 +321,14 @@ ${extractSummary(resultB, '模型B')}
     console.log('[BaseAdapter] Parsing response, length:', response.length)
     console.log('[BaseAdapter] Response preview (first 1000 chars):', response.substring(0, 1000))
 
+    // V2.10: 剥离常见模型伪标签（如MiniMax的tool_call）
+    const preprocessed = response
+      .replace(/<minimax:tool_call>[\s\S]*?<\/minimax:tool_call>/g, '')
+      .replace(/<minimax:tool_call>[\s\S]*?(?=<minimax:tool_call>|$)/g, '')
+      .replace(/<minimax:tool_call>/g, '')
+      .trim()
+    const textToParse = preprocessed || response
+
     // 提取JSON字符串的辅助函数
     const extractJsonString = (text) => {
       // 方法1: 查找 ```json ... ``` 块
@@ -355,13 +363,30 @@ ${extractSummary(resultB, '模型B')}
       return text
     }
 
-    const jsonStr = extractJsonString(response)
+    const jsonStr = extractJsonString(textToParse)
 
     // 尝试直接解析
     try {
       const parsed = JSON.parse(jsonStr)
-      console.log('[BaseAdapter] Parsed successfully, companyInfo:', parsed.companyInfo)
-      return parsed
+      // V2.10: 验证解析结果是否包含预期字段
+      if (parsed.companyInfo || parsed.financialMetrics || parsed.riskFactors || parsed.reportType || parsed.decisions || parsed.nonFinancialInfo) {
+        console.log('[BaseAdapter] Parsed successfully, companyInfo:', parsed.companyInfo)
+        return parsed
+      }
+      // 解析成功但内容不相关（如 {"name":"skip"}），视为解析失败
+      console.warn('[BaseAdapter] Parsed JSON lacks expected fields, keys:', Object.keys(parsed).join(','))
+      // 继续尝试从原始文本中提取有效JSON
+      const extracted = this.extractJsonObject(textToParse)
+      if (extracted && extracted !== jsonStr) {
+        try {
+          const reParsed = JSON.parse(this.sanitizeJsonString(extracted))
+          if (reParsed.companyInfo || reParsed.financialMetrics || reParsed.riskFactors || reParsed.reportType) {
+            console.log('[BaseAdapter] Found valid JSON after initial parse had wrong structure ✓')
+            return reParsed
+          }
+        } catch (e) { /* ignore */ }
+      }
+      return this.getDefaultResult()
     } catch (initialError) {
       console.log('[BaseAdapter] Initial parse failed:', initialError.message)
       console.log('[BaseAdapter] Attempting to sanitize JSON...')
@@ -370,9 +395,13 @@ ${extractSummary(resultB, '模型B')}
       try {
         const sanitizedJson = this.sanitizeJsonString(jsonStr)
         const parsed = JSON.parse(sanitizedJson)
-        console.log('[BaseAdapter] Parse succeeded after sanitization ✓')
-        console.log('[BaseAdapter] Parsed successfully, companyInfo:', parsed.companyInfo)
-        return parsed
+        // V2.10: 验证sanitization后的结果也包含预期字段
+        if (parsed.companyInfo || parsed.financialMetrics || parsed.riskFactors || parsed.reportType || parsed.decisions || parsed.nonFinancialInfo) {
+          console.log('[BaseAdapter] Parse succeeded after sanitization ✓')
+          return parsed
+        }
+        console.warn('[BaseAdapter] Sanitized parse has wrong structure, keys:', Object.keys(parsed).join(','))
+        return this.getDefaultResult()
       } catch (sanitizeError) {
         console.error('[BaseAdapter] Sanitization also failed:', sanitizeError.message)
         console.error('[BaseAdapter] Response preview:', response.substring(0, 500))
@@ -390,11 +419,11 @@ ${extractSummary(resultB, '模型B')}
 
         // V2.6: 最后尝试 - 从原始响应中用括号深度匹配提取
         try {
-          const braceExtracted = this.extractJsonObject(response)
+          const braceExtracted = this.extractJsonObject(textToParse)
           if (braceExtracted) {
             const sanitized = this.sanitizeJsonString(braceExtracted)
             const parsed = JSON.parse(sanitized)
-            if (parsed.companyInfo || parsed.financialMetrics) {
+            if (parsed.companyInfo || parsed.financialMetrics || parsed.riskFactors || parsed.reportType) {
               console.log('[BaseAdapter] Brace-depth extraction succeeded ✓')
               return parsed
             }

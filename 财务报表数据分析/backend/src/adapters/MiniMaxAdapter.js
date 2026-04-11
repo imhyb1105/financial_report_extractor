@@ -141,7 +141,9 @@ class MiniMaxAdapter extends BaseAdapter {
       )
 
       const text = response.data?.choices?.[0]?.message?.content || ''
-      const parsedResult = this.parseResponse(text)
+      // V2.10: 预处理MiniMax响应，剥离tool_call伪标签
+      const cleanedText = this.stripToolCallPatterns(text)
+      const parsedResult = this.parseResponse(cleanedText)
 
       if (aiLogService && logId) {
         aiLogService.logResponse(logId, {
@@ -161,6 +163,25 @@ class MiniMaxAdapter extends BaseAdapter {
       }
       throw new Error(`MiniMax模型提取失败: ${error.response?.data?.error?.message || error.message}`)
     }
+  }
+
+  /**
+   * V2.10: 剥离MiniMax模型可能生成的tool_call伪标签
+   * MiniMax M2.7有时会生成 <minimax:tool_call>{"name":"skip"}</minimax:tool_call> 模式
+   * 而不是直接返回JSON，导致解析失败
+   */
+  stripToolCallPatterns(text) {
+    if (!text) return text
+    // 剥离 <minimax:tool_call>...</minimax:tool_call> 或自闭合的tool_call块
+    const cleaned = text
+      .replace(/<minimax:tool_call>[\s\S]*?<\/minimax:tool_call>/g, '')
+      .replace(/<minimax:tool_call>[\s\S]*?(?=<minimax:tool_call>|$)/g, '')
+      .replace(/<minimax:tool_call>/g, '')
+      .trim()
+    if (cleaned !== text) {
+      console.log(`[MiniMaxAdapter] Stripped tool_call patterns, ${text.length} -> ${cleaned.length} chars`)
+    }
+    return cleaned
   }
 
   async validate(resultA, resultB, context) {
@@ -196,7 +217,8 @@ class MiniMaxAdapter extends BaseAdapter {
       )
 
       const text = response.data?.choices?.[0]?.message?.content || ''
-      const parsedResult = this.parseResponse(text)
+      const cleanedText = this.stripToolCallPatterns(text)
+      const parsedResult = this.parseResponse(cleanedText)
       const mergedResult = this.mergeValidationResults(resultA, resultB, parsedResult)
 
       if (aiLogService && logId) {
@@ -333,7 +355,8 @@ class MiniMaxAdapter extends BaseAdapter {
       )
 
       const text = response.data?.choices?.[0]?.message?.content || ''
-      const parsedResult = this.parseResponse(text)
+      const cleanedText = this.stripToolCallPatterns(text)
+      const parsedResult = this.parseResponse(cleanedText)
 
       if (aiLogService && logId) {
         aiLogService.logResponse(logId, {

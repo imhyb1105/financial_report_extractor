@@ -432,6 +432,17 @@ ${extractSummary(resultB, '模型B')}
           // ignore
         }
 
+        // V2.11: 最后尝试 - 修复截断的JSON
+        try {
+          const repaired = this.repairTruncatedJson(textToParse)
+          if (repaired) {
+            console.log('[BaseAdapter] Truncated JSON repaired ✓, metrics:', repaired.financialMetrics?.length || 0)
+            return repaired
+          }
+        } catch (e) {
+          console.error('[BaseAdapter] Truncated JSON repair also failed:', e.message)
+        }
+
         return this.getDefaultResult()
       }
     }
@@ -483,6 +494,257 @@ ${extractSummary(resultB, '模型B')}
     }
 
     return null
+  }
+
+  /**
+   * V2.11: 修复截断的JSON
+   * 当模型在生成过程中提前停止，JSON不完整时使用
+   * 策略：找到最后一个完整的键值对，截断并补全括号
+   * @param {string} text - 可能截断的JSON文本
+   * @returns {Object|null} 解析结果或null
+   */
+  repairTruncatedJson(text) {
+    if (!text || typeof text !== 'string') return null
+
+    // 先尝试提取JSON部分
+    let jsonStr = text
+    // 如果包含代码块标记，提取内容
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+    if (codeBlockMatch) {
+      jsonStr = codeBlockMatch[1]
+    }
+
+    // 尝试直接提取{...}内容
+    const startIdx = jsonStr.indexOf('{')
+    if (startIdx === -1) return null
+    jsonStr = jsonStr.substring(startIdx)
+
+    // 尝试直接解析（可能本来就是完整的）
+    try {
+      const parsed = JSON.parse(jsonStr)
+      if (parsed.companyInfo || parsed.financialMetrics || parsed.decisions || parsed.nonFinancialInfo) {
+        return parsed
+      }
+    } catch (e) {
+      // 继续修复
+    }
+
+    // 策略1: 找到最后一个完整的对象/数组元素
+    // 匹配模式：在字符串值结束后的逗号或闭合括号
+    const repairStrategies = [
+      // 策略A: 找到最后一个 "key": "value" 或 "key": number 模式后的位置
+      () => {
+        // 找最后一个完整的值结束位置
+        // 匹配: "key": <value> 后跟可选的逗号
+        const lastCompleteValue = this._findLastCompleteValue(jsonStr)
+        if (lastCompleteValue === null) return null
+        return jsonStr.substring(0, lastCompleteValue)
+      },
+      // 策略B: 找到最后一个完整的数组元素 }], 模式
+      () => {
+        const lastArrayElement = jsonStr.lastIndexOf('},')
+        if (lastArrayElement === -1) return null
+        return jsonStr.substring(0, lastArrayElement + 1)
+      },
+      // 策略C: 找到最后一个 }, 模式
+      () => {
+        const lastBrace = jsonStr.lastIndexOf('}')
+        if (lastBrace === -1) return null
+        return jsonStr.substring(0, lastBrace + 1)
+      }
+    ]
+
+    for (const strategy of repairStrategies) {
+      const truncated = strategy()
+      if (!truncated) continue
+
+      // 计算需要补全的括号
+      const repaired = this._closeBrackets(truncated)
+
+      try {
+        const parsed = JSON.parse(repaired)
+        if (parsed.companyInfo || parsed.financialMetrics || parsed.decisions || parsed.nonFinancialInfo) {
+          console.log(`[BaseAdapter] Truncated JSON repaired: ${text.length} → ${repaired.length} chars`)
+          return parsed
+        }
+      } catch (e) {
+        // 继续尝试下一个策略
+        console.log(`[BaseAdapter] Repair strategy failed: ${e.message}`)
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * V2.11: 找到最后一个完整的JSON值结束位置
+   * 完整值 = 字符串值 (引号内) | 数字 | boolean | null
+   * @param {string} jsonStr
+   * @returns {number|null} 截断位置
+   */
+  _findLastCompleteValue(jsonStr) {
+    // 从后往前找，定位到最后一个完整值的结尾
+    // 关键模式：
+    // 1. "key": "value"  → 值在引号内
+    // 2. "key": 12345    → 值是数字
+    // 3. "key": null     → 值是null
+
+    let pos = jsonStr.length - 1
+
+    // 跳过尾部空白和未完成的字符
+    while (pos >= 0 && (jsonStr[pos] === ' ' || jsonStr[pos] === '\n' || jsonStr[pos] === '\r' || jsonStr[pos] === '\t')) {
+      pos--
+    }
+
+    if (pos < 0) return null
+
+    // 情况1: 值在引号中 - 找到最后一个完整的 "value" (后面跟 , 或 } 或 ])
+    if (jsonStr[pos] === '"') {
+      // 找配对的开引号
+      let openQuote = pos - 1
+      let escaped = false
+      while (openQuote >= 0) {
+        if (jsonStr[openQuote] === '"' && !escaped) {
+          break
+        }
+        if (jsonStr[openQuote] === '\\') {
+          escaped = !escaped
+        } else {
+          escaped = false
+        }
+        openQuote--
+      }
+      if (openQuote < 0) return null
+      // 值是 jsonStr[openQuote..pos]，即 "value"
+      return pos + 1 // 包含结束引号
+    }
+
+    // 情况2: 数字值 - 找到数字的开始
+    if (/[0-9]/.test(jsonStr[pos]) || jsonStr[pos] === '.') {
+      let numEnd = pos
+      while (pos >= 0 && /[0-9.\-eE+]/.test(jsonStr[pos])) {
+        pos--
+      }
+      return numEnd + 1
+    }
+
+    // 情况3: null/true/false
+    if (pos >= 3 && jsonStr.substring(pos - 3, pos + 1) === 'null') {
+      return pos + 1
+    }
+    if (pos >= 3 && jsonStr.substring(pos - 3, pos + 1) === 'true') {
+      return pos + 1
+    }
+    if (pos >= 4 && jsonStr.substring(pos - 4, pos + 1) === 'false') {
+      return pos + 1
+    }
+
+    return null
+  }
+
+  /**
+   * V2.11: 为不完整的JSON补全括号
+   * @param {string} jsonStr - 可能不完整的JSON
+   * @returns {string} 补全括号后的JSON
+   */
+  _closeBrackets(jsonStr) {
+    let depth = 0
+    let inString = false
+    let escapeNext = false
+    const stack = [] // 记录括号类型: { 或 [
+
+    for (let i = 0; i < jsonStr.length; i++) {
+      const ch = jsonStr[i]
+
+      if (escapeNext) {
+        escapeNext = false
+        continue
+      }
+
+      if (ch === '\\' && inString) {
+        escapeNext = true
+        continue
+      }
+
+      if (ch === '"' && !escapeNext) {
+        inString = !inString
+        continue
+      }
+
+      if (inString) continue
+
+      if (ch === '{') {
+        depth++
+        stack.push('{')
+      } else if (ch === '[') {
+        depth++
+        stack.push('[')
+      } else if (ch === '}') {
+        depth--
+        stack.pop()
+      } else if (ch === ']') {
+        depth--
+        stack.pop()
+      }
+    }
+
+    // 去除尾部可能的未完成token（如逗号后面不完整的键）
+    let result = jsonStr.trimEnd()
+
+    // 如果末尾是逗号后面有不完整内容，去掉逗号和之后的内容
+    // 策略：从末尾往回看，如果最后一个有意义的字符不是 } ] " 数字 true false null
+    // 则需要回退到最后一个完整元素之后
+    let trimmed = result
+    for (let i = trimmed.length - 1; i >= 0; i--) {
+      const ch = trimmed[i]
+      if (ch === ' ' || ch === '\n' || ch === '\r' || ch === '\t') continue
+      if (ch === ',' || ch === ':') {
+        // 截断到这个逗号之前（去掉不完整的键值对）
+        trimmed = trimmed.substring(0, i)
+        break
+      }
+      // 遇到完整的结束符就停止
+      if (ch === '}' || ch === ']' || ch === '"' || /[0-9l]/.test(ch)) {
+        break
+      }
+      break
+    }
+
+    result = trimmed
+
+    // 重新计算stack
+    const newStack = []
+    let newInString = false
+    let newEscape = false
+    for (let i = 0; i < result.length; i++) {
+      const ch = result[i]
+      if (newEscape) { newEscape = false; continue }
+      if (ch === '\\' && newInString) { newEscape = true; continue }
+      if (ch === '"' && !newEscape) { newInString = !newInString; continue }
+      if (newInString) continue
+      if (ch === '{') newStack.push('{')
+      else if (ch === '[') newStack.push('[')
+      else if (ch === '}') newStack.pop()
+      else if (ch === ']') newStack.pop()
+    }
+
+    // 修复可能的尾随逗号（在闭合括号前）
+    // 在补全前，移除末尾多余的逗号
+    result = result.trimEnd()
+    if (result.endsWith(',')) {
+      result = result.slice(0, -1)
+    }
+
+    // 从内到外补全缺失的括号
+    for (let i = newStack.length - 1; i >= 0; i--) {
+      if (newStack[i] === '{') {
+        result += '}'
+      } else if (newStack[i] === '[') {
+        result += ']'
+      }
+    }
+
+    return result
   }
 
   /**

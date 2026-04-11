@@ -41,7 +41,7 @@ app.use('/api/pdf-source', pdfSourceRouter)
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    version: '2.7.0',
+    version: '2.11.0',
     timestamp: new Date().toISOString(),
     provider: 'vercel'
   })

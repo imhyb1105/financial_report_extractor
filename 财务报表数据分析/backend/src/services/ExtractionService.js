@@ -1293,6 +1293,20 @@ ${JSON.stringify(resultB || { reportType: 'unknown', riskFactors: { status: 'not
     const hasAMetrics = resultA.financialMetrics && resultA.financialMetrics.length > 0
     const hasBMetrics = resultB.financialMetrics && resultB.financialMetrics.length > 0
 
+    // V2.11: 指标完整性检查 - 21项中至少应有8项
+    const MIN_METRICS = 8
+    const aMetricCount = resultA.financialMetrics?.length || 0
+    const bMetricCount = resultB.financialMetrics?.length || 0
+
+    if (hasAMetrics && aMetricCount < MIN_METRICS) {
+      console.warn(`[ExtractionService] Model A only extracted ${aMetricCount} metrics (< ${MIN_METRICS} minimum)`)
+      resultA.metricWarning = `指标不完整：仅提取${aMetricCount}项，建议至少${MIN_METRICS}项`
+    }
+    if (hasBMetrics && bMetricCount < MIN_METRICS) {
+      console.warn(`[ExtractionService] Model B only extracted ${bMetricCount} metrics (< ${MIN_METRICS} minimum)`)
+      resultB.metricWarning = `指标不完整：仅提取${bMetricCount}项，建议至少${MIN_METRICS}项`
+    }
+
     if (!hasAMetrics && !hasBMetrics) {
       // 两个模型都失败了
       console.error('[ExtractionService] Both models failed to extract data')
@@ -1316,14 +1330,52 @@ ${JSON.stringify(resultB || { reportType: 'unknown', riskFactors: { status: 'not
 
       const finalResult = JSON.parse(JSON.stringify(successResult))
       this.cleanTemplateData(finalResult)
-      finalResult.confidence = 'medium-high'
+      // V2.11: 如果成功模型指标也不足，降低置信度
+      const successCount = successResult.financialMetrics?.length || 0
+      finalResult.confidence = successCount >= MIN_METRICS ? 'medium-high' : 'medium'
       finalResult.extractionMode = 'tri-single'
       finalResult.extractionWarning = `模型${failedModel}解析失败（AI响应格式异常），仅使用${failedModel === 'A' ? '模型B' : '模型A'}的数据`
+      if (successCount < MIN_METRICS) {
+        finalResult.extractionWarning += `；且成功模型仅提取${successCount}项指标，数据可能不完整`
+      }
 
       finalResult.modelResults = {
         modelA: { provider: modelA.provider, companyInfo: resultA.companyInfo, financialMetrics: resultA.financialMetrics, error: !hasAMetrics ? (resultA.error || 'AI响应解析失败') : undefined },
         modelB: { provider: modelB.provider, companyInfo: resultB.companyInfo, financialMetrics: resultB.financialMetrics, error: !hasBMetrics ? (resultB.error || 'AI响应解析失败') : undefined },
         modelC: { provider: modelC.provider, role: 'validator', skipped: true }
+      }
+
+      return finalResult
+    }
+
+    // V2.11: 双模型都成功但指标数都不足时，选择指标多的模型跳过Model C
+    if (aMetricCount < MIN_METRICS && bMetricCount < MIN_METRICS) {
+      console.warn(`[ExtractionService] Both models have insufficient metrics: A=${aMetricCount}, B=${bMetricCount}`)
+      const betterResult = aMetricCount >= bMetricCount ? resultA : resultB
+      const betterLabel = aMetricCount >= bMetricCount ? 'A' : 'B'
+
+      const finalResult = JSON.parse(JSON.stringify(betterResult))
+      this.cleanTemplateData(finalResult)
+
+      // 合并另一个模型中独有的指标
+      const otherResult = betterLabel === 'A' ? resultB : resultA
+      if (otherResult.financialMetrics) {
+        const existingNames = new Set(finalResult.financialMetrics.map(m => m.name))
+        for (const metric of otherResult.financialMetrics) {
+          if (!existingNames.has(metric.name)) {
+            finalResult.financialMetrics.push(metric)
+          }
+        }
+      }
+
+      finalResult.confidence = 'medium'
+      finalResult.extractionMode = 'tri-merged'
+      finalResult.extractionWarning = `两个模型指标均不完整（A=${aMetricCount}项, B=${bMetricCount}项），已合并结果`
+
+      finalResult.modelResults = {
+        modelA: { provider: modelA.provider, companyInfo: resultA.companyInfo, financialMetrics: resultA.financialMetrics, metricWarning: resultA.metricWarning },
+        modelB: { provider: modelB.provider, companyInfo: resultB.companyInfo, financialMetrics: resultB.financialMetrics, metricWarning: resultB.metricWarning },
+        modelC: { provider: modelC.provider, role: 'validator', skipped: true, reason: 'insufficient_metrics' }
       }
 
       return finalResult

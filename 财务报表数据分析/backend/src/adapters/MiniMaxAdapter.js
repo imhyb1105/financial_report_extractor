@@ -5,6 +5,7 @@ import BaseAdapter from './BaseAdapter.js'
  * MiniMax模型适配器
  * V2.8: 更新模型列表，添加 GroupId 支持
  * V2.9: 支持 Token Plan Key (JWT格式)
+ * V2.11: 优化max_tokens和system prompt，减少reasoning浪费
  */
 class MiniMaxAdapter extends BaseAdapter {
   constructor(apiKey, options = {}) {
@@ -123,13 +124,19 @@ class MiniMaxAdapter extends BaseAdapter {
     }
 
     try {
+      // V2.11: 添加system prompt引导模型行为，减少reasoning浪费
+      const systemPrompt = '你是一个精确的财务数据提取助手。请直接输出JSON格式结果，不要输出任何推理过程、分析说明、思考链或其他非JSON文字。不要使用<minimax:tool_call>标签。确保输出的JSON格式完整，所有括号正确闭合。'
+
       const response = await axios.post(
         `${this.baseURL}/chat/completions?GroupId=${this.groupId}`,
         {
           model: this.model,
-          messages: [{ role: 'user', content }],
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content }
+          ],
           temperature: 0.1,
-          max_tokens: 8192
+          max_tokens: 16384
         },
         {
           headers: {
@@ -199,13 +206,19 @@ class MiniMaxAdapter extends BaseAdapter {
     }
 
     try {
+      // V2.11: 添加system prompt
+      const systemPrompt = '你是财务审计专家。请直接输出JSON格式结果，不要输出任何推理过程或非JSON文字。不要使用<minimax:tool_call>标签。确保JSON格式完整。'
+
       const response = await axios.post(
         `${this.baseURL}/chat/completions?GroupId=${this.groupId}`,
         {
           model: this.model,
-          messages: [{ role: 'user', content: prompt }],
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+          ],
           temperature: 0.1,
-          max_tokens: 4096
+          max_tokens: 8192
         },
         {
           headers: {
@@ -348,9 +361,20 @@ class MiniMaxAdapter extends BaseAdapter {
     }
 
     try {
+      // V2.11: 添加system prompt
+      const systemPrompt = '你是财务信息总结专家。请直接输出JSON格式结果，不要输出推理过程。不要使用<minimax:tool_call>标签。确保JSON格式完整。'
+
       const response = await axios.post(
         `${this.baseURL}/chat/completions?GroupId=${this.groupId}`,
-        { model: this.model, messages: [{ role: 'user', content: prompt }], temperature: 0.1, max_tokens: 8192 },
+        {
+          model: this.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.1,
+          max_tokens: 16384
+        },
         { headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' }, timeout: 180000 }
       )
 

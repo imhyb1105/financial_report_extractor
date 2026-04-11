@@ -24,6 +24,7 @@ export async function validateApiKey(provider, apiKey) {
 // 提取数据
 // V1.7: 返回 { data, debugLog } 结构
 // V2.6: 大文件（>4MB）使用客户端文本提取，绕过Vercel body size限制
+// V2.13: 返回 { data, debugLog, pdfResult } 结构，pdfResult用于后续非财务提取
 export async function extractData(file, models, displayUnit, onProgress) {
   if (file.size > PDF_SIZE_THRESHOLD) {
     return extractDataFromText(file, models, displayUnit, onProgress)
@@ -61,7 +62,7 @@ export async function extractData(file, models, displayUnit, onProgress) {
       throw new Error(response.data.error?.message || '提取失败')
     }
 
-    return { data, debugLog }
+    return { data, debugLog, pdfResult: null }
   } catch (error) {
     clearInterval(progressInterval)
     throw new Error(error.response?.data?.error?.message || error.message)
@@ -71,6 +72,7 @@ export async function extractData(file, models, displayUnit, onProgress) {
 /**
  * 大文件提取：客户端先提取PDF文本，再发送文本到后端处理
  * 解决Vercel Hobby plan 4.5MB请求体限制
+ * V2.13: 返回pdfResult用于后续非财务信息提取
  */
 async function extractDataFromText(file, models, displayUnit, onProgress) {
   // 动态导入pdfjs-dist（仅大文件时加载，避免增加主bundle体积）
@@ -120,10 +122,52 @@ async function extractDataFromText(file, models, displayUnit, onProgress) {
       throw new Error(response.data.error?.message || '提取失败')
     }
 
-    return { data, debugLog }
+    // V2.13: 返回pdfResult供后续非财务提取使用
+    return {
+      data, debugLog,
+      pdfResult: {
+        pages: pdfResult.pages,
+        fullText: pdfResult.fullText,
+        pageCount: pdfResult.pageCount,
+        fileName: file.name
+      }
+    }
   } catch (error) {
     clearInterval(progressInterval)
     throw new Error(error.response?.data?.error?.message || error.message)
+  }
+}
+
+/**
+ * V2.13: 独立提取非财务信息（解决504超时）
+ * 在财务数据返回后单独调用，避免总时长超过Vercel 300s限制
+ * @param {Object} pdfResult - 客户端提取的PDF数据 { pages, fullText, pageCount, fileName }
+ * @param {Array} models - 模型配置
+ * @returns {Object} { nonFinancialInfo, debugLog }
+ */
+export async function extractNonFinancial(pdfResult, models) {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/extract/non-financial`, {
+      pages: pdfResult.pages,
+      textContent: pdfResult.fullText,
+      pageCount: pdfResult.pageCount,
+      fileName: pdfResult.fileName,
+      models
+    }, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 600000
+    })
+
+    const { success, data, debugLog } = response.data
+    if (!success) {
+      throw new Error(response.data.error?.message || '非财务信息提取失败')
+    }
+
+    return { data, debugLog }
+  } catch (error) {
+    console.warn('[apiService] Non-financial extraction failed:', error.message)
+    // 非财务信息提取失败不应阻断用户查看财务数据
+    return { data: null, debugLog: null }
   }
 }
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Upload, Button, message, Progress, Alert, Typography, Space } from 'antd'
 import { InboxOutlined, FilePdfOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useStore } from '../../store/useStore'
-import { extractData } from '../../services/apiService'
+import { extractData, extractNonFinancial } from '../../services/apiService'
 
 const { Dragger } = Upload
 const { Text } = Typography
@@ -23,7 +23,9 @@ function FileUploader() {
     selectedFile,
     fileInfo,
     setSelectedFile,
-    clearSelectedFile
+    clearSelectedFile,
+    setNonFinancialInfo,
+    setNonFinancialLoading
   } = useStore()
 
   const beforeUpload = (file) => {
@@ -73,9 +75,8 @@ function FileUploader() {
     startExtraction()
 
     try {
-      // V1.7: extractData 返回 { data, debugLog }
-      // V2.6: 大文件自动切换客户端文本提取模式
-      const { data: result, debugLog } = await extractData(selectedFile, validModels, displayUnit, (progress) => {
+      // V2.13: extractData 返回 { data, debugLog, pdfResult }
+      const { data: result, debugLog, pdfResult } = await extractData(selectedFile, validModels, displayUnit, (progress) => {
         setExtractionProgress(progress)
       })
 
@@ -92,7 +93,23 @@ function FileUploader() {
         success: true
       })
 
-      message.success('数据提取完成！')
+      message.success('财务数据提取完成！')
+
+      // V2.13: 三模型模式下异步加载非财务信息
+      if (validModels.length >= 3 && pdfResult) {
+        setNonFinancialLoading(true)
+        message.info('正在加载非财务信息...', 2)
+
+        extractNonFinancial(pdfResult, validModels).then(({ data: nfData }) => {
+          if (nfData?.nonFinancialInfo) {
+            setNonFinancialInfo(nfData.nonFinancialInfo)
+            message.success('非财务信息加载完成！')
+          }
+          setNonFinancialLoading(false)
+        }).catch(() => {
+          setNonFinancialLoading(false)
+        })
+      }
     } catch (error) {
       setExtractionError(error.message)
       message.error(`提取失败: ${error.message}`)

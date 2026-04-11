@@ -208,7 +208,7 @@ function AppLayout() {
           </Space>
         )}
         <br />
-        <Text type="secondary">© 2026 智能财务报表数据提取工具 V2.5</Text>
+        <Text type="secondary">© 2026 智能财务报表数据提取工具 V2.13</Text>
       </Footer>
     </Layout>
   )

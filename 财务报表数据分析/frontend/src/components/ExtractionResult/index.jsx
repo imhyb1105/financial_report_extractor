@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Card, Table, Tag, Tabs, Descriptions, Alert, Button, Space, Tooltip, Typography, Divider, Empty, Grid } from 'antd'
+import { Card, Table, Tag, Tabs, Descriptions, Alert, Button, Space, Tooltip, Typography, Divider, Empty, Grid, Spin } from 'antd'
 import {
   DownloadOutlined,
   CheckCircleOutlined,
@@ -10,7 +10,8 @@ import {
   ClockCircleOutlined,
   ApiOutlined,
   FileTextOutlined,
-  BulbOutlined
+  BulbOutlined,
+  LoadingOutlined
 } from '@ant-design/icons'
 import { useStore } from '../../store/useStore'
 import { exportToExcel } from '../../services/exportService'
@@ -52,7 +53,7 @@ const getConfidenceKey = (confidence) => {
 }
 
 function ExtractionResult() {
-  const { extractionResult, displayUnit, debugLog } = useStore()
+  const { extractionResult, displayUnit, debugLog, isNonFinancialLoading } = useStore()
   const [showDebugPanel, setShowDebugPanel] = useState(false) // V1.7: 调试面板状态
   const screens = Grid.useBreakpoint()
   const isMobile = !screens.md
@@ -613,7 +614,14 @@ function ExtractionResult() {
             {
               key: 'nonFinancial',
               label: '非财务信息',
-              children: nonFinancialInfo && (
+              children: isNonFinancialLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                  <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+                  <div style={{ marginTop: 12, color: '#999' }}>正在加载非财务信息...</div>
+                </div>
+              ) : !nonFinancialInfo ? (
+                <Empty description="暂无非财务信息" />
+              ) : (
                 <Space direction="vertical" style={{ width: '100%' }} size="middle">
                   {/* V2.8: 报告类型提示 */}
                   {nonFinancialInfo.reportType && (

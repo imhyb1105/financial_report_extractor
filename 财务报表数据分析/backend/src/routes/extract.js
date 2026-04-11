@@ -157,6 +157,55 @@ async function handleTextExtraction(req, res) {
   })
 }
 
+// V2.13: 独立的非财务信息提取接口（解决504超时问题）
+router.post('/non-financial', async (req, res, next) => {
+  try {
+    const { textContent, pages, pageCount, fileName, models } = req.body
+
+    if (!pages || pages.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'NO_PAGES',
+          message: '请提供页面数据'
+        }
+      })
+    }
+
+    if (!models || models.length < 3) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'NO_MODELS',
+          message: '非财务信息提取需要至少3个模型配置'
+        }
+      })
+    }
+
+    console.log(`[ExtractRoute] Non-financial extraction: file=${fileName}, pages=${pageCount}`)
+
+    const extractionService = new ExtractionService()
+    const result = await extractionService.extractNonFinancialFromText(
+      pages,
+      textContent || '',
+      pageCount,
+      fileName,
+      models
+    )
+
+    res.json({
+      success: true,
+      data: {
+        nonFinancialInfo: result.nonFinancialInfo,
+        nonFinancialInfoEnhanced: result.nonFinancialInfoEnhanced
+      },
+      debugLog: result.debugLog
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
 // 获取提取状态（用于长任务轮询）
 router.get('/status/:taskId', async (req, res, next) => {
   try {

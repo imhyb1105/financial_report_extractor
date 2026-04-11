@@ -212,14 +212,8 @@ class ExtractionService {
       // V1.12: 根据勾稽核对结果修正置信度
       result = this.adjustConfidenceBasedOnResults(result, models.length)
 
-      // V2.8: 非财务信息三模型提取（恢复阻塞，前端超时已增至10分钟，足够容纳）
-      if (models.length >= 3 && result.modelResults?.modelA && result.modelResults?.modelB) {
-        try {
-          result = await this.enhanceNonFinancialInfo(result, models, images, pdfPath)
-        } catch (e) {
-          console.warn(`[ExtractionService] Non-financial info enhancement failed: ${e.message}`)
-        }
-      }
+      // V2.13: 非财务信息提取改为独立API调用，不再阻塞主流程
+      // 前端收到财务数据后单独调用 /api/extract/non-financial
 
       // 5. 单位转换
       result = this.unitConvertService.convert(result, displayUnit)
@@ -825,6 +819,37 @@ class ExtractionService {
     }
 
     return result
+  }
+
+  /**
+   * V2.13: 独立的非财务信息提取方法（供独立API调用）
+   * @param {Array} pages - 页面数据 [{type, pageNumber, content}]
+   * @param {string} fullText - PDF完整文本
+   * @param {number} pageCount - 总页数
+   * @param {string} fileName - 文件名
+   * @param {Array} models - 模型配置
+   * @returns {Object} { nonFinancialInfo, debugLog }
+   */
+  async extractNonFinancialFromText(pages, fullText, pageCount, fileName, models) {
+    console.log(`[ExtractionService] Starting standalone non-financial extraction: ${fileName}, ${pageCount} pages`)
+
+    const sessionId = aiLogService.startSession()
+    const images = pages
+    const pdfPath = `client-extracted:${fileName || 'unknown'}`
+
+    try {
+      const result = await this.enhanceNonFinancialInfo({}, models, images, pdfPath)
+      const debugLog = aiLogService.buildDebugLog(result)
+
+      return {
+        nonFinancialInfo: result.nonFinancialInfo || null,
+        nonFinancialInfoEnhanced: result.nonFinancialInfoEnhanced || false,
+        debugLog
+      }
+    } catch (err) {
+      console.error('[ExtractionService] Standalone non-financial extraction failed:', err)
+      throw err
+    }
   }
 
   /**

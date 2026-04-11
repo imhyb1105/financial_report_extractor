@@ -80,6 +80,22 @@ export const useStore = create(
       // V1.7: 清除调试日志
       clearDebugLog: () => set({ debugLog: null }),
 
+      // V2.13: 更新非财务信息（异步加载完成后）
+      setNonFinancialInfo: (nonFinancialInfo) => set(state => {
+        if (!state.extractionResult) return {}
+        return {
+          extractionResult: {
+            ...state.extractionResult,
+            nonFinancialInfo,
+            nonFinancialInfoEnhanced: true
+          }
+        }
+      }),
+
+      // V2.13: 非财务信息加载状态
+      isNonFinancialLoading: false,
+      setNonFinancialLoading: (loading) => set({ isNonFinancialLoading: loading }),
+
       addToHistory: (record) => set(state => ({
         history: [record, ...state.history].slice(0, 50) // 保留最近50条
       })),

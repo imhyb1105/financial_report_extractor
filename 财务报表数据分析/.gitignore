@@ -55,3 +55,5 @@ test_*.pdf
 *.tmp
 *.temp
 .vercel/
+
+.vercel

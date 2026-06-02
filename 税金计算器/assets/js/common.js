@@ -152,6 +152,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 col.classList.add('hidden');
             }
         });
+
+        if(window.Feedback) window.Feedback.trackEvent({event:'search', metadata:{term: keyword}});
     }
 
     if (searchInput) {
@@ -173,6 +175,8 @@ document.addEventListener('DOMContentLoaded', function() {
     filterButtons.forEach(btn => {
         btn.addEventListener('click', function() {
             const filter = this.dataset.filter;
+
+            if(window.Feedback) window.Feedback.trackEvent({event:'filter', metadata:{category: filter}});
 
             // 更新按钮状态
             filterButtons.forEach(b => b.classList.remove('active'));

@@ -75,6 +75,7 @@ function getTaxBracket(appreciationRate) {
 
 // 计算土地增值税
 function calculateLandVat() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'land_vat'}});
     const income = parseFloat(document.getElementById('taxableIncome').value) || 0;
     const deduction = parseFloat(document.getElementById('deductionTotal').value) || 0;
 

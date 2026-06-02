@@ -77,6 +77,7 @@ function numberToChinese(num) {
 
 // 计算车辆购置税
 function calculateVehiclePurchaseTax() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'vehicle_purchase'}});
     const vehicleType = document.getElementById('vehicleType').value;
     const price = parseFloat(document.getElementById('vehiclePrice').value) || 0;
 

@@ -60,6 +60,7 @@ function numberToChinese(num) {
 
 // 计算城镇土地使用税
 function calculateLandUseTax() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'land_use'}});
     const cityTier = document.getElementById('cityTier').value;
     const area = parseFloat(document.getElementById('landArea').value) || 0;
     const rate = parseFloat(document.getElementById('taxRate').value) || 0;

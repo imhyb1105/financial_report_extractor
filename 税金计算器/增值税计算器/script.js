@@ -340,6 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 一般纳税人增值税计算（支持差额征税面板自动代入）
     function calculateGeneralTax() {
+        if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'vat', mode:'general'}});
         const sales = parseFloat(document.getElementById('generalSales').value);
         const isTaxIncluded = document.querySelector('input[name="generalTaxIncluded"]:checked').value === "1";
         const taxRate = parseFloat(document.getElementById('generalTaxRate').value);
@@ -410,6 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 兼营/多税率合并计算（分别核算/从高适用税率，含行内进项）
     function calculateMixedSales() {
+        if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'vat', mode:'mixed'}});
         const items = getMixedItems();
         if (!items || items.length === 0) {
             setErrors('请至少填写一行有效的兼营/多税率项目（有效税目与金额）。');
@@ -485,6 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 小规模纳税人
     function calculateSmallTax() {
+        if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'vat', mode:'small'}});
         const sales = parseFloat(document.getElementById('smallSales').value);
         const isTaxIncluded = document.querySelector('input[name="smallTaxIncluded"]:checked').value === "1";
         const taxRate = parseFloat(document.getElementById('smallTaxRate').value);

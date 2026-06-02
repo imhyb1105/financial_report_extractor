@@ -72,6 +72,7 @@ function formatArea(area) {
 
 // 计算耕地占用税
 function calculateFarmlandTax() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'farmland'}});
     const occupationArea = parseFloat(document.getElementById('occupationArea').value) || 0;
     const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
     const occupationType = document.getElementById('occupationType').value;

@@ -187,6 +187,7 @@ function calculateFromQuantity() {
 
 // 计算资源税
 function calculateResourceTax() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'resource'}});
     const taxType = document.getElementById('taxType').value;
 
     if (taxType === 'ad_valorem') {

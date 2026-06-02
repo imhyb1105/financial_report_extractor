@@ -96,6 +96,7 @@
 
   els.form.addEventListener('submit', function (e) {
     e.preventDefault();
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'surtax'}});
     els.errors.textContent = '';
 
     const vat = parseAmount(els.vatPaid.value);

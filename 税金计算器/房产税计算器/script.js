@@ -52,6 +52,7 @@ function numberToChinese(num) {
 
 // 从价计征计算
 function calculateFromValue() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'property', mode:'value'}});
     const propertyValue = parseFloat(document.getElementById('propertyValue').value) || 0;
     const deductionRate = parseFloat(document.getElementById('deductionRate').value) || 30;
 
@@ -80,6 +81,7 @@ function calculateFromValue() {
 
 // 从租计征计算
 function calculateFromRent() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'property', mode:'rent'}});
     const rentIncome = parseFloat(document.getElementById('rentIncome').value) || 0;
 
     if (rentIncome <= 0) {

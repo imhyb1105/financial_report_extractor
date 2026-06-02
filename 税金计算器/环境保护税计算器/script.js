@@ -100,6 +100,7 @@ function showResult(type, basis, rate, tax, formula) {
 // 大气污染物计算
 document.getElementById('airForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'environment', mode:'air'}});
     const pollutant = document.getElementById('airPollutant').value;
     const emission = parseFloat(document.getElementById('airEmission').value) || 0;
     const taxRate = parseFloat(document.getElementById('airTaxRate').value) || 1.2;
@@ -122,6 +123,7 @@ document.getElementById('airForm').addEventListener('submit', function(e) {
 // 水污染物计算
 document.getElementById('waterForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'environment', mode:'water'}});
     const pollutant = document.getElementById('waterPollutant').value;
     const emission = parseFloat(document.getElementById('waterEmission').value) || 0;
     const taxRate = parseFloat(document.getElementById('waterTaxRate').value) || 1.4;
@@ -144,6 +146,7 @@ document.getElementById('waterForm').addEventListener('submit', function(e) {
 // 固体废物计算
 document.getElementById('solidForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'environment', mode:'solid'}});
     const solidType = document.getElementById('solidType').value;
     const quantity = parseFloat(document.getElementById('solidQuantity').value) || 0;
 
@@ -163,6 +166,7 @@ document.getElementById('solidForm').addEventListener('submit', function(e) {
 // 噪声计算
 document.getElementById('noiseForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'environment', mode:'noise'}});
     const noiseLevel = document.getElementById('noiseLevel').value;
     const months = parseInt(document.getElementById('noiseMonths').value) || 1;
 

@@ -55,6 +55,7 @@ function numberToChinese(num) {
 
 // 计算烟叶税
 function calculateTobaccoTax() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'tobacco'}});
     const purchasePrice = parseFloat(document.getElementById('purchasePrice').value) || 0;
     const subsidyRate = parseFloat(document.getElementById('subsidyRate').value) || 0;
 

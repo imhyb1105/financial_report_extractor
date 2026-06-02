@@ -330,6 +330,7 @@ function collectAdditionalDeductionData() {
 
 // 主计算函数
 function calculate() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'cit'}});
     clearError();
 
     // 计算纳税调整增加额

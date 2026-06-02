@@ -94,6 +94,7 @@ document.getElementById('importMethod').addEventListener('change', function() {
 // 进口关税计算
 document.getElementById('importForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'tariff', mode:'import'}});
     const method = document.getElementById('importMethod').value;
     const customsValue = parseFloat(document.getElementById('customsValue').value) || 0;
     const quantity = parseFloat(document.getElementById('importQuantity').value) || 0;
@@ -145,6 +146,7 @@ document.getElementById('exportType').addEventListener('change', function() {
 // 出口关税计算
 document.getElementById('exportForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'tariff', mode:'export'}});
     const exportType = document.getElementById('exportType').value;
     const exportValue = parseFloat(document.getElementById('exportValue').value) || 0;
     const rate = parseFloat(document.getElementById('exportRate').value) || 0;

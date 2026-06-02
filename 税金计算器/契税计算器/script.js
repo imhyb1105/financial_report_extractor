@@ -61,6 +61,7 @@ function numberToChinese(num) {
 
 // 计算契税
 function calculateDeedTax() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'deed'}});
     const houseType = document.getElementById('houseType').value;
     const price = parseFloat(document.getElementById('housePrice').value) || 0;
     const area = parseFloat(document.getElementById('houseArea').value) || 0;

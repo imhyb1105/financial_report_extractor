@@ -104,6 +104,7 @@ function getApplicableRate(tonnage, period, rateType) {
 
 // 计算船舶吨税
 function calculateTonnageTax() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'tonnage'}});
     const netTonnage = parseInt(document.getElementById('netTonnage').value) || 0;
     const licensePeriod = document.getElementById('licensePeriod').value;
     const rateType = document.getElementById('rateType').value;

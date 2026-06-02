@@ -84,6 +84,7 @@ function numberToChinese(num) {
 
 // 通用计算函数
 function calculateConsumptionTax(type, amount, quantity) {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'consumption'}});
     const config = taxConfig[type];
     if (!config) {
         alert('请选择应税消费品类型');

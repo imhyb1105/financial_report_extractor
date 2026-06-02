@@ -29,6 +29,7 @@ function formatMoney(amount) {
 
 // 计算车船税
 function calculateVehicleTax() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'vehicle'}});
     const vehicleType = document.getElementById('vehicleType').value;
     const engineCapacity = parseFloat(document.getElementById('engineCapacity').value) || 0;
     const tonnage = parseFloat(document.getElementById('tonnage').value) || 0;

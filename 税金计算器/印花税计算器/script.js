@@ -68,6 +68,7 @@ function numberToChinese(num) {
 
 // 计算印花税
 function calculateStampTax() {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'stamp'}});
     const contractType = document.getElementById('contractType').value;
     const amount = parseFloat(document.getElementById('contractAmount').value) || 0;
     const copies = parseInt(document.getElementById('contractCopies').value) || 1;

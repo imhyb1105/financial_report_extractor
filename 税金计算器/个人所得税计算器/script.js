@@ -97,6 +97,7 @@ function getBracket(taxableIncome, brackets) {
 
 // 显示结果
 function showResult(type, basis, rate, quickDeduction, tax, formula) {
+    if(window.Feedback) window.Feedback.trackEvent({event:'calculate', metadata:{taxType:'pit'}});
     document.getElementById('result').classList.remove('d-none');
     document.getElementById('resultType').textContent = type;
     document.getElementById('resultBasis').textContent = formatMoney(basis);

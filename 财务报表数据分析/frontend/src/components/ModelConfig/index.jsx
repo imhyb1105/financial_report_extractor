@@ -34,6 +34,7 @@ function ModelConfig() {
       const result = await validateApiKey(config.provider, config.apiKey)
       if (result.success) {
         setModelConfig(role, { valid: true })
+        window.Feedback && window.Feedback.trackEvent({ event: 'model_validate', metadata: { role, provider: config.provider } })
         message.success(`${role === 'modelA' ? '模型A' : role === 'modelB' ? '模型B' : '模型C'} 连接成功！`)
       } else {
         setModelConfig(role, { valid: false })

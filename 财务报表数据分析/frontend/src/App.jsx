@@ -219,6 +219,15 @@ function App() {
   const [disagreed, setDisagreed] = useState(false)
 
   useEffect(() => {
+    // 初始化反馈系统
+    if (window.Feedback && window.Feedback.initFeedback) {
+      window.Feedback.initFeedback({
+        project: 'fin-report',
+        supabaseUrl: 'https://oiwvqsgkzzhexsfslcoa.supabase.co',
+        supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pd3Zxc2drenpoZXhzZnNsY29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjE4MjEsImV4cCI6MjA5NTc5NzgyMX0.QEiB0gzqslfCI8xqyhijB6R0kmmgtCS_cBZcdMtvWj0'
+      });
+    }
+
     // 检查是否已同意免责声明
     if (!hasAgreedDisclaimer()) {
       setShowDisclaimer(true)

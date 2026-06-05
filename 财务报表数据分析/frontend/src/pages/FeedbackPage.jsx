@@ -1,12 +1,11 @@
 /**
  * 用户反馈页面
- * V2.4 新增
+ * V2.5 — 使用共享 feedback.js 模块提交到 Supabase
  */
 import React, { useState } from 'react'
 import { Card, Form, Input, Select, Button, message, Typography, Space, Result, Grid } from 'antd'
 import { BugOutlined, BulbOutlined, BookOutlined, MessageOutlined, SendOutlined, ArrowLeftOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import api from '../services/api'
 
 const { Title, Paragraph, Text } = Typography
 const { TextArea } = Input
@@ -14,8 +13,8 @@ const { Option } = Select
 
 const feedbackTypes = [
   { value: 'bug', label: '问题报告', icon: <BugOutlined />, description: '功能异常、错误报告' },
-  { value: 'suggestion', label: '功能建议', icon: <BulbOutlined />, description: '新功能想法、改进建议' },
-  { value: 'consultation', label: '使用咨询', icon: <BookOutlined />, description: '如何使用、操作指南' },
+  { value: 'feature', label: '功能建议', icon: <BulbOutlined />, description: '新功能想法、改进建议' },
+  { value: 'improvement', label: '改进建议', icon: <BookOutlined />, description: '使用体验改进' },
   { value: 'other', label: '其他反馈', icon: <MessageOutlined />, description: '其他意见建议' }
 ]
 
@@ -29,16 +28,19 @@ function FeedbackPage() {
   const isMobile = !screens.md
 
   const handleSubmit = async (values) => {
+    if (!window.Feedback || !window.Feedback.submitFeedback) {
+      message.error('反馈系统未就绪，请刷新页面后重试')
+      return
+    }
     setLoading(true)
     try {
-      const response = await api.post('/feedback', values)
-      if (response.data.success) {
-        setFeedbackNo(response.data.data.feedbackNo)
-        setSubmitted(true)
-        message.success('反馈提交成功！')
-      }
+      const result = await window.Feedback.submitFeedback(values)
+      if (result.error) throw new Error(result.error.message || '提交失败')
+      setFeedbackNo('#' + Date.now().toString(36).toUpperCase())
+      setSubmitted(true)
+      message.success('反馈提交成功！')
     } catch (err) {
-      message.error(err.response?.data?.message || '提交失败，请稍后重试')
+      message.error(err.message || '提交失败，请稍后重试')
     } finally {
       setLoading(false)
     }
@@ -158,7 +160,7 @@ function FeedbackPage() {
             label="联系方式"
             extra="选填，用于回复您的反馈（邮箱或电话）"
           >
-            <Input placeholder="请输入您的联系方式（选填）" maxLength={100} />
+            <Input placeholder="请输入您的联系方式（选填)" maxLength={100} />
           </Form.Item>
 
           <Form.Item

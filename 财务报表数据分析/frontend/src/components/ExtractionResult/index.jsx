@@ -63,6 +63,7 @@ function ExtractionResult() {
   const { companyInfo, financialMetrics, nonFinancialInfo, accountingCheck, confidence, confidenceReason, modelResults, extractionWarning, usage, metricStats } = extractionResult
 
   const handleExport = () => {
+    window.Feedback && window.Feedback.trackEvent({ event: 'export_excel', metadata: { metricCount: extractionResult.financialMetrics?.length || 0 } })
     exportToExcel(extractionResult, displayUnit)
   }
 

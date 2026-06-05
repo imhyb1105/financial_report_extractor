@@ -49,6 +49,7 @@ function FileUploader() {
         type: file.type,
         lastModified: new Date(file.lastModified).toLocaleString()
       })
+      window.Feedback && window.Feedback.trackEvent({ event: 'file_upload', metadata: { type: 'pdf', sizeMB: (file.size / 1024 / 1024).toFixed(1) } })
     } else {
       clearSelectedFile()
     }
@@ -75,6 +76,7 @@ function FileUploader() {
     startExtraction()
 
     try {
+      window.Feedback && window.Feedback.trackEvent({ event: 'start_extraction', metadata: { modelCount: validModels.length } })
       // V2.13: extractData 返回 { data, debugLog, pdfResult }
       const { data: result, debugLog, pdfResult } = await extractData(selectedFile, validModels, displayUnit, (progress) => {
         setExtractionProgress(progress)
@@ -94,6 +96,7 @@ function FileUploader() {
       })
 
       message.success('财务数据提取完成！')
+      window.Feedback && window.Feedback.trackEvent({ event: 'complete_extraction', metadata: { modelCount: validModels.length, hasNonFinancial: validModels.length >= 3 } })
 
       // V2.13: 三模型模式下异步加载非财务信息
       if (validModels.length >= 3 && pdfResult) {

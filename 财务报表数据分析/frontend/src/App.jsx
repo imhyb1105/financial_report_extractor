@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { Layout, Typography, Button, Space, Result, Drawer, Grid } from 'antd'
-import { MenuOutlined, MessageOutlined, SafetyOutlined } from '@ant-design/icons'
+import { MenuOutlined, SafetyOutlined } from '@ant-design/icons'
 import ModelConfig from './components/ModelConfig'
 import FileUploader from './components/FileUploader'
 import UnitSelector from './components/UnitSelector'
@@ -143,18 +143,11 @@ function AppHeader() {
           {isMobile ? '财务报表提取' : '智能财务报表数据提取工具'}
         </Title>
       </Link>
-      <Space>
-        <Link to="/feedback">
-          <Button type="text" icon={<MessageOutlined />} style={{ color: '#fff' }}>
-            {!isMobile && '反馈'}
-          </Button>
-        </Link>
-        <Link to="/disclaimer">
-          <Button type="text" icon={<SafetyOutlined />} style={{ color: '#fff' }}>
-            {!isMobile && '免责声明'}
-          </Button>
-        </Link>
-      </Space>
+      <Link to="/disclaimer">
+        <Button type="text" icon={<SafetyOutlined />} style={{ color: '#fff' }}>
+          {!isMobile && '免责声明'}
+        </Button>
+      </Link>
     </Header>
   )
 }
@@ -192,21 +185,7 @@ function AppLayout() {
         <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
       </Routes>
       <Footer style={{ textAlign: 'center', background: '#f5f5f5', padding: isMobile ? '16px 12px' : undefined }}>
-        {!isMobile ? (
-          <Space split={<Text type="secondary">|</Text>}>
-            <Link to="/disclaimer">免责声明</Link>
-            <Link to="/feedback">用户反馈</Link>
-            <Link to="/admin/login">管理员入口</Link>
-          </Space>
-        ) : (
-          <Space direction="vertical" size={4}>
-            <Space split={<Text type="secondary">|</Text>}>
-              <Link to="/disclaimer">免责声明</Link>
-              <Link to="/feedback">用户反馈</Link>
-              <Link to="/admin/login">管理员入口</Link>
-            </Space>
-          </Space>
-        )}
+        <Link to="/disclaimer">免责声明</Link>
         <br />
         <Text type="secondary">© 2026 智能财务报表数据提取工具 V2.15</Text>
       </Footer>
